@@ -7,6 +7,13 @@ import (
 	"chrome-analytics-backend/internal/services"
 )
 
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
 func main() {
 	// Read the downloaded HTML file
 	htmlBytes, err := os.ReadFile("../../test/fixtures/extension.html")
@@ -44,4 +51,43 @@ func main() {
 	
 	privacyURL := extractor.ExtractPrivacyURL(html)
 	fmt.Printf("Privacy URL: '%s'\n", privacyURL)
+	
+	logoURL := extractor.ExtractLogo(html)
+	fmt.Printf("Logo URL: '%s'\n", logoURL)
+	
+	features := extractor.ExtractFeatures(html)
+	fmt.Printf("Features: %v\n", features)
+	
+	languages := extractor.ExtractLanguages(html)
+	fmt.Printf("Languages: '%s'\n", languages)
+	
+	fullDesc := extractor.ExtractFullDescription(html)
+	fmt.Printf("Full Description: '%s'\n", fullDesc[:min(200, len(fullDesc))]+"...")
+	
+	screenshots := extractor.ExtractScreenshots(html)
+	fmt.Printf("Screenshots: %v\n", screenshots)
+	
+	category, subcategory := extractor.ExtractCategory(html)
+	fmt.Printf("Category: '%s', Subcategory: '%s'\n", category, subcategory)
+	
+	status := extractor.ExtractStatus(html)
+	fmt.Printf("Status: %v\n", status)
+	
+	reviewCount := extractor.ExtractReviewCount(html)
+	fmt.Printf("Review Count: '%s'\n", reviewCount)
+	
+	privacyDetails := extractor.ExtractPrivacyDetails(html)
+	fmt.Printf("Privacy Details: %v\n", privacyDetails)
+	
+	rating := extractor.ExtractRating(html)
+	fmt.Printf("Rating: '%s'\n", rating)
+	
+	userCount := extractor.ExtractUserCount(html)
+	fmt.Printf("User Count: '%s'\n", userCount)
+	
+	betterScreenshots := extractor.ExtractBetterScreenshots(html)
+	fmt.Printf("Better Screenshots: %v\n", betterScreenshots)
+	
+	related := extractor.ExtractRelatedExtensions(html)
+	fmt.Printf("Related Extensions: %v\n", related)
 }

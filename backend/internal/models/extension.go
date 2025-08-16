@@ -12,7 +12,10 @@ type Extension struct {
 	Name        string             `json:"name" bson:"name"`
 	Description string             `json:"description" bson:"description"`
 	Category    string             `json:"category" bson:"category"`
+	Subcategory string             `json:"subcategory" bson:"subcategory"`
+	Status      []string           `json:"status" bson:"status"`
 	Developer   string             `json:"developer" bson:"developer"`
+	LogoURL     string             `json:"logoUrl" bson:"logoUrl"`
 	DeveloperURL string            `json:"developerUrl" bson:"developerUrl"`
 	Website     string             `json:"website" bson:"website"`
 	SupportURL  string             `json:"supportUrl" bson:"supportUrl"`
@@ -20,6 +23,10 @@ type Extension struct {
 	Version     string             `json:"version" bson:"version"`
 	FileSize    string             `json:"fileSize" bson:"fileSize"`
 	LastUpdated string             `json:"lastUpdated" bson:"lastUpdated"`
+	Features      []string           `json:"features" bson:"features"`
+	Languages     string             `json:"languages" bson:"languages"`
+	Screenshots   []string           `json:"screenshots" bson:"screenshots"`
+	PrivacyDetails []string          `json:"privacyDetails" bson:"privacyDetails"`
 	Permissions []string           `json:"permissions" bson:"permissions"`
 	Users       int64              `json:"users" bson:"users"`
 	Rating      float64            `json:"rating" bson:"rating"`

@@ -84,8 +84,9 @@ func NewStandaloneScraper() *StandaloneScraper {
 	}
 
 	return &StandaloneScraper{
-		client:  client,
-		metrics: &ScraperMetrics{},
+		client:    client,
+		metrics:   &ScraperMetrics{},
+		extractor: NewExtractor(),
 	}
 }
 
@@ -116,6 +117,7 @@ func NewStandaloneScraperWithProxies(proxies []ProxyConfig) *StandaloneScraper {
 		client:       client,
 		metrics:      &ScraperMetrics{},
 		proxyManager: proxyManager,
+		extractor:    NewExtractor(),
 	}
 
 	// Initialize proxy client with first proxy
@@ -806,16 +808,18 @@ func (ss *StandaloneScraper) extractAdditionalMetadata(extension *models.Extensi
 	// Remove the duplicate developer extraction that was causing corruption
 	// The developer field is already extracted earlier with proper patterns
 
-	// Extract developer URL
-	extension.DeveloperURL = ss.extractDeveloperURL(html)
-	
-	// Extract additional metadata
-	extension.Website = ss.extractWebsite(html)
-	extension.SupportURL = ss.extractSupportURL(html)
-	extension.PrivacyURL = ss.extractPrivacyURL(html)
-	extension.Version = ss.extractVersion(html)
-	extension.FileSize = ss.extractFileSize(html)
-	extension.LastUpdated = ss.extractLastUpdated(html)
+	// Extract additional metadata using the CSS selector extractor
+	extension.LogoURL = ss.extractor.ExtractLogo(html)
+	extension.DeveloperURL = ss.extractor.ExtractDeveloperURL(html)
+	extension.Website = ss.extractor.ExtractWebsite(html)
+	extension.SupportURL = ss.extractor.ExtractSupportURL(html)
+	extension.PrivacyURL = ss.extractor.ExtractPrivacyURL(html)
+	extension.Version = ss.extractor.ExtractVersion(html)
+	extension.FileSize = ss.extractor.ExtractFileSize(html)
+	extension.LastUpdated = ss.extractor.ExtractLastUpdated(html)
+	extension.Features = ss.extractor.ExtractFeatures(html)
+	extension.Languages = ss.extractor.ExtractLanguages(html)
+	extension.Screenshots = ss.extractor.ExtractScreenshots(html)
 	extension.Permissions = ss.extractPermissionStrings(html)
 }
 
