@@ -1,7 +1,6 @@
 package services
 
 import (
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -9,7 +8,6 @@ import (
 	"testing"
 
 	"chrome-analytics-backend/internal/models"
-	"chrome-analytics-backend/internal/services/proxy"
 )
 
 func TestScraper_ExtractFromHTML(t *testing.T) {
@@ -27,9 +25,10 @@ func TestScraper_ExtractFromHTML(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	// Create scraper with mock proxy manager
-	proxyManager := proxy.NewProxyManager([]string{})
-	scraper := NewScraper(proxyManager)
+	// Create scraper with nil database (for testing)
+	scraper := NewScraper(nil)
+	// Override the Chrome Web Store URL to point to our test server
+	scraper.baseURL = ts.URL + "/detail/"
 
 	// Test scraping
 	testCases := []struct {
@@ -45,9 +44,9 @@ func TestScraper_ExtractFromHTML(t *testing.T) {
 				Name:        "AdBlock — best ad blocker",
 				Description: "Block ads and pop-ups on YouTube, Facebook, Twitch, and your favorite websites.",
 				Developer:   "getadblock.com",
-				Users:       10000000,
+				Users:       int64(10000000),
 				Rating:      4.5,
-				ReviewCount: 171234,
+				ReviewCount: int64(171234),
 				Category:    "Productivity",
 			},
 		},
@@ -55,18 +54,11 @@ func TestScraper_ExtractFromHTML(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// Override the Chrome Web Store URL to point to our test server
-			originalURL := "https://chromewebstore.google.com/detail/"
-			scraper.baseURL = ts.URL + "/detail/"
-			
 			extension, err := scraper.ScrapeExtension(tc.extensionID)
 			if err != nil {
 				t.Errorf("ScrapeExtension failed: %v", err)
 				return
 			}
-
-			// Restore original URL
-			scraper.baseURL = originalURL
 
 			// Validate results
 			if extension.Name != tc.expected.Name {
@@ -94,7 +86,7 @@ func TestScraper_ExtractFromHTML(t *testing.T) {
 func TestScraper_ParseUserCount(t *testing.T) {
 	testCases := []struct {
 		input    string
-		expected int
+		expected int64
 	}{
 		{"10,000,000+ users", 10000000},
 		{"10,000,000+", 10000000},
@@ -145,7 +137,7 @@ func TestScraper_ParseRating(t *testing.T) {
 func TestScraper_ParseReviewCount(t *testing.T) {
 	testCases := []struct {
 		input    string
-		expected int
+		expected int64
 	}{
 		{"171,234 reviews", 171234},
 		{"171,234", 171234},
@@ -179,8 +171,7 @@ func TestScraper_LiveScraping(t *testing.T) {
 		t.Skip("Live scraping test disabled. Set TEST_LIVE_SCRAPING=true to enable")
 	}
 
-	proxyManager := proxy.NewProxyManager([]string{})
-	scraper := NewScraper(proxyManager)
+	scraper := NewScraper(nil)
 
 	// Test with a known stable extension
 	extensionID := "nmmhkkegccagdldgiimedpiccmgmieda" // Google Wallet

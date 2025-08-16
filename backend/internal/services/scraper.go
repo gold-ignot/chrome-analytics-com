@@ -21,6 +21,7 @@ type Scraper struct {
 	db           *mongo.Database
 	client       *http.Client
 	proxyManager *ProxyManager
+	baseURL      string // For testing, defaults to Chrome Web Store
 }
 
 func NewScraper(db *mongo.Database) *Scraper {
@@ -37,6 +38,7 @@ func NewScraper(db *mongo.Database) *Scraper {
 			Timeout: 10 * time.Second, // Faster timeout for quicker failure detection
 		},
 		proxyManager: proxyManager,
+		baseURL:      "https://chromewebstore.google.com/detail/",
 	}
 }
 
@@ -47,7 +49,7 @@ func (s *Scraper) ScrapeExtension(extensionID string) (*models.Extension, error)
 
 // ScrapeExtensionWithProxy scrapes a single extension using a specific proxy
 func (s *Scraper) ScrapeExtensionWithProxy(extensionID string, proxyIndex int) (*models.Extension, error) {
-	url := fmt.Sprintf("https://chromewebstore.google.com/detail/%s", extensionID)
+	url := fmt.Sprintf("%s%s", s.baseURL, extensionID)
 	
 	// Use proxy if available
 	client := s.client
