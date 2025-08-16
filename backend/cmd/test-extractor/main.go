@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"chrome-analytics-backend/internal/services"
 )
@@ -85,16 +84,6 @@ func main() {
 	
 	userCount := extractor.ExtractUserCount(html)
 	fmt.Printf("User Count: '%s'\n", userCount)
-	
-	// Debug user count extraction
-	fmt.Printf("Debug: Searching for 'users' in HTML...\n")
-	lines := strings.Split(html, "\n")
-	for i, line := range lines {
-		if strings.Contains(line, "users") && strings.Contains(line, "1,000,000") {
-			fmt.Printf("Found user count in line %d: %s\n", i, strings.TrimSpace(line))
-			break
-		}
-	}
 	
 	betterScreenshots := extractor.ExtractBetterScreenshots(html)
 	fmt.Printf("Better Screenshots: %v\n", betterScreenshots)
