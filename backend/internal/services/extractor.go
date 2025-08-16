@@ -373,27 +373,44 @@ func (e *Extractor) ExtractReviewCount(html string) string {
 	
 	var reviewCount string
 	
-	// Look for patterns like "(26.7K ratings)" first (most reliable)
-	doc.Find("*").Each(func(i int, s *goquery.Selection) {
+	// Look in the banner area first for review count
+	doc.Find("div[role='banner'] *").Each(func(i int, s *goquery.Selection) {
 		text := strings.TrimSpace(s.Text())
-		if strings.Contains(text, "ratings") && strings.Contains(text, "(") && strings.Contains(text, ")") {
-			start := strings.Index(text, "(")
-			end := strings.Index(text, ")")
-			if start >= 0 && end > start {
-				content := strings.TrimSpace(text[start+1 : end])
-				// Look for pattern like "26.7K ratings"
-				parts := strings.Fields(content)
-				for _, part := range parts {
-					if strings.Contains(part, "K") || strings.Contains(part, "M") || strings.Contains(part, ".") {
-						if strings.ContainsAny(part, "0123456789") {
+		if strings.Contains(text, "ratings") && len(text) < 20 {
+			parts := strings.Fields(text)
+			for i, part := range parts {
+				if part == "ratings" && i > 0 {
+					candidate := parts[i-1]
+					if strings.ContainsAny(candidate, "0123456789") {
+						reviewCount = candidate
+						return
+					}
+				}
+			}
+		}
+	})
+	
+	// Look for patterns like "(26.7K ratings)" in general content
+	if reviewCount == "" {
+		doc.Find("*").Each(func(i int, s *goquery.Selection) {
+			text := strings.TrimSpace(s.Text())
+			if strings.Contains(text, "ratings") && strings.Contains(text, "(") && strings.Contains(text, ")") {
+				start := strings.Index(text, "(")
+				end := strings.Index(text, ")")
+				if start >= 0 && end > start {
+					content := strings.TrimSpace(text[start+1 : end])
+					// Look for pattern like "26.7K ratings"
+					parts := strings.Fields(content)
+					for _, part := range parts {
+						if strings.ContainsAny(part, "0123456789") && (strings.Contains(part, "K") || strings.Contains(part, "M") || strings.Contains(part, ".")) {
 							reviewCount = part
 							return
 						}
 					}
 				}
 			}
-		}
-	})
+		})
+	}
 	
 	// If no parentheses format, look for direct "X.XK ratings" format
 	if reviewCount == "" {
@@ -404,7 +421,7 @@ func (e *Extractor) ExtractReviewCount(html string) string {
 				for i, part := range parts {
 					if part == "ratings" && i > 0 {
 						candidate := parts[i-1]
-						if strings.Contains(candidate, "K") || strings.Contains(candidate, "M") || strings.Contains(candidate, ".") {
+						if strings.ContainsAny(candidate, "0123456789") {
 							reviewCount = candidate
 							return
 						}
@@ -425,20 +442,24 @@ func (e *Extractor) ExtractPrivacyDetails(html string) []string {
 	}
 	
 	var privacyDetails []string
+	seen := make(map[string]bool)
 	
 	// Look for privacy section content
 	doc.Find("div, section").Each(func(i int, s *goquery.Selection) {
 		text := strings.TrimSpace(s.Text())
 		if strings.Contains(strings.ToLower(text), "privacy") && len(text) > 50 {
-			// Look for specific privacy items
-			if strings.Contains(text, "Personal communications") {
+			// Look for specific privacy items and avoid duplicates
+			if strings.Contains(text, "Personal communications") && !seen["Personal communications"] {
 				privacyDetails = append(privacyDetails, "Personal communications")
+				seen["Personal communications"] = true
 			}
-			if strings.Contains(text, "User activity") {
+			if strings.Contains(text, "User activity") && !seen["User activity"] {
 				privacyDetails = append(privacyDetails, "User activity")
+				seen["User activity"] = true
 			}
-			if strings.Contains(text, "Not being sold to third parties") {
+			if strings.Contains(text, "Not being sold to third parties") && !seen["Not being sold to third parties"] {
 				privacyDetails = append(privacyDetails, "Not being sold to third parties")
+				seen["Not being sold to third parties"] = true
 			}
 		}
 	})
@@ -454,42 +475,37 @@ func (e *Extractor) ExtractRating(html string) string {
 	}
 	
 	var rating string
-	// Look for the specific rating display in the header area
-	doc.Find("div[role='banner'] *").Each(func(i int, s *goquery.Selection) {
+	
+	// Look for rating near star icons or in rating context
+	doc.Find("*").Each(func(i int, s *goquery.Selection) {
 		text := strings.TrimSpace(s.Text())
-		// Look for "4.9 out of 5" or "4.9" standalone in the banner area
+		
+		// Look for exact patterns like "4.9" that appear standalone
+		if len(text) == 3 && strings.Contains(text, ".") {
+			// Check if it looks like a rating (1.0-5.0)
+			if text[0] >= '1' && text[0] <= '5' && text[1] == '.' && text[2] >= '0' && text[2] <= '9' {
+				// Prefer higher ratings (more likely to be accurate)
+				if rating == "" || text > rating {
+					rating = text
+				}
+			}
+		}
+		
+		// Also look for "X.X out of 5" pattern
 		if strings.Contains(text, "out of 5") {
 			parts := strings.Fields(text)
 			for _, part := range parts {
-				if len(part) >= 3 && strings.Contains(part, ".") {
-					if rating == "" && part[0] >= '1' && part[0] <= '5' {
-						rating = part
-						return
+				if len(part) == 3 && strings.Contains(part, ".") {
+					if part[0] >= '1' && part[0] <= '5' && part[1] == '.' && part[2] >= '0' && part[2] <= '9' {
+						if rating == "" || part > rating {
+							rating = part
+						}
 					}
 				}
-			}
-		} else if len(text) >= 3 && len(text) <= 5 && strings.Contains(text, ".") {
-			// Check if it looks like a rating (1.0-5.0)
-			if text[0] >= '1' && text[0] <= '5' && text[1] == '.' {
-				rating = text
-				return
 			}
 		}
 	})
 	
-	// If no rating found in banner, look more broadly
-	if rating == "" {
-		doc.Find("*").Each(func(i int, s *goquery.Selection) {
-			text := strings.TrimSpace(s.Text())
-			if len(text) == 3 && strings.Contains(text, ".") {
-				// Check if it looks like a rating (1.0-5.0)
-				if text[0] >= '1' && text[0] <= '5' && text[1] == '.' {
-					rating = text
-					return
-				}
-			}
-		})
-	}
 	return rating
 }
 
@@ -501,19 +517,38 @@ func (e *Extractor) ExtractUserCount(html string) string {
 	}
 	
 	var userCount string
-	// Look in the banner/header area first for user count
-	doc.Find("div[role='banner'] *").Each(func(i int, s *goquery.Selection) {
+	
+	// Look for user count in a more targeted way - search for specific patterns
+	doc.Find("*").Each(func(i int, s *goquery.Selection) {
 		text := strings.TrimSpace(s.Text())
-		if strings.Contains(text, "users") && len(text) < 30 {
-			// Clean extract just the number before "users"
-			words := strings.Fields(text)
-			for i, word := range words {
-				if word == "users" && i > 0 {
-					// Get the previous word which should be the count
-					candidate := words[i-1]
-					// Check if it contains numbers and commas
-					if strings.ContainsAny(candidate, "0123456789,") && !strings.ContainsAny(candidate, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ") {
-						userCount = candidate
+		// Look for patterns like "1,000,000+ users" or "Tools1,000,000 users" (concatenated)
+		if strings.Contains(text, "users") {
+			// This handles cases where text is concatenated like "Tools1,000,000 users"
+			
+			// Find the pattern in the text
+			if idx := strings.Index(text, "users"); idx != -1 {
+				// Look backwards from "users" to find the number
+				beforeUsers := text[:idx]
+				words := strings.Fields(beforeUsers)
+				if len(words) > 0 {
+					lastWord := words[len(words)-1]
+					// Check if last word is a number (might be concatenated with other text)
+					for j := len(lastWord) - 1; j >= 0; j-- {
+						if lastWord[j] >= '0' && lastWord[j] <= '9' || lastWord[j] == ',' || lastWord[j] == '.' {
+							continue
+						} else {
+							// Found non-numeric character, extract from j+1 onwards
+							candidate := lastWord[j+1:]
+							if strings.ContainsAny(candidate, "0123456789") && len(candidate) > 3 {
+								userCount = candidate
+								return
+							}
+							break
+						}
+					}
+					// If the whole lastWord is numeric
+					if strings.ContainsAny(lastWord, "0123456789") && len(lastWord) > 3 {
+						userCount = lastWord
 						return
 					}
 				}
@@ -521,24 +556,6 @@ func (e *Extractor) ExtractUserCount(html string) string {
 		}
 	})
 	
-	// If not found in banner, search more broadly
-	if userCount == "" {
-		doc.Find("*").Each(func(i int, s *goquery.Selection) {
-			text := strings.TrimSpace(s.Text())
-			if strings.Contains(text, "users") && len(text) < 30 {
-				words := strings.Fields(text)
-				for i, word := range words {
-					if word == "users" && i > 0 {
-						candidate := words[i-1]
-						if strings.ContainsAny(candidate, "0123456789,") && !strings.ContainsAny(candidate, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ") {
-							userCount = candidate
-							return
-						}
-					}
-				}
-			}
-		})
-	}
 	return userCount
 }
 
@@ -550,25 +567,57 @@ func (e *Extractor) ExtractRelatedExtensions(html string) []map[string]string {
 	}
 	
 	var related []map[string]string
+	seenExtensions := make(map[string]bool)
 	
 	// Look for sections that might contain related extensions
 	doc.Find("div, section").Each(func(i int, s *goquery.Selection) {
-		text := strings.TrimSpace(s.Text())
-		if strings.Contains(strings.ToLower(text), "related") {
-			// Look for extension names and ratings within this section
+		text := strings.ToLower(strings.TrimSpace(s.Text()))
+		if strings.Contains(text, "related") || strings.Contains(text, "recommended") || strings.Contains(text, "similar") {
+			// Look for extension links within this section
 			s.Find("a").Each(func(j int, link *goquery.Selection) {
 				href, exists := link.Attr("href")
 				name := strings.TrimSpace(link.Text())
-				if exists && strings.Contains(href, "/detail/") && len(name) > 5 {
+				if exists && strings.Contains(href, "/detail/") && len(name) > 10 {
+					// Avoid UI elements like "Flag concern", "ratings"
+					if !strings.Contains(name, "ratings") && !strings.Contains(name, "Flag") && 
+					   !strings.Contains(name, "concern") && !strings.Contains(name, "Report") {
+						key := name + href
+						if !seenExtensions[key] {
+							seenExtensions[key] = true
+							ext := map[string]string{
+								"name": name,
+								"url":  href,
+							}
+							related = append(related, ext)
+						}
+					}
+				}
+			})
+		}
+	})
+	
+	// If no related extensions found via sections, look for general extension links
+	if len(related) == 0 {
+		doc.Find("a").Each(func(i int, link *goquery.Selection) {
+			href, exists := link.Attr("href")
+			name := strings.TrimSpace(link.Text())
+			if exists && strings.Contains(href, "/detail/") && len(name) > 15 && 
+			   !strings.Contains(name, "ratings") && !strings.Contains(name, "Flag") {
+				key := name + href
+				if !seenExtensions[key] {
+					seenExtensions[key] = true
 					ext := map[string]string{
 						"name": name,
 						"url":  href,
 					}
 					related = append(related, ext)
+					if len(related) >= 5 { // Limit to reasonable number
+						return
+					}
 				}
-			})
-		}
-	})
+			}
+		})
+	}
 	
 	return related
 }
