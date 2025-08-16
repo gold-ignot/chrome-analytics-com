@@ -84,7 +84,7 @@ func NewDiscoveryHandler(db *mongo.Database) *DiscoveryHandler {
 }
 
 // HandleJob processes a discovery job
-func (dh *DiscoveryHandler) HandleJob(job *Job, queue *JobQueue, proxyIndex int) error {
+func (dh *DiscoveryHandler) HandleJob(job *Job, queue *JobQueue) error {
 	discoveryType, ok := job.Payload["type"].(string)
 	if !ok {
 		return fmt.Errorf("invalid discovery type in job payload")
@@ -92,13 +92,13 @@ func (dh *DiscoveryHandler) HandleJob(job *Job, queue *JobQueue, proxyIndex int)
 
 	switch discoveryType {
 	case DiscoveryTypeCategory:
-		return dh.handleCategoryDiscovery(job, queue, proxyIndex)
+		return dh.handleCategoryDiscovery(job, queue)
 	case DiscoveryTypeSearch:
-		return dh.handleSearchDiscovery(job, queue, proxyIndex)
+		return dh.handleSearchDiscovery(job, queue)
 	case DiscoveryTypeRelated:
-		return dh.handleRelatedDiscovery(job, queue, proxyIndex)
+		return dh.handleRelatedDiscovery(job, queue)
 	case DiscoveryTypePopular:
-		return dh.handlePopularDiscovery(job, queue, proxyIndex)
+		return dh.handlePopularDiscovery(job, queue)
 	default:
 		return fmt.Errorf("unknown discovery type: %s", discoveryType)
 	}
@@ -110,7 +110,7 @@ func (dh *DiscoveryHandler) GetJobType() JobType {
 }
 
 // handleCategoryDiscovery crawls a specific Chrome Web Store category
-func (dh *DiscoveryHandler) handleCategoryDiscovery(job *Job, queue *JobQueue, proxyIndex int) error {
+func (dh *DiscoveryHandler) handleCategoryDiscovery(job *Job, queue *JobQueue) error {
 	category, ok := job.Payload["category"].(string)
 	if !ok {
 		return fmt.Errorf("category not specified in job payload")

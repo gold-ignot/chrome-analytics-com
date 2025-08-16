@@ -20,16 +20,15 @@ type WorkerPool struct {
 
 // Worker represents a single worker that processes jobs
 type Worker struct {
-	id         int
-	pool       *WorkerPool
-	jobType    JobType
-	stopChan   chan struct{}
-	proxyIndex int // Dedicated proxy index (-1 for no proxy)
+	id       int
+	pool     *WorkerPool
+	jobType  JobType
+	stopChan chan struct{}
 }
 
 // JobHandler defines the interface for handling different job types
 type JobHandler interface {
-	HandleJob(job *Job, queue *JobQueue, proxyIndex int) error
+	HandleJob(job *Job, queue *JobQueue) error
 	GetJobType() JobType
 }
 
@@ -66,18 +65,11 @@ func NewWorkerPool(queue *JobQueue, config WorkerPoolConfig) *WorkerPool {
 // addWorkers adds workers for a specific job type
 func (wp *WorkerPool) addWorkers(jobType JobType, count int) {
 	for i := 0; i < count; i++ {
-		// Assign dedicated proxy indices for scraping workers
-		proxyIndex := -1 // Default: no dedicated proxy
-		if (jobType == JobTypeDiscovery || jobType == JobTypeUpdate) && wp.workerCount < 10 {
-			proxyIndex = wp.workerCount // Assign proxy 0-9 to first 10 workers
-		}
-		
 		worker := &Worker{
-			id:         wp.workerCount,
-			pool:       wp,
-			jobType:    jobType,
-			stopChan:   make(chan struct{}),
-			proxyIndex: proxyIndex,
+			id:       wp.workerCount,
+			pool:     wp,
+			jobType:  jobType,
+			stopChan: make(chan struct{}),
 		}
 		wp.workers = append(wp.workers, worker)
 		wp.workerCount++
@@ -147,11 +139,7 @@ func (wp *WorkerPool) GetStats() map[string]interface{} {
 func (w *Worker) start(handler JobHandler, wg *sync.WaitGroup) {
 	defer wg.Done()
 	
-	if w.proxyIndex >= 0 {
-		log.Printf("Worker %d started for job type: %s (dedicated proxy %d)", w.id, w.jobType, w.proxyIndex)
-	} else {
-		log.Printf("Worker %d started for job type: %s (no dedicated proxy)", w.id, w.jobType)
-	}
+	log.Printf("Worker %d started for job type: %s", w.id, w.jobType)
 	
 	for {
 		select {
@@ -179,7 +167,7 @@ func (w *Worker) start(handler JobHandler, wg *sync.WaitGroup) {
 			log.Printf("Worker %d processing job %s", w.id, job.ID)
 			
 			// Process the job
-			err = handler.HandleJob(job, w.pool.queue, w.proxyIndex)
+			err = handler.HandleJob(job, w.pool.queue)
 			if err != nil {
 				log.Printf("Worker %d: Job %s failed: %v", w.id, job.ID, err)
 				err = w.pool.queue.FailJob(job.ID, err.Error())
@@ -200,9 +188,9 @@ func (w *Worker) start(handler JobHandler, wg *sync.WaitGroup) {
 // DefaultWorkerPoolConfig returns a default configuration for the worker pool
 func DefaultWorkerPoolConfig() WorkerPoolConfig {
 	return WorkerPoolConfig{
-		DiscoveryWorkers: 4,  // 4 workers with dedicated proxies 0-3
-		UpdateWorkers:    6,  // 6 workers with dedicated proxies 4-9  
-		AnalyticsWorkers: 2,  // 2 workers without dedicated proxies (use shared/rotated)
-		HealthWorkers:    1,  // 1 worker without dedicated proxy
+		DiscoveryWorkers: 4,  // 4 workers for discovery jobs
+		UpdateWorkers:    6,  // 6 workers for update jobs
+		AnalyticsWorkers: 2,  // 2 workers for analytics jobs
+		HealthWorkers:    1,  // 1 worker for health checks
 	}
 }

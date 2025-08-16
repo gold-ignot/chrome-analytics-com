@@ -31,7 +31,7 @@ func NewUpdateHandler(db *mongo.Database) *UpdateHandler {
 }
 
 // HandleJob processes an update job
-func (uh *UpdateHandler) HandleJob(job *Job, queue *JobQueue, proxyIndex int) error {
+func (uh *UpdateHandler) HandleJob(job *Job, queue *JobQueue) error {
 	extensionID, ok := job.Payload["extension_id"].(string)
 	if !ok {
 		return fmt.Errorf("extension_id not specified in job payload")
