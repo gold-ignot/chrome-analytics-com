@@ -47,6 +47,11 @@ func NewScraper(db *mongo.Database) *Scraper {
 	}
 }
 
+// SetBrowserClient allows overriding the browser client (useful for testing)
+func (s *Scraper) SetBrowserClient(client *BrowserClient) {
+	s.browserClient = client
+}
+
 // ScrapeExtension scrapes a single extension from Chrome Web Store
 func (s *Scraper) ScrapeExtension(extensionID string) (*models.Extension, error) {
 	// First try the traditional HTTP scraping method
@@ -72,7 +77,13 @@ func (s *Scraper) ScrapeExtension(extensionID string) (*models.Extension, error)
 			browserExtension, browserErr = s.browserClient.ScrapeExtension(extensionID)
 		} else {
 			log.Printf("Using proxy %s for browser scraping", proxy.URL)
-			browserExtension, browserErr = s.browserClient.ScrapeExtensionWithProxy(extensionID, proxy)
+			proxyInfo := &ProxyInfo{
+				Host:     proxy.Host,
+				Port:     proxy.Port,
+				Username: proxy.Username,
+				Password: proxy.Password,
+			}
+			browserExtension, browserErr = s.browserClient.ScrapeExtensionWithProxy(extensionID, proxyInfo)
 		}
 	} else {
 		browserExtension, browserErr = s.browserClient.ScrapeExtension(extensionID)

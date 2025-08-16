@@ -61,21 +61,11 @@ func (bc *BrowserClient) ScrapeExtension(extensionID string) (*models.Extension,
 }
 
 // ScrapeExtensionWithProxy scrapes using a specific proxy
-func (bc *BrowserClient) ScrapeExtensionWithProxy(extensionID string, proxy *Proxy) (*models.Extension, error) {
-	var proxyInfo *ProxyInfo
-	if proxy != nil {
-		proxyInfo = &ProxyInfo{
-			Host:     proxy.Host,
-			Port:     proxy.Port,
-			Username: proxy.Username,
-			Password: proxy.Password,
-		}
-	}
-	
+func (bc *BrowserClient) ScrapeExtensionWithProxy(extensionID string, proxy *ProxyInfo) (*models.Extension, error) {
 	reqData := BrowserScrapeRequest{
 		ExtensionID: extensionID,
 		Timeout:     30,
-		Proxy:       proxyInfo,
+		Proxy:       proxy,
 	}
 
 	return bc.scrapeWithRequest(reqData)

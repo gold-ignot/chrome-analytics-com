@@ -171,10 +171,23 @@ func (bs *BrowserScraper) scrapeExtension(extensionID string, timeout time.Durat
 	)
 
 	// Add proxy configuration if provided
+	var proxyAuthHandler *ProxyAuthHandler
 	if proxy != nil {
-		proxyURL := fmt.Sprintf("%s:%s", proxy.Host, proxy.Port)
-		opts = append(opts, chromedp.ProxyServer(proxyURL))
-		log.Printf("Using proxy: %s", proxyURL)
+		if proxy.Username != "" && proxy.Password != "" {
+			// Create local proxy with authentication
+			proxyAuthHandler = NewProxyAuthHandler(proxy.Host, proxy.Port, proxy.Username, proxy.Password)
+			localProxyURL, err := proxyAuthHandler.Start()
+			if err != nil {
+				return nil, fmt.Errorf("failed to start local proxy: %w", err)
+			}
+			opts = append(opts, chromedp.ProxyServer(localProxyURL))
+			log.Printf("Using authenticated proxy via local proxy: %s:%s", proxy.Host, proxy.Port)
+		} else {
+			// Use proxy without auth
+			proxyURL := fmt.Sprintf("http://%s:%s", proxy.Host, proxy.Port)
+			opts = append(opts, chromedp.ProxyServer(proxyURL))
+			log.Printf("Using proxy: %s:%s", proxy.Host, proxy.Port)
+		}
 	}
 
 	allocCtx, cancel := chromedp.NewExecAllocator(context.Background(), opts...)
@@ -186,6 +199,7 @@ func (bs *BrowserScraper) scrapeExtension(extensionID string, timeout time.Durat
 	// Set timeout
 	ctx, cancel = context.WithTimeout(ctx, timeout)
 	defer cancel()
+
 
 	var pageHTML string
 

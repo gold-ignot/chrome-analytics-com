@@ -1,0 +1,182 @@
+{
+  "cjpalhdlnbpafiamejdnhcphjbkeiagm": {
+    "duration": "1.634948979s",
+    "extension": {
+      "id": "000000000000000000000000",
+      "extensionId": "cjpalhdlnbpafiamejdnhcphjbkeiagm",
+      "name": "",
+      "description": "",
+      "category": "Productivity",
+      "developer": "",
+      "users": 0,
+      "rating": 0,
+      "reviewCount": 0,
+      "keywords": [],
+      "createdAt": "2025-08-16T16:24:42.098017+03:00",
+      "updatedAt": "2025-08-16T16:24:42.098017+03:00",
+      "snapshots": [
+        {
+          "date": "2025-08-16T16:24:42.589978+03:00",
+          "users": 0,
+          "rating": 0,
+          "reviewCount": 0
+        }
+      ]
+    },
+    "name": "uBlock Origin",
+    "score": 0.8333333333333333,
+    "success": true,
+    "validation": {
+      "description": false,
+      "developer": false,
+      "name": false,
+      "rating": false,
+      "reviews": true,
+      "users": false
+    }
+  },
+  "ejidjjhkpiempkbhmpbfngldlkglhimk": {
+    "duration": "1.300720993s",
+    "extension": {
+      "id": "000000000000000000000000",
+      "extensionId": "ejidjjhkpiempkbhmpbfngldlkglhimk",
+      "name": "",
+      "description": "",
+      "category": "Productivity",
+      "developer": "",
+      "users": 0,
+      "rating": 0,
+      "reviewCount": 0,
+      "keywords": [],
+      "createdAt": "2025-08-16T16:25:01.341016+03:00",
+      "updatedAt": "2025-08-16T16:25:01.341016+03:00",
+      "snapshots": [
+        {
+          "date": "2025-08-16T16:25:01.558719+03:00",
+          "users": 0,
+          "rating": 0,
+          "reviewCount": 0
+        }
+      ]
+    },
+    "name": "Web Developer",
+    "score": 0.8333333333333333,
+    "success": true,
+    "validation": {
+      "description": false,
+      "developer": false,
+      "name": false,
+      "rating": false,
+      "reviews": true,
+      "users": false
+    }
+  },
+  "gighmmpiobklfepjocnamgkkbiglidom": {
+    "duration": "1.092970613s",
+    "extension": {
+      "id": "000000000000000000000000",
+      "extensionId": "gighmmpiobklfepjocnamgkkbiglidom",
+      "name": "",
+      "description": "",
+      "category": "Productivity",
+      "developer": "",
+      "users": 0,
+      "rating": 4.2,
+      "reviewCount": 0,
+      "keywords": [],
+      "createdAt": "2025-08-16T16:24:48.737086+03:00",
+      "updatedAt": "2025-08-16T16:24:48.737086+03:00",
+      "snapshots": [
+        {
+          "date": "2025-08-16T16:24:49.233557+03:00",
+          "users": 0,
+          "rating": 4.2,
+          "reviewCount": 0
+        }
+      ]
+    },
+    "name": "AdBlock",
+    "score": 1.6666666666666665,
+    "success": true,
+    "validation": {
+      "description": false,
+      "developer": false,
+      "name": false,
+      "rating": true,
+      "reviews": true,
+      "users": false
+    }
+  },
+  "hkgfoiooedgoejojocmhlaklaeopbecg": {
+    "duration": "1.588622737s",
+    "extension": {
+      "id": "000000000000000000000000",
+      "extensionId": "hkgfoiooedgoejojocmhlaklaeopbecg",
+      "name": "",
+      "description": "",
+      "category": "Productivity",
+      "developer": "",
+      "users": 0,
+      "rating": 0,
+      "reviewCount": 0,
+      "keywords": [],
+      "createdAt": "2025-08-16T16:24:54.812002+03:00",
+      "updatedAt": "2025-08-16T16:24:54.812002+03:00",
+      "snapshots": [
+        {
+          "date": "2025-08-16T16:24:55.297459+03:00",
+          "users": 0,
+          "rating": 0,
+          "reviewCount": 0
+        }
+      ]
+    },
+    "name": "Picture-in-Picture Extension",
+    "score": 0.8333333333333333,
+    "success": true,
+    "validation": {
+      "description": false,
+      "developer": false,
+      "name": false,
+      "rating": false,
+      "reviews": true,
+      "users": false
+    }
+  },
+  "nmmhkkegccagdldgiimedpiccmgmieda": {
+    "duration": "1.304055904s",
+    "extension": {
+      "id": "000000000000000000000000",
+      "extensionId": "nmmhkkegccagdldgiimedpiccmgmieda",
+      "name": "",
+      "description": "",
+      "category": "Productivity",
+      "developer": "",
+      "users": 0,
+      "rating": 0,
+      "reviewCount": 0,
+      "keywords": [],
+      "createdAt": "2025-08-16T16:24:35.73185+03:00",
+      "updatedAt": "2025-08-16T16:24:35.73185+03:00",
+      "snapshots": [
+        {
+          "date": "2025-08-16T16:24:35.968281+03:00",
+          "users": 0,
+          "rating": 0,
+          "reviewCount": 0
+        }
+      ]
+    },
+    "name": "Google Wallet",
+    "score": 0.8333333333333333,
+    "success": true,
+    "validation": {
+      "description": false,
+      "developer": false,
+      "name": false,
+      "rating": false,
+      "reviews": true,
+      "users": false
+    }
+  }
+}
