@@ -73,6 +73,34 @@ interface ProxyStats {
   };
 }
 
+interface ScraperDiagnostics {
+  timestamp: string;
+  scraper_config: {
+    concurrency: number;
+    proxy_enabled: boolean;
+  };
+  health_check: {
+    status: boolean;
+    error: string | null;
+  };
+  browser_metrics?: {
+    TotalRequests: number;
+    SuccessfulScrapes: number;
+    FailedScrapes: number;
+    TimeoutErrors: number;
+    ConnectionErrors: number;
+    TotalDuration: number;
+    LastError: string;
+    LastErrorTime: string;
+  };
+  error_analysis?: {
+    timeout_rate: number;
+    connection_error_rate: number;
+    overall_failure_rate: number;
+  };
+  proxy_stats?: any;
+}
+
 export default function AdminPage() {
   const [automationStatus, setAutomationStatus] = useState<AutomationStatus | null>(null);
   const [queueStats, setQueueStats] = useState<QueueStats | null>(null);
@@ -93,6 +121,20 @@ export default function AdminPage() {
   const [dashboardOverview, setDashboardOverview] = useState<any>(null);
   const [growthTrends, setGrowthTrends] = useState<any>(null);
   const [proxyStats, setProxyStats] = useState<ProxyStats | null>(null);
+  const [scraperDiagnostics, setScraperDiagnostics] = useState<ScraperDiagnostics | null>(null);
+  const [failedJobsStats, setFailedJobsStats] = useState<{
+    total_failed: number;
+    failed_last_24h: number;
+    failed_by_type: Record<string, number>;
+    recent_failed: Array<{
+      id: string;
+      type: string;
+      error_msg: string;
+      retry_count: number;
+      max_retries: number;
+      updated_at: string;
+    }>;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
@@ -164,6 +206,33 @@ export default function AdminPage() {
       setProxyStats(data);
     } catch (error) {
       console.error('Error fetching proxy stats:', error);
+    }
+  };
+
+  const fetchScraperDiagnostics = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/automation/scraper/diagnostics?_t=${Date.now()}`);
+      const data = await response.json();
+      setScraperDiagnostics(data);
+    } catch (error) {
+      console.error('Error fetching scraper diagnostics:', error);
+      setScraperDiagnostics(null);
+    }
+  };
+
+  const fetchFailedJobsStats = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/automation/failed/stats?_t=${Date.now()}`);
+      const data = await response.json();
+      setFailedJobsStats(data);
+    } catch (error) {
+      console.error('Error fetching failed jobs stats:', error);
+      setFailedJobsStats({
+        total_failed: 0,
+        failed_last_24h: 0,
+        failed_by_type: {},
+        recent_failed: []
+      });
     }
   };
 
@@ -298,7 +367,9 @@ export default function AdminPage() {
       fetchAutomationStatus(),
       fetchQueueStats(),
       fetchCompletedJobsStats(),
+      fetchFailedJobsStats(),
       fetchProxyStats(),
+      fetchScraperDiagnostics(),
       fetchDashboardData()
     ]);
     setLastRefresh(new Date());
@@ -433,7 +504,9 @@ export default function AdminPage() {
         fetchAutomationStatus(),
         fetchQueueStats(),
         fetchCompletedJobsStats(),
+        fetchFailedJobsStats(),
         fetchProxyStats(),
+        fetchScraperDiagnostics(),
         fetchCategories(),
         fetchKeywords(),
         fetchDashboardData()
@@ -506,6 +579,12 @@ export default function AdminPage() {
             <div className="text-xs text-gray-500">
               {lastRefresh && `${lastRefresh.toLocaleTimeString()} | `}
               {automationStatus?.update_stats?.total_extensions || 0} ext | {totalQueuedJobs} queued
+              {scraperDiagnostics?.health_check?.status && (
+                <span className="ml-2 text-green-600" title="Scraper Healthy">🟢</span>
+              )}
+              {scraperDiagnostics?.health_check?.status === false && (
+                <span className="ml-2 text-red-600" title="Scraper Unhealthy">🔴</span>
+              )}
               {autoRefresh && <span className="text-green-600 ml-1">●</span>}
             </div>
           </div>
@@ -696,27 +775,27 @@ export default function AdminPage() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4">
                     <p className="text-2xl font-bold text-blue-900">
-                      {completedJobsStats?.completed_last_24h || 0}
+                      {Math.round((completedJobsStats?.completed_last_24h || 0) / 24)}
                     </p>
-                    <p className="text-xs text-blue-700 font-medium">Jobs/24h</p>
+                    <p className="text-xs text-blue-700 font-medium">Jobs/Hour (1h avg)</p>
                   </div>
                   <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4">
                     <p className="text-2xl font-bold text-green-900">
                       {Math.round((completedJobsStats?.completed_last_24h || 0) / 24)}
                     </p>
-                    <p className="text-xs text-green-700 font-medium">Jobs/Hour</p>
+                    <p className="text-xs text-green-700 font-medium">Jobs/Hour (1h avg)</p>
                   </div>
                   <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4">
                     <p className="text-2xl font-bold text-purple-900">
-                      {((completedJobsStats?.completed_last_24h || 0) / 1440).toFixed(1)}
+                      {((completedJobsStats?.completed_last_24h || 0) / 24 / 60).toFixed(1)}
                     </p>
-                    <p className="text-xs text-purple-700 font-medium">Jobs/Minute</p>
+                    <p className="text-xs text-purple-700 font-medium">Jobs/Minute (1h avg)</p>
                   </div>
                   <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4">
                     <p className="text-2xl font-bold text-orange-900">
-                      {Math.round((totalQueuedJobs / (completedJobsStats?.completed_last_24h || 1)) * 24)}h
+                      {Math.round(totalQueuedJobs / Math.max((completedJobsStats?.completed_last_24h || 0) / 24, 1))}h
                     </p>
-                    <p className="text-xs text-orange-700 font-medium">Queue Time</p>
+                    <p className="text-xs text-orange-700 font-medium">Est. Queue Time</p>
                   </div>
                 </div>
 
@@ -733,7 +812,7 @@ export default function AdminPage() {
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-slate-600">Processing Rate</span>
-                      <span className="text-sm font-bold text-slate-900">{completedJobsStats?.completed_last_24h || 0}/24h</span>
+                      <span className="text-sm font-bold text-slate-900">{Math.round((completedJobsStats?.completed_last_24h || 0) / 24)}/hour</span>
                     </div>
                   </div>
                 </div>
@@ -847,7 +926,7 @@ export default function AdminPage() {
                   <div className="flex justify-between items-center p-3 bg-red-50 rounded-lg">
                     <span className="text-sm font-medium text-red-700">Failed Jobs (24h)</span>
                     <span className="text-2xl font-bold text-red-900">
-                      {Math.round((completedJobsStats?.completed_last_24h || 0) * 0.02)}
+                      {failedJobsStats?.failed_last_24h || 0}
                     </span>
                   </div>
                   
@@ -856,14 +935,15 @@ export default function AdminPage() {
                     <div className="flex justify-between items-center py-1">
                       <span className="text-sm text-slate-600">Total Failed Jobs</span>
                       <span className="text-sm font-bold text-slate-900">
-                        {Math.round((completedJobsStats?.completed_last_24h || 0) * 0.02)}
+                        {failedJobsStats?.total_failed || 0}
                       </span>
                     </div>
                     <div className="flex justify-between items-center py-1">
                       <span className="text-sm text-slate-600">Success Rate</span>
                       <span className="text-sm font-bold text-green-600">
-                        {completedJobsStats?.total_completed ? 
-                          Math.round((completedJobsStats.total_completed / (completedJobsStats.total_completed + Math.round(completedJobsStats.total_completed * 0.02))) * 100) : 0}%
+                        {(completedJobsStats?.total_completed && failedJobsStats?.total_failed) ? 
+                          Math.round((completedJobsStats.total_completed / (completedJobsStats.total_completed + failedJobsStats.total_failed)) * 100) : 
+                          (completedJobsStats?.total_completed ? 100 : 0)}%
                       </span>
                     </div>
                   </div>
@@ -872,11 +952,32 @@ export default function AdminPage() {
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-slate-600">Error Rate</span>
                       <span className="text-sm font-bold text-orange-600">
-                        {completedJobsStats?.total_completed ? 
-                          Math.round((Math.round(completedJobsStats.total_completed * 0.02) / completedJobsStats.total_completed) * 100) : 0}%
+                        {(completedJobsStats?.total_completed && failedJobsStats?.total_failed) ? 
+                          Math.round((failedJobsStats.total_failed / (completedJobsStats.total_completed + failedJobsStats.total_failed)) * 100) : 0}%
                       </span>
                     </div>
                   </div>
+
+                  {/* Recent Failed Jobs */}
+                  {failedJobsStats?.recent_failed && failedJobsStats.recent_failed.length > 0 && (
+                    <div className="pt-4 border-t border-slate-200">
+                      <p className="text-xs font-medium text-slate-600 uppercase mb-2">Recent Failed Jobs</p>
+                      <div className="space-y-1 max-h-32 overflow-y-auto">
+                        {failedJobsStats.recent_failed.slice(0, 5).map((job, index) => (
+                          <div key={job.id} className="text-xs bg-red-50 p-2 rounded">
+                            <div className="flex justify-between items-start">
+                              <span className="font-medium text-red-800">{job.type}</span>
+                              <span className="text-red-600">{job.retry_count}/{job.max_retries} retries</span>
+                            </div>
+                            <div className="text-red-700 mt-1 truncate">{job.error_msg}</div>
+                            <div className="text-red-500 text-xs mt-1">
+                              {new Date(job.updated_at).toLocaleString()}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -940,6 +1041,142 @@ export default function AdminPage() {
               </div>
             )}
           </div>
+
+          {/* Scraper Diagnostics */}
+          {scraperDiagnostics && (
+            <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-6 mb-8">
+              <h2 className="text-xl font-semibold text-slate-900 mb-6">Browser Scraper Diagnostics</h2>
+              
+              {/* Health Status */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                <div className={`p-4 rounded-lg border-2 ${scraperDiagnostics.health_check.status ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className={`text-sm font-medium ${scraperDiagnostics.health_check.status ? 'text-green-800' : 'text-red-800'}`}>
+                        Health Status
+                      </p>
+                      <p className={`text-2xl font-bold ${scraperDiagnostics.health_check.status ? 'text-green-900' : 'text-red-900'}`}>
+                        {scraperDiagnostics.health_check.status ? 'Healthy' : 'Unhealthy'}
+                      </p>
+                      {scraperDiagnostics.health_check.error && (
+                        <p className="text-xs text-red-600 mt-1">{scraperDiagnostics.health_check.error}</p>
+                      )}
+                    </div>
+                    <div className={`w-3 h-3 rounded-full ${scraperDiagnostics.health_check.status ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-lg bg-blue-50 border-2 border-blue-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-blue-800">Concurrency Workers</p>
+                      <p className="text-2xl font-bold text-blue-900">{scraperDiagnostics.scraper_config.concurrency}</p>
+                      <p className="text-xs text-blue-600">parallel workers</p>
+                    </div>
+                    <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-lg bg-purple-50 border-2 border-purple-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-purple-800">Proxy Status</p>
+                      <p className="text-2xl font-bold text-purple-900">
+                        {scraperDiagnostics.scraper_config.proxy_enabled ? 'Enabled' : 'Disabled'}
+                      </p>
+                      <p className="text-xs text-purple-600">connection method</p>
+                    </div>
+                    <svg className="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              {/* Performance Metrics */}
+              {scraperDiagnostics.browser_metrics && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                  <div className="bg-slate-50 rounded-lg p-4">
+                    <h3 className="text-lg font-medium text-slate-900 mb-4">Performance Metrics</h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-slate-600">Total Requests</span>
+                        <span className="text-sm font-bold text-slate-900">{scraperDiagnostics.browser_metrics.TotalRequests}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-slate-600">Successful Scrapes</span>
+                        <span className="text-sm font-bold text-green-600">{scraperDiagnostics.browser_metrics.SuccessfulScrapes}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-slate-600">Failed Scrapes</span>
+                        <span className="text-sm font-bold text-red-600">{scraperDiagnostics.browser_metrics.FailedScrapes}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-slate-600">Success Rate</span>
+                        <span className="text-sm font-bold text-slate-900">
+                          {scraperDiagnostics.browser_metrics.TotalRequests > 0 ? 
+                            Math.round((scraperDiagnostics.browser_metrics.SuccessfulScrapes / scraperDiagnostics.browser_metrics.TotalRequests) * 100) : 0}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-50 rounded-lg p-4">
+                    <h3 className="text-lg font-medium text-slate-900 mb-4">Error Analysis</h3>
+                    {scraperDiagnostics.error_analysis ? (
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-slate-600">Timeout Rate</span>
+                          <span className="text-sm font-bold text-orange-600">
+                            {scraperDiagnostics.error_analysis.timeout_rate.toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-slate-600">Connection Error Rate</span>
+                          <span className="text-sm font-bold text-red-600">
+                            {scraperDiagnostics.error_analysis.connection_error_rate.toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-slate-600">Overall Failure Rate</span>
+                          <span className="text-sm font-bold text-slate-900">
+                            {scraperDiagnostics.error_analysis.overall_failure_rate.toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className="pt-2 mt-2 border-t border-slate-200">
+                          <span className="text-sm text-slate-600">Timeout Errors</span>
+                          <span className="text-sm font-bold text-orange-600 float-right">
+                            {scraperDiagnostics.browser_metrics.TimeoutErrors}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-sm text-slate-600">Connection Errors</span>
+                          <span className="text-sm font-bold text-red-600 float-right">
+                            {scraperDiagnostics.browser_metrics.ConnectionErrors}
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-sm text-slate-500">No error analysis available</div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Last Error Details */}
+              {scraperDiagnostics.browser_metrics?.LastError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <h3 className="text-lg font-medium text-red-900 mb-2">Last Error</h3>
+                  <p className="text-sm text-red-700 mb-2">{scraperDiagnostics.browser_metrics.LastError}</p>
+                  <p className="text-xs text-red-600">
+                    {new Date(scraperDiagnostics.browser_metrics.LastErrorTime).toLocaleString()}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </>
       )}
 

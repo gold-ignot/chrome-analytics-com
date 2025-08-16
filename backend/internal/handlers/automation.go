@@ -270,6 +270,17 @@ func (ah *AutomationHandler) GetCompletedJobsStats(c *gin.Context) {
 	c.JSON(http.StatusOK, stats)
 }
 
+// GetFailedJobsStats returns statistics about failed jobs
+func (ah *AutomationHandler) GetFailedJobsStats(c *gin.Context) {
+	stats, err := ah.queue.GetFailedJobsStats()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get failed jobs stats: " + err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, stats)
+}
+
 // GetJobDetails returns details for a specific job
 func (ah *AutomationHandler) GetJobDetails(c *gin.Context) {
 	jobID := c.Param("jobId")
@@ -372,6 +383,12 @@ func (ah *AutomationHandler) GetProxyStats(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"proxy_stats": stats,
 	})
+}
+
+// GetScraperDiagnostics returns detailed scraper diagnostics
+func (ah *AutomationHandler) GetScraperDiagnostics(c *gin.Context) {
+	diagnostics := ah.updateHandler.GetScraperDiagnostics()
+	c.JSON(http.StatusOK, diagnostics)
 }
 
 // CleanupInvalidExtensions removes invalid extension records from database

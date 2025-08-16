@@ -290,18 +290,38 @@ func (jq *JobQueue) GetCompletedJobsStats() (map[string]interface{}, error) {
 		return nil, fmt.Errorf("failed to get completed jobs count: %w", err)
 	}
 	
-	// Get recent completed job IDs (last 50)
+	// Get recent completed job IDs (last 50 for display)
 	recentJobIDs, err := jq.redis.LRange(jq.ctx, completedKey, 0, 49).Result()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get recent completed jobs: %w", err)
 	}
 	
-	// Get details for recent jobs
+	// Get more job IDs for 24h calculation (last 500 to ensure we catch all jobs in 24h)
+	allRecentJobIDs, err := jq.redis.LRange(jq.ctx, completedKey, 0, 499).Result()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get jobs for 24h calculation: %w", err)
+	}
+	
+	// Get details for recent jobs (for display)
 	recentJobs := make([]map[string]interface{}, 0)
 	completedByType := make(map[string]int)
 	completedInLast24h := 0
 	now := time.Now()
 	
+	// Count 24h completions from larger set
+	for _, jobID := range allRecentJobIDs {
+		job, err := jq.GetJob(jobID)
+		if err != nil {
+			continue // Skip if job details can't be retrieved
+		}
+		
+		// Count jobs completed in last 24 hours
+		if job.UpdatedAt.After(now.Add(-24 * time.Hour)) {
+			completedInLast24h++
+		}
+	}
+	
+	// Get details for recent jobs display
 	for _, jobID := range recentJobIDs {
 		job, err := jq.GetJob(jobID)
 		if err != nil {
@@ -333,6 +353,67 @@ func (jq *JobQueue) GetCompletedJobsStats() (map[string]interface{}, error) {
 		"completed_last_24h":   completedInLast24h,
 		"completed_by_type":    completedByType,
 		"recent_completed":     recentJobs,
+	}, nil
+}
+
+// GetFailedJobsStats returns statistics about failed jobs
+func (jq *JobQueue) GetFailedJobsStats() (map[string]interface{}, error) {
+	// Get all jobs with failed status from Redis
+	// We'll scan through job keys and check their status
+	ctx := context.Background()
+	keys, err := jq.redis.Keys(ctx, "job:*").Result()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get job keys: %w", err)
+	}
+
+	totalFailed := 0
+	failedLast24h := 0
+	failedByType := make(map[string]int)
+	recentFailed := make([]map[string]interface{}, 0)
+	now := time.Now()
+
+	for _, key := range keys {
+		jobData, err := jq.redis.Get(ctx, key).Result()
+		if err != nil {
+			continue // Skip if we can't get the job
+		}
+
+		var job Job
+		if err := json.Unmarshal([]byte(jobData), &job); err != nil {
+			continue // Skip if we can't unmarshal
+		}
+
+		if job.Status == JobStatusFailed {
+			totalFailed++
+			failedByType[string(job.Type)]++
+
+			// Count failed jobs in last 24 hours
+			if job.UpdatedAt.After(now.Add(-24 * time.Hour)) {
+				failedLast24h++
+			}
+
+			// Add to recent failed jobs (limit to 20)
+			if len(recentFailed) < 20 {
+				recentFailed = append(recentFailed, map[string]interface{}{
+					"id":          job.ID,
+					"type":        job.Type,
+					"priority":    job.Priority,
+					"error_msg":   job.ErrorMsg,
+					"retry_count": job.RetryCount,
+					"max_retries": job.MaxRetries,
+					"created_at":  job.CreatedAt,
+					"updated_at":  job.UpdatedAt,
+					"payload":     job.Payload,
+				})
+			}
+		}
+	}
+
+	return map[string]interface{}{
+		"total_failed":       totalFailed,
+		"failed_last_24h":    failedLast24h,
+		"failed_by_type":     failedByType,
+		"recent_failed":      recentFailed,
 	}, nil
 }
 

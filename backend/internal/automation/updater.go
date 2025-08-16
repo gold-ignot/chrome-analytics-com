@@ -366,6 +366,11 @@ func (uh *UpdateHandler) GetProxyStats() map[string]interface{} {
 	return uh.scraper.GetProxyStats()
 }
 
+// GetScraperDiagnostics returns detailed scraper diagnostics
+func (uh *UpdateHandler) GetScraperDiagnostics() map[string]interface{} {
+	return uh.scraper.GetDetailedDiagnostics()
+}
+
 // GetUpdateStats returns statistics about the update process
 func (uh *UpdateHandler) GetUpdateStats() map[string]interface{} {
 	collection := uh.db.Collection("extensions")

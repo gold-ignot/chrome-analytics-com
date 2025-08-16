@@ -4,9 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -47,7 +49,25 @@ type BrowserScraper struct {
 	defaultTimeout time.Duration
 }
 
+// FilteredWriter filters out chromedp unmarshal error logs
+type FilteredWriter struct {
+	writer io.Writer
+}
+
+func (fw *FilteredWriter) Write(p []byte) (n int, err error) {
+	msg := string(p)
+	// Filter out chromedp unmarshal errors for unknown enum values
+	if strings.Contains(msg, "could not unmarshal event") && strings.Contains(msg, "ClientNavigationReason") {
+		return len(p), nil // Discard the log message
+	}
+	return fw.writer.Write(p)
+}
+
 func main() {
+	// Set up filtered logging to suppress chromedp unmarshal errors
+	filteredWriter := &FilteredWriter{writer: os.Stderr}
+	log.SetOutput(filteredWriter)
+	
 	log.Println("Starting Browser Scraper Service")
 	
 	scraper := &BrowserScraper{

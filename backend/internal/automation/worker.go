@@ -16,6 +16,8 @@ type WorkerPool struct {
 	wg          sync.WaitGroup
 	ctx         context.Context
 	cancel      context.CancelFunc
+	stopped     bool
+	stopMutex   sync.Mutex
 }
 
 // Worker represents a single worker that processes jobs
@@ -96,6 +98,14 @@ func (wp *WorkerPool) Start(handlers map[JobType]JobHandler) {
 
 // Stop gracefully stops all workers
 func (wp *WorkerPool) Stop() {
+	wp.stopMutex.Lock()
+	defer wp.stopMutex.Unlock()
+	
+	if wp.stopped {
+		log.Println("Worker pool already stopped")
+		return
+	}
+	
 	log.Println("Stopping worker pool...")
 	
 	wp.cancel() // Cancel context for all workers
@@ -105,6 +115,8 @@ func (wp *WorkerPool) Stop() {
 	for _, worker := range wp.workers {
 		close(worker.stopChan)
 	}
+	
+	wp.stopped = true
 	
 	// Wait for all workers to finish
 	wp.wg.Wait()

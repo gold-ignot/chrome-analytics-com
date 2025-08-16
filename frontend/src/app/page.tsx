@@ -7,7 +7,7 @@ import ExtensionCard from '@/components/ExtensionCard';
 import SearchBar from '@/components/SearchBar';
 
 export default function Home() {
-  const [extensions, setExtensions] = useState<Extension[]>([]);
+  const [extensions, setExtensions] = useState<Extension[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [totalExtensions, setTotalExtensions] = useState(0);
@@ -29,10 +29,11 @@ export default function Home() {
       setError(null);
       // Sort by createdAt to get the most recently discovered extensions
       const response = await apiClient.getExtensions(1, 6, 'recent', 'desc');
-      setExtensions(response.extensions);
+      setExtensions(response.extensions || []);
       setTotalExtensions(response.total);
     } catch (err) {
       setError('Failed to fetch extensions');
+      setExtensions([]);
       console.error('Error fetching extensions:', err);
     } finally {
       setLoading(false);
@@ -43,7 +44,7 @@ export default function Home() {
     try {
       // Background refresh without loading state - get recent extensions
       const response = await apiClient.getExtensions(1, 6, 'recent', 'desc');
-      setExtensions(response.extensions);
+      setExtensions(response.extensions || []);
       setTotalExtensions(response.total);
       setError(null); // Clear any previous errors
     } catch (err) {
@@ -146,7 +147,7 @@ export default function Home() {
                 Try Again
               </button>
             </div>
-          ) : extensions.length > 0 ? (
+          ) : extensions && extensions.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {extensions.map((extension) => (
                 <ExtensionCard

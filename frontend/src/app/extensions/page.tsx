@@ -5,7 +5,6 @@ import { apiClient, Extension, ExtensionResponse } from '@/lib/api';
 import ExtensionCard from '@/components/ExtensionCard';
 import SearchBar from '@/components/SearchBar';
 import Pagination from '@/components/Pagination';
-import ScraperControls from '@/components/ScraperControls';
 
 export default function ExtensionsPage() {
   const [extensions, setExtensions] = useState<Extension[]>([]);
@@ -84,10 +83,6 @@ export default function ExtensionsPage() {
       {/* Main Content */}
       <section className="py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Scraper Controls */}
-          <div className="mb-8">
-            <ScraperControls onScrapeComplete={fetchExtensions} />
-          </div>
           
           {/* Results Info */}
           <div className="flex items-center justify-between mb-6">
