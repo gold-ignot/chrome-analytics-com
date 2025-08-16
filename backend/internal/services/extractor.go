@@ -454,28 +454,34 @@ func (e *Extractor) ExtractRating(html string) string {
 	}
 	
 	var rating string
-	// Look more specifically for rating patterns
-	doc.Find("*").Each(func(i int, s *goquery.Selection) {
+	// Look for the specific rating display in the header area
+	doc.Find("div[role='banner'] *").Each(func(i int, s *goquery.Selection) {
 		text := strings.TrimSpace(s.Text())
-		// Look for "4.9 out of 5" pattern first (most reliable)
+		// Look for "4.9 out of 5" or "4.9" standalone in the banner area
 		if strings.Contains(text, "out of 5") {
 			parts := strings.Fields(text)
 			for _, part := range parts {
 				if len(part) >= 3 && strings.Contains(part, ".") {
-					if rating == "" { // Take first match
+					if rating == "" && part[0] >= '1' && part[0] <= '5' {
 						rating = part
 						return
 					}
 				}
 			}
+		} else if len(text) >= 3 && len(text) <= 5 && strings.Contains(text, ".") {
+			// Check if it looks like a rating (1.0-5.0)
+			if text[0] >= '1' && text[0] <= '5' && text[1] == '.' {
+				rating = text
+				return
+			}
 		}
 	})
 	
-	// If no "out of 5" found, look for standalone ratings
+	// If no rating found in banner, look more broadly
 	if rating == "" {
 		doc.Find("*").Each(func(i int, s *goquery.Selection) {
 			text := strings.TrimSpace(s.Text())
-			if len(text) >= 3 && len(text) <= 5 && strings.Contains(text, ".") {
+			if len(text) == 3 && strings.Contains(text, ".") {
 				// Check if it looks like a rating (1.0-5.0)
 				if text[0] >= '1' && text[0] <= '5' && text[1] == '.' {
 					rating = text
@@ -495,9 +501,10 @@ func (e *Extractor) ExtractUserCount(html string) string {
 	}
 	
 	var userCount string
-	doc.Find("*").Each(func(i int, s *goquery.Selection) {
+	// Look in the banner/header area first for user count
+	doc.Find("div[role='banner'] *").Each(func(i int, s *goquery.Selection) {
 		text := strings.TrimSpace(s.Text())
-		if strings.Contains(text, "users") && len(text) < 50 {
+		if strings.Contains(text, "users") && len(text) < 30 {
 			// Clean extract just the number before "users"
 			words := strings.Fields(text)
 			for i, word := range words {
@@ -505,7 +512,7 @@ func (e *Extractor) ExtractUserCount(html string) string {
 					// Get the previous word which should be the count
 					candidate := words[i-1]
 					// Check if it contains numbers and commas
-					if strings.ContainsAny(candidate, "0123456789,") {
+					if strings.ContainsAny(candidate, "0123456789,") && !strings.ContainsAny(candidate, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ") {
 						userCount = candidate
 						return
 					}
@@ -513,6 +520,25 @@ func (e *Extractor) ExtractUserCount(html string) string {
 			}
 		}
 	})
+	
+	// If not found in banner, search more broadly
+	if userCount == "" {
+		doc.Find("*").Each(func(i int, s *goquery.Selection) {
+			text := strings.TrimSpace(s.Text())
+			if strings.Contains(text, "users") && len(text) < 30 {
+				words := strings.Fields(text)
+				for i, word := range words {
+					if word == "users" && i > 0 {
+						candidate := words[i-1]
+						if strings.ContainsAny(candidate, "0123456789,") && !strings.ContainsAny(candidate, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ") {
+							userCount = candidate
+							return
+						}
+					}
+				}
+			}
+		})
+	}
 	return userCount
 }
 
@@ -555,16 +581,44 @@ func (e *Extractor) ExtractBetterScreenshots(html string) []string {
 	}
 	
 	var screenshots []string
-	doc.Find("img").Each(func(i int, s *goquery.Selection) {
-		src, exists := s.Attr("src")
-		if exists && strings.HasPrefix(src, "http") {
-			// Look for larger images that are likely screenshots
-			if strings.Contains(src, "googleusercontent.com") && 
-			   (strings.Contains(src, "screenshot") || strings.Contains(src, "s640") || 
-			    strings.Contains(src, "s460") || strings.Contains(src, "w640")) {
-				screenshots = append(screenshots, src)
-			}
+	seenUrls := make(map[string]bool)
+	
+	// Look for images in sections that contain screenshots
+	doc.Find("section, div").Each(func(i int, section *goquery.Selection) {
+		sectionText := strings.ToLower(section.Text())
+		// Find sections that contain screenshot-related content
+		if strings.Contains(sectionText, "screenshot") || strings.Contains(sectionText, "image") {
+			section.Find("img").Each(func(j int, img *goquery.Selection) {
+				src, exists := img.Attr("src")
+				if exists && strings.HasPrefix(src, "http") {
+					// Avoid duplicates
+					if !seenUrls[src] {
+						seenUrls[src] = true
+						screenshots = append(screenshots, src)
+					}
+				}
+			})
 		}
 	})
+	
+	// If no screenshots found via sections, look for larger images
+	if len(screenshots) == 0 {
+		doc.Find("img").Each(func(i int, s *goquery.Selection) {
+			src, exists := s.Attr("src")
+			if exists && strings.HasPrefix(src, "http") {
+				// Look for larger images that are likely screenshots
+				if strings.Contains(src, "googleusercontent.com") && 
+				   (strings.Contains(src, "screenshot") || strings.Contains(src, "s640") || 
+				    strings.Contains(src, "s460") || strings.Contains(src, "w640") || 
+				    strings.Contains(src, "w460") || strings.Contains(src, "h350")) {
+					if !seenUrls[src] {
+						seenUrls[src] = true
+						screenshots = append(screenshots, src)
+					}
+				}
+			}
+		})
+	}
+	
 	return screenshots
 }
