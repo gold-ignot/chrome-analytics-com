@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -143,7 +144,7 @@ func main() {
 func (bs *BrowserScraper) scrapeExtension(extensionID string, timeout time.Duration, proxy *ProxyInfo) (*ScrapeResponse, error) {
 	url := fmt.Sprintf("https://chromewebstore.google.com/detail/%s", extensionID)
 
-	// Create chrome context with alpine-compatible options
+	// Create chrome context with bandwidth-efficient and realistic options
 	opts := append(chromedp.DefaultExecAllocatorOptions[:],
 		chromedp.ExecPath("/usr/bin/chromium-browser"),
 		chromedp.Flag("headless", true),
@@ -152,9 +153,21 @@ func (bs *BrowserScraper) scrapeExtension(extensionID string, timeout time.Durat
 		chromedp.Flag("disable-extensions", true),
 		chromedp.Flag("no-sandbox", true),
 		chromedp.Flag("disable-setuid-sandbox", true),
-		chromedp.Flag("disable-web-security", true),
-		chromedp.Flag("disable-features", "VizDisplayCompositor"),
-		chromedp.UserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"),
+		// Bandwidth saving measures
+		chromedp.Flag("disable-images", true),              // Block images to save bandwidth
+		chromedp.Flag("disable-javascript", false),         // Keep JS enabled (needed for Chrome Web Store)
+		chromedp.Flag("disable-plugins", true),             // Disable plugins
+		chromedp.Flag("disable-web-security", false),       // Keep web security for realism
+		chromedp.Flag("disable-features", "VizDisplayCompositor,AudioServiceOutOfProcess"),
+		chromedp.Flag("disable-background-timer-throttling", false), // More realistic
+		chromedp.Flag("disable-backgrounding-occluded-windows", false),
+		chromedp.Flag("disable-renderer-backgrounding", false),
+		chromedp.Flag("disable-background-networking", true), // Save bandwidth
+		// Realistic browser behavior
+		chromedp.Flag("enable-automation", false),           // Hide automation flags
+		chromedp.Flag("disable-blink-features", "AutomationControlled"),
+		chromedp.UserAgent(bs.getRandomUserAgent()),
+		chromedp.WindowSize(bs.getRandomWindowSize()),      // Random realistic screen size
 	)
 
 	// Add proxy configuration if provided
@@ -183,8 +196,14 @@ func (bs *BrowserScraper) scrapeExtension(extensionID string, timeout time.Durat
 		// Wait for the body to be visible
 		chromedp.WaitVisible("body", chromedp.ByQuery),
 
-		// Wait for JavaScript to load the extension data
-		chromedp.Sleep(8*time.Second),
+		// Simulate human-like behavior with random delays
+		chromedp.Sleep(time.Duration(2+rand.Intn(3))*time.Second), // 2-4 seconds
+
+		// Wait for content to load (simulate reading time)
+		chromedp.WaitVisible("main, [role='main'], .main-content", chromedp.ByQuery),
+
+		// Additional realistic delay for JavaScript execution
+		chromedp.Sleep(time.Duration(5+rand.Intn(4))*time.Second), // 5-8 seconds
 
 		// Get the rendered HTML
 		chromedp.OuterHTML("html", &pageHTML, chromedp.ByQuery),
@@ -471,4 +490,30 @@ func (bs *BrowserScraper) isStopWord(word string) bool {
 		"with": true, "by": true, "from": true, "up": true, "about": true, "into": true,
 	}
 	return stopWords[word]
+}
+
+// getRandomUserAgent returns a random realistic user agent string
+func (bs *BrowserScraper) getRandomUserAgent() string {
+	userAgents := []string{
+		"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+		"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+		"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+		"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+		"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+		"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/121.0",
+		"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/121.0",
+	}
+	
+	return userAgents[rand.Intn(len(userAgents))]
+}
+
+// getRandomWindowSize returns random realistic window dimensions
+func (bs *BrowserScraper) getRandomWindowSize() (int, int) {
+	sizes := [][2]int{
+		{1920, 1080}, {1366, 768}, {1536, 864}, {1440, 900},
+		{1280, 720}, {1600, 900}, {1920, 1200}, {1680, 1050},
+	}
+	
+	size := sizes[rand.Intn(len(sizes))]
+	return size[0], size[1]
 }

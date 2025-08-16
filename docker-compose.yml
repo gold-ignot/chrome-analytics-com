@@ -55,18 +55,21 @@ services:
   browser-scraper:
     build:
       context: ./browser-scraper
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     container_name: chrome-analytics-browser-scraper
     restart: unless-stopped
     ports:
       - "8081:8081"
     environment:
       - CHROME_BIN=/usr/bin/chromium-browser
+    volumes:
+      - ./browser-scraper:/app
+      - /app/tmp
     networks:
       - chrome-analytics
-    # Add memory limits for browser
-    mem_limit: 512m
-    memswap_limit: 512m
+    # Add memory limits for browser (increased for dev build)
+    mem_limit: 1g
+    memswap_limit: 1g
 
   frontend:
     build:
