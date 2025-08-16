@@ -101,6 +101,15 @@ func main() {
 				jobs.GET("/:jobId", automationHandler.GetJobDetails)
 			}
 		}
+
+		admin := api.Group("/admin")
+		{
+			dashboard := admin.Group("/dashboard")
+			{
+				dashboard.GET("/overview", h.GetDashboardOverview)
+				dashboard.GET("/growth-trends", h.GetExtensionGrowthTrends)
+			}
+		}
 	}
 
 	// Server configuration

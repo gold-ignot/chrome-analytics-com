@@ -309,3 +309,178 @@ func (h *Handler) GetKeywordPerformance(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"keywords": analytics[0].Keywords})
 }
+
+// Admin Dashboard Analytics Handlers
+func (h *Handler) GetDashboardOverview(c *gin.Context) {
+	collection := h.db.Collection("extensions")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Get total counts and aggregated metrics
+	pipeline := []bson.M{
+		{
+			"$group": bson.M{
+				"_id": nil,
+				"total_extensions": bson.M{"$sum": 1},
+				"total_users": bson.M{"$sum": "$users"},
+				"average_rating": bson.M{"$avg": "$rating"},
+				"categories": bson.M{"$push": "$category"},
+			},
+		},
+	}
+
+	cursor, err := collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch overview data"})
+		return
+	}
+	defer cursor.Close(ctx)
+
+	var results []bson.M
+	if err = cursor.All(ctx, &results); err != nil || len(results) == 0 {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process overview data"})
+		return
+	}
+
+	result := results[0]
+	
+	// Process category breakdown
+	categories := result["categories"].(primitive.A)
+	categoryBreakdown := make(map[string]int)
+	for _, cat := range categories {
+		if category, ok := cat.(string); ok && category != "" {
+			categoryBreakdown[category]++
+		}
+	}
+
+	// Get top extensions
+	findOptions := options.Find().SetSort(bson.D{{Key: "users", Value: -1}}).SetLimit(5)
+	topCursor, err := collection.Find(ctx, bson.M{}, findOptions)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch top extensions"})
+		return
+	}
+	defer topCursor.Close(ctx)
+
+	var topExtensions []models.Extension
+	if err = topCursor.All(ctx, &topExtensions); err != nil {
+		topExtensions = []models.Extension{}
+	}
+
+	// Calculate growth metrics (simplified for now)
+	totalUsers := int64(0)
+	if users, ok := result["total_users"].(int64); ok {
+		totalUsers = users
+	} else if users, ok := result["total_users"].(int32); ok {
+		totalUsers = int64(users)
+	}
+
+	overview := map[string]interface{}{
+		"total_extensions": result["total_extensions"],
+		"total_users": totalUsers,
+		"average_rating": result["average_rating"],
+		"growth_metrics": map[string]interface{}{
+			"daily_growth": totalUsers * 2 / 100,   // Placeholder calculation
+			"weekly_growth": totalUsers * 5 / 100,  // Placeholder calculation  
+			"monthly_growth": totalUsers * 15 / 100, // Placeholder calculation
+		},
+		"category_breakdown": categoryBreakdown,
+		"top_extensions": topExtensions,
+		"recent_snapshots": []map[string]interface{}{}, // To be implemented with actual snapshot data
+	}
+
+	c.JSON(http.StatusOK, overview)
+}
+
+func (h *Handler) GetExtensionGrowthTrends(c *gin.Context) {
+	collection := h.db.Collection("extensions")
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// Get growth by category
+	pipeline := []bson.M{
+		{
+			"$unwind": "$snapshots",
+		},
+		{
+			"$group": bson.M{
+				"_id": bson.M{
+					"category": "$category",
+					"date": bson.M{
+						"$dateToString": bson.M{
+							"format": "%Y-%m-%d",
+							"date": "$snapshots.date",
+						},
+					},
+				},
+				"total_users": bson.M{"$sum": "$snapshots.users"},
+				"avg_rating": bson.M{"$avg": "$snapshots.rating"},
+			},
+		},
+		{
+			"$sort": bson.M{"_id.date": 1},
+		},
+	}
+
+	cursor, err := collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch growth trends"})
+		return
+	}
+	defer cursor.Close(ctx)
+
+	var growthData []bson.M
+	if err = cursor.All(ctx, &growthData); err != nil {
+		growthData = []bson.M{}
+	}
+
+	// Process growth by category
+	growthByCategory := make(map[string][]map[string]interface{})
+	for _, item := range growthData {
+		id := item["_id"].(bson.M)
+		category := id["category"].(string)
+		date := id["date"].(string)
+		
+		if growthByCategory[category] == nil {
+			growthByCategory[category] = []map[string]interface{}{}
+		}
+		
+		growthByCategory[category] = append(growthByCategory[category], map[string]interface{}{
+			"date": date,
+			"users": item["total_users"],
+			"rating": item["avg_rating"],
+		})
+	}
+
+	// Get top growing extensions (simplified)
+	findOptions := options.Find().SetSort(bson.D{{Key: "users", Value: -1}}).SetLimit(3)
+	topCursor, err := collection.Find(ctx, bson.M{}, findOptions)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch top growing extensions"})
+		return
+	}
+	defer topCursor.Close(ctx)
+
+	var topGrowingExtensions []models.Extension
+	if err = topCursor.All(ctx, &topGrowingExtensions); err != nil {
+		topGrowingExtensions = []models.Extension{}
+	}
+
+	// Convert to response format
+	topGrowingFormatted := []map[string]interface{}{}
+	for _, ext := range topGrowingExtensions {
+		topGrowingFormatted = append(topGrowingFormatted, map[string]interface{}{
+			"extension": ext,
+			"growth_rate": 15.5, // Placeholder calculation
+			"growth_period": "Last 30 days",
+		})
+	}
+
+	trends := map[string]interface{}{
+		"growth_by_category": growthByCategory,
+		"top_growing_extensions": topGrowingFormatted,
+		"market_trends": []map[string]interface{}{}, // To be implemented
+	}
+
+	c.JSON(http.StatusOK, trends)
+}

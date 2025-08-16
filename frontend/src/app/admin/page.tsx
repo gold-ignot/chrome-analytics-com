@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
+import Chart from '@/components/Chart';
+import { apiClient, Extension } from '@/lib/api';
 
 // Simple SVG icons components
 const PlayIcon = () => (
@@ -87,6 +89,8 @@ export default function AdminPage() {
       payload: Record<string, any>;
     }>;
   } | null>(null);
+  const [dashboardOverview, setDashboardOverview] = useState<any>(null);
+  const [growthTrends, setGrowthTrends] = useState<any>(null);
   const [proxyStats, setProxyStats] = useState<ProxyStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -159,6 +163,19 @@ export default function AdminPage() {
       setCompletedJobsStats(data);
     } catch (error) {
       console.error('Error fetching completed jobs stats:', error);
+    }
+  };
+
+  const fetchDashboardData = async () => {
+    try {
+      const [overviewData, trendsData] = await Promise.all([
+        apiClient.getDashboardOverview(),
+        apiClient.getExtensionGrowthTrends()
+      ]);
+      setDashboardOverview(overviewData);
+      setGrowthTrends(trendsData);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
     }
   };
 
@@ -246,7 +263,8 @@ export default function AdminPage() {
       fetchAutomationStatus(),
       fetchQueueStats(),
       fetchCompletedJobsStats(),
-      fetchProxyStats()
+      fetchProxyStats(),
+      fetchDashboardData()
     ]);
     setLastRefresh(new Date());
   };
@@ -260,7 +278,8 @@ export default function AdminPage() {
         fetchCompletedJobsStats(),
         fetchProxyStats(),
         fetchCategories(),
-        fetchKeywords()
+        fetchKeywords(),
+        fetchDashboardData()
       ]);
       setLoading(false);
     };
@@ -367,144 +386,200 @@ export default function AdminPage() {
       {/* Tab Content */}
       {activeTab === 'overview' && (
         <>
-          {/* System Status */}
+          {/* System Status Header */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center">
-                <div className={`w-3 h-3 rounded-full mr-3 ${isRunning ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                <h3 className="text-lg font-semibold text-gray-900">System Status</h3>
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-blue-800">System Status</p>
+                  <p className="text-2xl font-bold text-blue-900">
+                    {isRunning ? 'Running' : 'Stopped'}
+                  </p>
+                  <p className="text-xs text-blue-600">
+                    {automationStatus?.worker_stats?.total_workers || 0} workers active
+                  </p>
+                </div>
+                <div className={`w-3 h-3 rounded-full ${isRunning ? 'bg-green-500' : 'bg-red-500'}`}></div>
               </div>
-              <p className="text-2xl font-bold text-gray-900 mt-2">
-                {isRunning ? 'Running' : 'Stopped'}
-              </p>
-              <p className="text-sm text-gray-600">
-                {automationStatus?.worker_stats?.total_workers || 0} workers active
-              </p>
             </div>
 
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center">
+            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border border-green-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-green-800">Total Extensions</p>
+                  <p className="text-2xl font-bold text-green-900">
+                    {dashboardOverview?.total_extensions || automationStatus?.update_stats?.total_extensions || 0}
+                  </p>
+                  <p className="text-xs text-green-600">
+                    {Math.round((dashboardOverview?.total_users || 0) / 1000000 * 10) / 10}M total users
+                  </p>
+                </div>
+                <DatabaseIcon />
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-purple-800">Average Rating</p>
+                  <p className="text-2xl font-bold text-purple-900">
+                    {dashboardOverview?.average_rating ? dashboardOverview.average_rating.toFixed(1) : '4.2'}
+                  </p>
+                  <p className="text-xs text-purple-600">across all extensions</p>
+                </div>
+                <svg className="w-6 h-6 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 border border-orange-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-orange-800">Queue Status</p>
+                  <p className="text-2xl font-bold text-orange-900">{totalQueuedJobs}</p>
+                  <p className="text-xs text-orange-600">jobs queued</p>
+                </div>
                 <ClockIcon />
-                <h3 className="text-lg font-semibold text-gray-900 ml-2">Queue Status</h3>
               </div>
-              <p className="text-2xl font-bold text-gray-900 mt-2">{totalQueuedJobs}</p>
-              <p className="text-sm text-gray-600">jobs queued</p>
-            </div>
-
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center">
-                <DatabaseIcon />
-                <h3 className="text-lg font-semibold text-gray-900 ml-2">Extensions</h3>
-              </div>
-              <p className="text-2xl font-bold text-gray-900 mt-2">
-                {automationStatus?.update_stats?.total_extensions || 0}
-              </p>
-              <p className="text-sm text-gray-600">
-                {automationStatus?.update_stats?.recently_updated || 0} recently updated
-              </p>
-            </div>
-
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center">
-                <div className={`w-3 h-3 rounded-full mr-3 ${proxyStats?.proxy_stats?.proxy_enabled ? 'bg-green-500' : 'bg-gray-500'}`}></div>
-                <h3 className="text-lg font-semibold text-gray-900">Proxy Status</h3>
-              </div>
-              <p className="text-2xl font-bold text-gray-900 mt-2">
-                {proxyStats?.proxy_stats?.healthy_proxies || 0}/{proxyStats?.proxy_stats?.total_proxies || 0}
-              </p>
-              <p className="text-sm text-gray-600">healthy proxies</p>
             </div>
           </div>
 
-          {/* System Controls */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <button
-              onClick={startAutomation}
-              disabled={isRunning || actionLoading === 'start'}
-              className="flex items-center justify-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-            >
-              <div className="mr-2">
-                <PlayIcon />
-              </div>
-              {actionLoading === 'start' ? 'Starting...' : 'Start Automation'}
-            </button>
-
-            <button
-              onClick={stopAutomation}
-              disabled={!isRunning || actionLoading === 'stop'}
-              className="flex items-center justify-center px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-            >
-              <div className="mr-2">
-                <PauseIcon />
-              </div>
-              {actionLoading === 'stop' ? 'Stopping...' : 'Stop Automation'}
-            </button>
-
-            <button
-              onClick={cleanupInvalidData}
-              disabled={actionLoading === 'cleanup'}
-              className="flex items-center px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-            >
-              <div className="mr-2">
-                <DatabaseIcon />
-              </div>
-              {actionLoading === 'cleanup' ? 'Cleaning...' : 'Cleanup Invalid Data'}
-            </button>
-          </div>
-
-          {/* Job Statistics Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            {/* Queued Jobs */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Queued Jobs</h2>
-              <div className="space-y-3">
-                {Object.entries(queueStats?.queue_stats || {}).map(([queue, count]) => (
-                  <div key={queue} className="flex justify-between">
-                    <span className="text-gray-600">{queue.replace(/_/g, ' ')}:</span>
-                    <span className="font-semibold">{count}</span>
+          {/* Main Analytics Dashboard */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            {/* Category Breakdown Chart */}
+            <div className="lg:col-span-2 bg-white rounded-xl shadow-lg border border-slate-200">
+              <div className="p-6">
+                <h2 className="text-xl font-semibold text-slate-900 mb-6">Extensions by Category</h2>
+                {dashboardOverview?.category_breakdown ? (
+                  <Chart 
+                    data={Object.entries(dashboardOverview.category_breakdown).map(([category, count]) => ({
+                      date: category,
+                      users: count,
+                      rating: 0,
+                      reviewCount: 0
+                    }))}
+                    type="users"
+                    title=""
+                    variant="area"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-48 text-slate-500">
+                    <div className="text-center">
+                      <div className="w-12 h-12 mx-auto mb-4 animate-spin">
+                        <RefreshIcon />
+                      </div>
+                      <p className="text-sm">Loading category data...</p>
+                    </div>
                   </div>
-                ))}
-                {Object.keys(queueStats?.queue_stats || {}).length === 0 && (
-                  <p className="text-gray-500 italic">No queue data available</p>
                 )}
               </div>
             </div>
 
-            {/* Completed Jobs */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Completed Jobs</h2>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Total Completed:</span>
-                  <span className="font-semibold">{completedJobsStats?.total_completed || 0}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Last 24 Hours:</span>
-                  <span className="font-semibold">{completedJobsStats?.completed_last_24h || 0}</span>
-                </div>
-                
-                {/* Completed by Type */}
-                <div className="pt-3 border-t">
-                  <h3 className="text-sm font-medium text-gray-700 mb-2">By Type:</h3>
-                  {Object.entries(completedJobsStats?.completed_by_type || {}).map(([type, count]) => (
-                    <div key={type} className="flex justify-between text-sm">
-                      <span className="text-gray-600 capitalize">{type}:</span>
-                      <span className="font-medium">{count}</span>
+            {/* Top Extensions */}
+            <div className="bg-white rounded-xl shadow-lg border border-slate-200">
+              <div className="p-6">
+                <h2 className="text-xl font-semibold text-slate-900 mb-6">Top Extensions</h2>
+                <div className="space-y-4">
+                  {dashboardOverview?.top_extensions?.slice(0, 5).map((extension: Extension, index: number) => (
+                    <div key={extension.extensionId} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white text-sm font-bold">
+                          #{index + 1}
+                        </div>
+                        <div>
+                          <p className="font-medium text-slate-900 text-sm leading-tight">
+                            {extension.name.length > 25 ? `${extension.name.substring(0, 25)}...` : extension.name}
+                          </p>
+                          <p className="text-xs text-slate-500 capitalize">{extension.category}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-slate-900">
+                          {extension.users >= 1000000 ? `${Math.round(extension.users / 1000000)}M` : 
+                           extension.users >= 1000 ? `${Math.round(extension.users / 1000)}K` : extension.users}
+                        </p>
+                        <p className="text-xs text-slate-500">users</p>
+                      </div>
                     </div>
-                  ))}
-                  {Object.keys(completedJobsStats?.completed_by_type || {}).length === 0 && (
-                    <p className="text-gray-500 italic text-sm">No completed jobs yet</p>
+                  )) || (
+                    <div className="space-y-3">
+                      {[...Array(5)].map((_, i) => (
+                        <div key={i} className="flex items-center space-x-3 p-3 bg-slate-50 rounded-lg animate-pulse">
+                          <div className="w-8 h-8 bg-slate-300 rounded-lg"></div>
+                          <div className="flex-1">
+                            <div className="h-4 bg-slate-300 rounded w-3/4 mb-1"></div>
+                            <div className="h-3 bg-slate-200 rounded w-1/2"></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Performance Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            {/* Queue Processing Chart */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Queue Processing Metrics</h2>
+          {/* Growth Trends */}
+          {growthTrends?.growth_by_category && Object.keys(growthTrends.growth_by_category).length > 0 && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+              {Object.entries(growthTrends.growth_by_category).slice(0, 4).map(([category, data]: [string, any]) => (
+                <div key={category} className="bg-white rounded-xl shadow-lg border border-slate-200">
+                  <div className="p-6">
+                    <Chart 
+                      data={data.map((point: any) => ({
+                        date: point.date,
+                        users: point.users || 0,
+                        rating: point.rating || 0,
+                        reviewCount: 0
+                      }))}
+                      type="users"
+                      title={`${category.charAt(0).toUpperCase() + category.slice(1)} Extensions Growth`}
+                      variant="area"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* System Controls */}
+          <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-6 mb-8">
+            <h2 className="text-xl font-semibold text-slate-900 mb-6">System Controls</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <button
+                onClick={startAutomation}
+                disabled={isRunning || actionLoading === 'start'}
+                className="flex items-center justify-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+              >
+                <PlayIcon />
+                <span className="ml-2">{actionLoading === 'start' ? 'Starting...' : 'Start Automation'}</span>
+              </button>
+
+              <button
+                onClick={stopAutomation}
+                disabled={!isRunning || actionLoading === 'stop'}
+                className="flex items-center justify-center px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+              >
+                <PauseIcon />
+                <span className="ml-2">{actionLoading === 'stop' ? 'Stopping...' : 'Stop Automation'}</span>
+              </button>
+
+              <button
+                onClick={cleanupInvalidData}
+                disabled={actionLoading === 'cleanup'}
+                className="flex items-center justify-center px-6 py-3 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+              >
+                <DatabaseIcon />
+                <span className="ml-2">{actionLoading === 'cleanup' ? 'Cleaning...' : 'Cleanup Database'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Job Statistics */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-6">
+              <h2 className="text-xl font-semibold text-slate-900 mb-4">Queue Processing</h2>
               <div className="space-y-4">
                 {Object.entries(queueStats?.queue_stats || {}).map(([queue, count]) => {
                   const maxCount = Math.max(...Object.values(queueStats?.queue_stats || {}));
@@ -512,13 +587,13 @@ export default function AdminPage() {
                   return (
                     <div key={queue} className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-600 capitalize">{queue.replace(/_/g, ' ')}</span>
-                        <span className="font-medium">{count}</span>
+                        <span className="text-slate-600 capitalize">{queue.replace(/_/g, ' ')}</span>
+                        <span className="font-medium text-slate-900">{count}</span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="w-full bg-slate-200 rounded-full h-2">
                         <div 
-                          className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
-                          style={{ width: `${percentage}%` }}
+                          className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500" 
+                          style={{ width: `${Math.max(percentage, 5)}%` }}
                         ></div>
                       </div>
                     </div>
@@ -527,113 +602,28 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {/* System Performance */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">System Performance</h2>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                  <div>
-                    <p className="text-sm font-medium text-green-800">Workers Active</p>
-                    <p className="text-2xl font-bold text-green-900">{automationStatus?.worker_stats?.total_workers || 0}</p>
-                  </div>
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                    <svg className="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                  </div>
+            <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-6">
+              <h2 className="text-xl font-semibold text-slate-900 mb-4">Completed Jobs</h2>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                  <span className="text-green-800 font-medium">Total Completed</span>
+                  <span className="text-2xl font-bold text-green-900">{completedJobsStats?.total_completed || 0}</span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                  <span className="text-blue-800 font-medium">Last 24 Hours</span>
+                  <span className="text-2xl font-bold text-blue-900">{completedJobsStats?.completed_last_24h || 0}</span>
                 </div>
                 
-                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                  <div>
-                    <p className="text-sm font-medium text-blue-800">Extensions Tracked</p>
-                    <p className="text-2xl font-bold text-blue-900">{automationStatus?.update_stats?.total_extensions || 0}</p>
-                  </div>
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                    <DatabaseIcon />
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-                  <div>
-                    <p className="text-sm font-medium text-purple-800">Healthy Proxies</p>
-                    <p className="text-2xl font-bold text-purple-900">
-                      {proxyStats?.proxy_stats?.healthy_proxies || 0}/{proxyStats?.proxy_stats?.total_proxies || 0}
-                    </p>
-                  </div>
-                  <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                    <svg className="w-6 h-6 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Worker Statistics */}
-          <div className="bg-white rounded-lg shadow p-6 mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Worker Pool Statistics</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600 mb-2">
-                  {Object.values(automationStatus?.worker_stats?.workers_by_type || {}).reduce((sum, count) => sum + count, 0)}
-                </div>
-                <div className="text-sm text-gray-600">Total Workers</div>
-              </div>
-              
-              <div className="space-y-3">
-                <h3 className="text-sm font-medium text-gray-700">By Type</h3>
-                {Object.entries(automationStatus?.worker_stats?.workers_by_type || {}).map(([type, count]) => (
-                  <div key={type} className="flex justify-between text-sm">
-                    <span className="text-gray-600 capitalize">{type.replace(/_/g, ' ')}:</span>
-                    <span className="font-medium">{count}</span>
-                  </div>
-                ))}
-              </div>
-              
-              <div className="space-y-3">
-                <h3 className="text-sm font-medium text-gray-700">Scheduler Status</h3>
-                <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${automationStatus?.scheduler_stats?.running ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                  <span className="text-sm">{automationStatus?.scheduler_stats?.running ? 'Running' : 'Stopped'}</span>
-                </div>
-                {automationStatus?.scheduler_stats?.last_checked && (
-                  <div className="text-xs text-gray-500">
-                    Last check: {new Date(automationStatus.scheduler_stats.last_checked).toLocaleTimeString()}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Recent Activity Timeline */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h2>
-            <div className="space-y-4">
-              {completedJobsStats?.recent_completed?.slice(0, 5).map((job, index) => (
-                <div key={job.id || index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full ${
-                      job.type === 'discovery' ? 'bg-blue-500' : 
-                      job.type === 'update' ? 'bg-green-500' : 
-                      'bg-gray-500'
-                    }`}></div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900 capitalize">
-                        {job.type} Job Completed
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Priority: {job.priority} | {new Date(job.updated_at).toLocaleString()}
-                      </p>
+                <div className="pt-3 border-t border-slate-200">
+                  <h3 className="text-sm font-medium text-slate-700 mb-3">By Type</h3>
+                  {Object.entries(completedJobsStats?.completed_by_type || {}).map(([type, count]) => (
+                    <div key={type} className="flex justify-between text-sm py-1">
+                      <span className="text-slate-600 capitalize">{type}</span>
+                      <span className="font-medium text-slate-900">{count}</span>
                     </div>
-                  </div>
-                  <div className="text-xs text-gray-400">
-                    {job.id.slice(-8)}
-                  </div>
+                  ))}
                 </div>
-              )) || (
-                <p className="text-gray-500 italic text-center py-4">No recent activity</p>
-              )}
+              </div>
             </div>
           </div>
         </>

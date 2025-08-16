@@ -153,6 +153,45 @@ class ApiClient {
   async getScrapingStatus(): Promise<{ status: string; message: string; last_update: string }> {
     return this.request<{ status: string; message: string; last_update: string }>('/api/scraper/status');
   }
+
+  // Admin Dashboard Analytics
+  async getDashboardOverview(): Promise<{
+    total_extensions: number;
+    total_users: number;
+    average_rating: number;
+    growth_metrics: {
+      daily_growth: number;
+      weekly_growth: number;
+      monthly_growth: number;
+    };
+    category_breakdown: Record<string, number>;
+    top_extensions: Extension[];
+    recent_snapshots: Array<{
+      date: string;
+      total_users: number;
+      total_extensions: number;
+      average_rating: number;
+    }>;
+  }> {
+    return this.request('/api/admin/dashboard/overview');
+  }
+
+  async getExtensionGrowthTrends(): Promise<{
+    growth_by_category: Record<string, Array<{ date: string; users: number; rating: number }>>;
+    top_growing_extensions: Array<{
+      extension: Extension;
+      growth_rate: number;
+      growth_period: string;
+    }>;
+    market_trends: Array<{
+      date: string;
+      new_extensions: number;
+      total_users_added: number;
+      average_rating: number;
+    }>;
+  }> {
+    return this.request('/api/admin/dashboard/growth-trends');
+  }
 }
 
 export const apiClient = new ApiClient();
