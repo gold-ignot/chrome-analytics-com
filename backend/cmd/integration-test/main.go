@@ -39,8 +39,7 @@ func main() {
 	// Create scraper with real proxy setup
 	scraper := services.NewScraper(nil) // nil database for testing
 	
-	// Override browser client for local testing
-	scraper.SetBrowserClient(services.NewBrowserClient("http://localhost:8081"))
+	// Note: Now using standalone scraper by default, no need to override
 
 	results := make(map[string]interface{})
 	successCount := 0

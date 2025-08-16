@@ -155,7 +155,7 @@ func TestScraper_LiveScraping(t *testing.T) {
 
 	// Test with a known stable extension
 	extensionID := "nmmhkkegccagdldgiimedpiccmgmieda" // Google Wallet
-	
+
 	extension, err := scraper.ScrapeExtension(extensionID)
 	if err != nil {
 		t.Fatalf("Failed to scrape extension: %v", err)

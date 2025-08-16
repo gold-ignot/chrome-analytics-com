@@ -217,8 +217,8 @@ func (jq *JobQueue) CompleteJob(jobID string) error {
 	// Add to completed jobs list
 	completedKey := "jobs:completed"
 	jq.redis.LPush(jq.ctx, completedKey, jobID)
-	// Keep only last 1000 completed jobs
-	jq.redis.LTrim(jq.ctx, completedKey, 0, 999)
+	// Keep only last 10000 completed jobs
+	jq.redis.LTrim(jq.ctx, completedKey, 0, 9999)
 	
 	return jq.UpdateJob(job)
 }

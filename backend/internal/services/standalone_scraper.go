@@ -329,6 +329,7 @@ func (ss *StandaloneScraper) parseExtensionData(extensionID, html string) (*mode
 	extension := &models.Extension{
 		ExtensionID: extensionID,
 		Category:    "Productivity", // Default category
+		Keywords:    []string{},     // Initialize as empty array
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}

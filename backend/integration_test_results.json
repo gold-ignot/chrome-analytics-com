@@ -1,42 +1,34 @@
 {
   "cjpalhdlnbpafiamejdnhcphjbkeiagm": {
-    "duration": "15.254797457s",
+    "duration": "365.484122ms",
     "extension": {
       "id": "000000000000000000000000",
       "extensionId": "cjpalhdlnbpafiamejdnhcphjbkeiagm",
       "name": "uBlock Origin",
       "description": "Finally, an efficient blocker. Easy on CPU and memory.",
       "category": "Productivity",
-      "developer": "",
+      "developer": "users.",
       "users": 19000000,
-      "rating": 4.5,
+      "rating": 4.7,
       "reviewCount": 0,
-      "keywords": [
-        "finally",
-        "efficient",
-        "blocker",
-        "easy",
-        "memory",
-        "ublock",
-        "origin"
-      ],
-      "createdAt": "2025-08-16T16:35:52.003158+03:00",
-      "updatedAt": "2025-08-16T16:35:52.003158+03:00",
+      "keywords": null,
+      "createdAt": "2025-08-16T21:46:37.640363+03:00",
+      "updatedAt": "2025-08-16T21:46:37.640363+03:00",
       "snapshots": [
         {
-          "date": "2025-08-16T16:35:52.003159+03:00",
+          "date": "2025-08-16T21:46:37.743863+03:00",
           "users": 19000000,
-          "rating": 4.5,
+          "rating": 4.7,
           "reviewCount": 0
         }
       ]
     },
     "name": "uBlock Origin",
-    "score": 4.166666666666667,
+    "score": 5,
     "success": true,
     "validation": {
       "description": true,
-      "developer": false,
+      "developer": true,
       "name": true,
       "rating": true,
       "reviews": true,
@@ -44,160 +36,87 @@
     }
   },
   "ejidjjhkpiempkbhmpbfngldlkglhimk": {
-    "duration": "14.0541074s",
-    "extension": {
-      "id": "000000000000000000000000",
-      "extensionId": "ejidjjhkpiempkbhmpbfngldlkglhimk",
-      "name": "Item not available",
-      "description": "",
-      "category": "Productivity",
-      "developer": "",
-      "users": 0,
-      "rating": 0,
-      "reviewCount": 0,
-      "keywords": [
-        "item",
-        "not",
-        "available"
-      ],
-      "createdAt": "2025-08-16T16:36:36.8667+03:00",
-      "updatedAt": "2025-08-16T16:36:36.8667+03:00",
-      "snapshots": [
-        {
-          "date": "2025-08-16T16:36:36.866702+03:00",
-          "users": 0,
-          "rating": 0,
-          "reviewCount": 0
-        }
-      ]
-    },
+    "duration": "695.658752ms",
+    "error": "standalone scraping failed for ejidjjhkpiempkbhmpbfngldlkglhimk: failed to parse extension data: could not extract extension name - extension may not exist or be inaccessible",
     "name": "Web Developer",
-    "score": 1.6666666666666665,
-    "success": true,
-    "validation": {
-      "description": false,
-      "developer": false,
-      "name": true,
-      "rating": false,
-      "reviews": true,
-      "users": false
-    }
+    "success": false
   },
   "gighmmpiobklfepjocnamgkkbiglidom": {
-    "duration": "1.055283908s",
+    "duration": "400.473847ms",
     "extension": {
       "id": "000000000000000000000000",
       "extensionId": "gighmmpiobklfepjocnamgkkbiglidom",
-      "name": "",
-      "description": "",
+      "name": "AdBlock — block ads across the web",
+      "description": "Block ads on YouTube and your favorite sites for free",
       "category": "Productivity",
-      "developer": "",
-      "users": 0,
-      "rating": 0.4,
-      "reviewCount": 0,
-      "keywords": [],
-      "createdAt": "2025-08-16T16:35:57.594271+03:00",
-      "updatedAt": "2025-08-16T16:35:57.594271+03:00",
+      "developer": "the",
+      "users": 57000000,
+      "rating": 4.5,
+      "reviewCount": 629,
+      "keywords": null,
+      "createdAt": "2025-08-16T21:46:43.034161+03:00",
+      "updatedAt": "2025-08-16T21:46:43.034161+03:00",
       "snapshots": [
         {
-          "date": "2025-08-16T16:35:58.058881+03:00",
-          "users": 0,
-          "rating": 0.4,
-          "reviewCount": 0
+          "date": "2025-08-16T21:46:43.145441+03:00",
+          "users": 57000000,
+          "rating": 4.5,
+          "reviewCount": 629
         }
       ]
     },
     "name": "AdBlock",
-    "score": 1.6666666666666665,
+    "score": 5,
     "success": true,
     "validation": {
-      "description": false,
-      "developer": false,
-      "name": false,
+      "description": true,
+      "developer": true,
+      "name": true,
       "rating": true,
       "reviews": true,
-      "users": false
+      "users": true
     }
   },
   "hkgfoiooedgoejojocmhlaklaeopbecg": {
-    "duration": "14.752415445s",
+    "duration": "377.421568ms",
     "extension": {
       "id": "000000000000000000000000",
       "extensionId": "hkgfoiooedgoejojocmhlaklaeopbecg",
-      "name": "",
+      "name": "Picture-in-Picture Extension (by Google)",
       "description": "Watch video using Picture-in-Picture",
       "category": "Productivity",
-      "developer": "",
+      "developer": "Google)",
       "users": 3000000,
       "rating": 4,
-      "reviewCount": 0,
-      "keywords": [
-        "watch",
-        "video",
-        "using",
-        "picture-in-picture"
-      ],
-      "createdAt": "2025-08-16T16:36:17.811645+03:00",
-      "updatedAt": "2025-08-16T16:36:17.811646+03:00",
+      "reviewCount": 79,
+      "keywords": null,
+      "createdAt": "2025-08-16T21:46:48.436321+03:00",
+      "updatedAt": "2025-08-16T21:46:48.436321+03:00",
       "snapshots": [
         {
-          "date": "2025-08-16T16:36:17.811647+03:00",
+          "date": "2025-08-16T21:46:48.523132+03:00",
           "users": 3000000,
           "rating": 4,
-          "reviewCount": 0
+          "reviewCount": 79
         }
       ]
     },
     "name": "Picture-in-Picture Extension",
-    "score": 3.333333333333333,
+    "score": 5,
     "success": true,
     "validation": {
       "description": true,
-      "developer": false,
-      "name": false,
+      "developer": true,
+      "name": true,
       "rating": true,
       "reviews": true,
       "users": true
     }
   },
   "nmmhkkegccagdldgiimedpiccmgmieda": {
-    "duration": "14.940672972s",
-    "extension": {
-      "id": "000000000000000000000000",
-      "extensionId": "nmmhkkegccagdldgiimedpiccmgmieda",
-      "name": "Item not available",
-      "description": "",
-      "category": "Productivity",
-      "developer": "",
-      "users": 0,
-      "rating": 0,
-      "reviewCount": 0,
-      "keywords": [
-        "item",
-        "not",
-        "available"
-      ],
-      "createdAt": "2025-08-16T16:35:31.746948+03:00",
-      "updatedAt": "2025-08-16T16:35:31.746949+03:00",
-      "snapshots": [
-        {
-          "date": "2025-08-16T16:35:31.74697+03:00",
-          "users": 0,
-          "rating": 0,
-          "reviewCount": 0
-        }
-      ]
-    },
+    "duration": "713.99601ms",
+    "error": "standalone scraping failed for nmmhkkegccagdldgiimedpiccmgmieda: failed to parse extension data: could not extract extension name - extension may not exist or be inaccessible",
     "name": "Google Wallet",
-    "score": 1.6666666666666665,
-    "success": true,
-    "validation": {
-      "description": false,
-      "developer": false,
-      "name": true,
-      "rating": false,
-      "reviews": true,
-      "users": false
-    }
+    "success": false
   }
 }

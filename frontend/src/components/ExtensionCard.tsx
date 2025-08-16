@@ -113,7 +113,7 @@ export default function ExtensionCard({ extension, onClick }: ExtensionCardProps
       </div>
       
       {/* Keywords */}
-      {extension.keywords.length > 0 && (
+      {extension.keywords && extension.keywords.length > 0 && (
         <div className="mb-4">
           <div className="flex flex-wrap gap-1.5">
             {extension.keywords.slice(0, 3).map((keyword, index) => (

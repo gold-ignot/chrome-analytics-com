@@ -1,10 +1,13 @@
 package services
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"log"
 	"math/rand"
+	"os"
+	"strings"
 	"time"
 
 	"chrome-analytics-backend/internal/models"
@@ -13,75 +16,61 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// BrowserScraper interface defines the methods needed for browser scraping
-type BrowserScraper interface {
+// ExtensionScraper interface defines the methods needed for extension scraping
+type ExtensionScraper interface {
 	ScrapeExtension(extensionID string) (*models.Extension, error)
 	ScrapeExtensionWithProxy(extensionID string, proxy *ProxyInfo) (*models.Extension, error)
 	HealthCheck() error
+	GetMetrics() interface{}
 }
 
 type Scraper struct {
-	db            *mongo.Database
-	proxyManager  *ProxyManager
-	browserClient BrowserScraper
-	concurrency   int // Number of concurrent workers for batch operations
+	db               *mongo.Database
+	standaloneScraper *StandaloneScraper
+	concurrency      int // Number of concurrent workers for batch operations
 }
 
 func NewScraper(db *mongo.Database) *Scraper {
-	// Initialize proxy manager
-	proxyManager, err := NewProxyManager("proxies.txt")
+	// Load proxies from proxies.txt
+	proxies, err := loadProxiesFromFile("proxies.txt")
 	if err != nil {
-		log.Printf("Failed to initialize proxy manager: %v, using direct connection", err)
-		proxyManager = nil
+		log.Printf("Failed to load proxies from proxies.txt: %v, using direct connection", err)
+		// Use standalone scraper without proxies
+		standaloneScraper := NewStandaloneScraper()
+		return &Scraper{
+			db:               db,
+			standaloneScraper: standaloneScraper,
+			concurrency:      10, // Increased from 5 since standalone scraper is much faster
+		}
 	}
 
-	// Initialize browser client
-	browserClient := NewBrowserClient("")
+	log.Printf("✅ Loaded %d proxies for standalone scraper", len(proxies))
+	standaloneScraper := NewStandaloneScraperWithProxies(proxies)
 
 	return &Scraper{
-		db:            db,
-		proxyManager:  proxyManager,
-		browserClient: browserClient,
-		concurrency:   5, // Restored to 5 workers with delays to balance throughput and stability
+		db:               db,
+		standaloneScraper: standaloneScraper,
+		concurrency:      10, // Increased concurrency for faster standalone scraper
 	}
 }
 
-// SetBrowserClient allows overriding the browser client (useful for testing)
-func (s *Scraper) SetBrowserClient(client BrowserScraper) {
-	s.browserClient = client
+// SetStandaloneScraper allows overriding the standalone scraper (useful for testing)
+func (s *Scraper) SetStandaloneScraper(scraper *StandaloneScraper) {
+	s.standaloneScraper = scraper
 }
 
-// ScrapeExtension scrapes a single extension from Chrome Web Store using browser scraper
+// ScrapeExtension scrapes a single extension from Chrome Web Store using standalone scraper
 func (s *Scraper) ScrapeExtension(extensionID string) (*models.Extension, error) {
-	var extension *models.Extension
-	var err error
+	log.Printf("Scraping %s using standalone scraper", extensionID)
 	
-	if s.proxyManager != nil {
-		// Get a random proxy for browser scraping
-		proxy, proxyErr := s.proxyManager.GetRandomProxy()
-		if proxyErr != nil {
-			log.Printf("Failed to get proxy for browser scraping: %v, using direct connection", proxyErr)
-			extension, err = s.browserClient.ScrapeExtension(extensionID)
-		} else {
-			log.Printf("Using proxy %s for browser scraping of %s", proxy.URL, extensionID)
-			proxyInfo := &ProxyInfo{
-				Host:     proxy.Host,
-				Port:     proxy.Port,
-				Username: proxy.Username,
-				Password: proxy.Password,
-			}
-			extension, err = s.browserClient.ScrapeExtensionWithProxy(extensionID, proxyInfo)
-		}
-	} else {
-		log.Printf("Scraping %s using browser scraper (no proxy)", extensionID)
-		extension, err = s.browserClient.ScrapeExtension(extensionID)
-	}
-	
+	// Use the standalone scraper (automatically handles proxy rotation if available)
+	extension, err := s.standaloneScraper.ScrapeExtension(extensionID)
 	if err != nil {
-		return nil, fmt.Errorf("browser scraping failed for %s: %w", extensionID, err)
+		return nil, fmt.Errorf("standalone scraping failed for %s: %w", extensionID, err)
 	}
 	
-	log.Printf("Successfully scraped %s using browser scraper", extensionID)
+	log.Printf("Successfully scraped %s using standalone scraper: %s (%d users)", 
+		extensionID, extension.Name, extension.Users)
 	return extension, nil
 }
 
@@ -214,8 +203,8 @@ func (s *Scraper) scrapeWorker(workChan <-chan string, resultChan chan<- scrapeR
 	for extensionID := range workChan {
 		result := scrapeResult{extensionID: extensionID}
 
-		// Add 1-2 second delay to prevent overwhelming the browser-scraper service
-		delay := time.Duration(1000+rand.Intn(1000)) * time.Millisecond // 1-2 seconds
+		// Minimal delay for standalone scraper (much faster than browser scraper)
+		delay := time.Duration(200+rand.Intn(300)) * time.Millisecond // 200-500ms
 		time.Sleep(delay)
 		log.Printf("Worker processing %s after %v delay", extensionID, delay)
 
@@ -235,16 +224,23 @@ func (s *Scraper) scrapeWorker(workChan <-chan string, resultChan chan<- scrapeR
 	}
 }
 
-// GetProxyStats returns proxy manager statistics
+// GetProxyStats returns proxy statistics from standalone scraper
 func (s *Scraper) GetProxyStats() map[string]interface{} {
-	if s.proxyManager == nil {
+	if s.standaloneScraper == nil {
 		return map[string]interface{}{
 			"proxy_enabled": false,
-			"message":       "Proxy manager not initialized",
+			"message":       "Standalone scraper not initialized",
 		}
 	}
 
-	stats := s.proxyManager.GetProxyStats()
+	stats := s.standaloneScraper.GetProxyStats()
+	if stats == nil || len(stats) == 0 {
+		return map[string]interface{}{
+			"proxy_enabled": false,
+			"message":       "No proxy support in standalone scraper",
+		}
+	}
+
 	stats["proxy_enabled"] = true
 	return stats
 }
@@ -252,29 +248,29 @@ func (s *Scraper) GetProxyStats() map[string]interface{} {
 // GetScraperStats returns scraper performance statistics
 func (s *Scraper) GetScraperStats() map[string]interface{} {
 	stats := map[string]interface{}{
+		"scraper_type":        "standalone",
 		"concurrency_workers": s.concurrency,
-		"browser_timeout":     "45s",
+		"http_timeout":        "10s",
 		"connection_pooling":  true,
 		"optimizations": map[string]interface{}{
 			"concurrent_processing": true,
 			"connection_reuse":      true,
-			"request_delays":        "1-2 seconds",
+			"request_delays":        "200-500ms",
 			"random_jitter":         true,
+			"gzip_compression":      true,
+			"regex_parsing":         true,
 		},
 	}
 
-	// Add browser client metrics if available
-	if browserClient, ok := s.browserClient.(*BrowserClient); ok {
-		metrics := browserClient.GetMetrics()
-		stats["browser_metrics"] = map[string]interface{}{
+	// Add standalone scraper metrics if available
+	if s.standaloneScraper != nil {
+		metrics := s.standaloneScraper.GetMetrics()
+		stats["standalone_metrics"] = map[string]interface{}{
 			"total_requests":     metrics.TotalRequests,
 			"successful_scrapes": metrics.SuccessfulScrapes,
 			"failed_scrapes":     metrics.FailedScrapes,
-			"timeout_errors":     metrics.TimeoutErrors,
 			"connection_errors":  metrics.ConnectionErrors,
 			"avg_duration":       metrics.TotalDuration.String(),
-			"last_error":         metrics.LastError,
-			"last_error_time":    metrics.LastErrorTime,
 		}
 		
 		// Calculate success rate
@@ -282,14 +278,35 @@ func (s *Scraper) GetScraperStats() map[string]interface{} {
 			successRate := float64(metrics.SuccessfulScrapes) / float64(metrics.TotalRequests) * 100
 			stats["success_rate"] = fmt.Sprintf("%.1f%%", successRate)
 		}
+		
+		// Add proxy stats if available
+		proxyStats := s.standaloneScraper.GetProxyStats()
+		if proxyStats != nil && len(proxyStats) > 0 {
+			stats["proxy_integration"] = true
+			stats["proxy_stats"] = proxyStats
+		} else {
+			stats["proxy_integration"] = false
+		}
 	}
 
 	return stats
 }
 
-// PerformHealthCheck checks the health of the browser scraper service
+// PerformHealthCheck checks the health of the standalone scraper
 func (s *Scraper) PerformHealthCheck() error {
-	return s.browserClient.HealthCheck()
+	if s.standaloneScraper == nil {
+		return fmt.Errorf("standalone scraper not initialized")
+	}
+	
+	// Test with a simple extension ID to verify scraper is working
+	testExtensionID := "cjpalhdlnbpafiamejdnhcphjbkeiagm" // uBlock Origin
+	_, err := s.standaloneScraper.ScrapeExtensionDirectly(testExtensionID)
+	if err != nil {
+		return fmt.Errorf("health check failed: %w", err)
+	}
+	
+	log.Printf("HEALTH CHECK OK: Standalone scraper is working")
+	return nil
 }
 
 // GetDetailedDiagnostics returns detailed diagnostic information
@@ -297,8 +314,9 @@ func (s *Scraper) GetDetailedDiagnostics() map[string]interface{} {
 	diagnostics := map[string]interface{}{
 		"timestamp": time.Now(),
 		"scraper_config": map[string]interface{}{
+			"type":        "standalone",
 			"concurrency": s.concurrency,
-			"proxy_enabled": s.proxyManager != nil,
+			"proxy_enabled": s.standaloneScraper != nil && len(s.standaloneScraper.GetProxyStats()) > 0,
 		},
 	}
 
@@ -312,30 +330,72 @@ func (s *Scraper) GetDetailedDiagnostics() map[string]interface{} {
 		diagnostics["health_check"].(map[string]interface{})["error"] = healthErr.Error()
 	}
 
-	// Browser metrics
-	if browserClient, ok := s.browserClient.(*BrowserClient); ok {
-		metrics := browserClient.GetMetrics()
-		diagnostics["browser_metrics"] = metrics
+	// Standalone scraper metrics
+	if s.standaloneScraper != nil {
+		metrics := s.standaloneScraper.GetMetrics()
+		diagnostics["standalone_metrics"] = metrics
 		
 		// Error analysis
 		errorAnalysis := map[string]interface{}{
-			"timeout_rate": 0.0,
 			"connection_error_rate": 0.0,
 			"overall_failure_rate": 0.0,
 		}
 		
 		if metrics.TotalRequests > 0 {
-			errorAnalysis["timeout_rate"] = float64(metrics.TimeoutErrors) / float64(metrics.TotalRequests) * 100
 			errorAnalysis["connection_error_rate"] = float64(metrics.ConnectionErrors) / float64(metrics.TotalRequests) * 100
 			errorAnalysis["overall_failure_rate"] = float64(metrics.FailedScrapes) / float64(metrics.TotalRequests) * 100
 		}
 		diagnostics["error_analysis"] = errorAnalysis
-	}
-
-	// Proxy stats
-	if s.proxyManager != nil {
-		diagnostics["proxy_stats"] = s.GetProxyStats()
+		
+		// Proxy stats
+		proxyStats := s.standaloneScraper.GetProxyStats()
+		if proxyStats != nil && len(proxyStats) > 0 {
+			diagnostics["proxy_stats"] = proxyStats
+		}
 	}
 
 	return diagnostics
+}
+
+// loadProxiesFromFile loads proxy configurations from a file
+func loadProxiesFromFile(filename string) ([]ProxyConfig, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open %s: %w", filename, err)
+	}
+	defer file.Close()
+
+	var proxies []ProxyConfig
+	scanner := bufio.NewScanner(file)
+	
+	lineNum := 0
+	for scanner.Scan() {
+		lineNum++
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+
+		// Parse format: host:port:username:password
+		parts := strings.Split(line, ":")
+		if len(parts) != 4 {
+			log.Printf("⚠️  Skipping invalid proxy line %d: %s", lineNum, line)
+			continue
+		}
+
+		proxy := ProxyConfig{
+			Host:     parts[0],
+			Port:     parts[1],
+			Username: parts[2],
+			Password: parts[3],
+		}
+		
+		proxies = append(proxies, proxy)
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("error reading file: %w", err)
+	}
+
+	return proxies, nil
 }

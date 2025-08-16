@@ -10,7 +10,7 @@ export interface Extension {
   users: number;
   rating: number;
   reviewCount: number;
-  keywords: string[];
+  keywords: string[] | null; // Allow null for backward compatibility
   createdAt: string;
   updatedAt: string;
   snapshots: Snapshot[];
