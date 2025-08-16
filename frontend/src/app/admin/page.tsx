@@ -171,10 +171,13 @@ export default function AdminPage() {
 
   const fetchDashboardData = async () => {
     try {
+      console.log('Fetching dashboard data...');
       const [overviewData, trendsData] = await Promise.all([
         apiClient.getDashboardOverview(),
         apiClient.getExtensionGrowthTrends()
       ]);
+      console.log('Dashboard overview data:', overviewData);
+      console.log('Growth trends data:', trendsData);
       setDashboardOverview(overviewData);
       setGrowthTrends(trendsData);
     } catch (error) {
