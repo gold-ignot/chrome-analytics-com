@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -45,12 +46,24 @@ func (ah *AdminHandler) requireAdminAuth(c *gin.Context) bool {
 	
 	providedPassword := c.GetHeader("X-Admin-Password")
 	if providedPassword == "" {
+		providedPassword = c.GetHeader("x-admin-password") // Try lowercase
+	}
+	if providedPassword == "" {
 		providedPassword = c.Query("password")
 	}
+	
+	// Debug logging - remove in production
+	log.Printf("Admin auth check: expected='%s', provided='%s', headers=%v", 
+		adminPassword, providedPassword, c.Request.Header)
 	
 	if providedPassword != adminPassword {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"error": "Unauthorized. Provide admin password in X-Admin-Password header or password query param",
+			"debug": gin.H{
+				"expected_password": adminPassword,
+				"provided_password": providedPassword,
+				"all_headers": c.Request.Header,
+			},
 		})
 		return false
 	}
