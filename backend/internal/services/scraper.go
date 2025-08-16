@@ -18,10 +18,11 @@ import (
 )
 
 type Scraper struct {
-	db           *mongo.Database
-	client       *http.Client
-	proxyManager *ProxyManager
-	baseURL      string // For testing, defaults to Chrome Web Store
+	db            *mongo.Database
+	client        *http.Client
+	proxyManager  *ProxyManager
+	browserClient *BrowserClient
+	baseURL       string // For testing, defaults to Chrome Web Store
 }
 
 func NewScraper(db *mongo.Database) *Scraper {
@@ -32,19 +33,58 @@ func NewScraper(db *mongo.Database) *Scraper {
 		proxyManager = nil
 	}
 
+	// Initialize browser client
+	browserClient := NewBrowserClient("")
+
 	return &Scraper{
-		db: db,
+		db:            db,
 		client: &http.Client{
 			Timeout: 10 * time.Second, // Faster timeout for quicker failure detection
 		},
-		proxyManager: proxyManager,
-		baseURL:      "https://chromewebstore.google.com/detail/",
+		proxyManager:  proxyManager,
+		browserClient: browserClient,
+		baseURL:       "https://chromewebstore.google.com/detail/",
 	}
 }
 
 // ScrapeExtension scrapes a single extension from Chrome Web Store
 func (s *Scraper) ScrapeExtension(extensionID string) (*models.Extension, error) {
-	return s.ScrapeExtensionWithProxy(extensionID, -1) // Use random proxy
+	// First try the traditional HTTP scraping method
+	extension, err := s.ScrapeExtensionWithProxy(extensionID, -1)
+	
+	// Check if we got meaningful data
+	if err == nil && s.hasValidData(extension) {
+		log.Printf("Successfully scraped %s using HTTP method", extensionID)
+		return extension, nil
+	}
+
+	// If HTTP scraping failed or returned empty data, try browser scraping
+	log.Printf("HTTP scraping for %s returned insufficient data, trying browser scraping", extensionID)
+	browserExtension, browserErr := s.browserClient.ScrapeExtension(extensionID)
+	
+	if browserErr == nil && s.hasValidData(browserExtension) {
+		log.Printf("Successfully scraped %s using browser method", extensionID)
+		return browserExtension, nil
+	}
+
+	// If both methods failed, return the original error
+	if err != nil {
+		return nil, fmt.Errorf("both HTTP and browser scraping failed. HTTP error: %w, Browser error: %v", err, browserErr)
+	}
+
+	// Return the HTTP result even if data is incomplete
+	log.Printf("Returning incomplete data for %s from HTTP scraping", extensionID)
+	return extension, nil
+}
+
+// hasValidData checks if the extension has meaningful data
+func (s *Scraper) hasValidData(ext *models.Extension) bool {
+	if ext == nil {
+		return false
+	}
+	
+	// Consider it valid if we have at least name OR users OR rating
+	return ext.Name != "" || ext.Users > 0 || ext.Rating > 0
 }
 
 // ScrapeExtensionWithProxy scrapes a single extension using a specific proxy

@@ -52,6 +52,22 @@ services:
       - chrome-analytics
     command: air -c .air.toml
 
+  browser-scraper:
+    build:
+      context: ./browser-scraper
+      dockerfile: Dockerfile
+    container_name: chrome-analytics-browser-scraper
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      - CHROME_BIN=/usr/bin/chromium-browser
+    networks:
+      - chrome-analytics
+    # Add memory limits for browser
+    mem_limit: 512m
+    memswap_limit: 512m
+
   frontend:
     build:
       context: ./frontend
