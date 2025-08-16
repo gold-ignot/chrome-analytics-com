@@ -337,19 +337,41 @@ func (h *Handler) GetDashboardOverview(c *gin.Context) {
 	defer cursor.Close(ctx)
 
 	var results []bson.M
-	if err = cursor.All(ctx, &results); err != nil || len(results) == 0 {
+	if err = cursor.All(ctx, &results); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to process overview data"})
+		return
+	}
+
+	// Handle empty database case
+	if len(results) == 0 {
+		overview := map[string]interface{}{
+			"total_extensions": 0,
+			"total_users": 0,
+			"average_rating": 0.0,
+			"growth_metrics": map[string]interface{}{
+				"daily_growth": 0,
+				"weekly_growth": 0,
+				"monthly_growth": 0,
+			},
+			"category_breakdown": map[string]int{},
+			"top_extensions": []models.Extension{},
+			"recent_snapshots": []map[string]interface{}{},
+		}
+		c.JSON(http.StatusOK, overview)
 		return
 	}
 
 	result := results[0]
 	
 	// Process category breakdown
-	categories := result["categories"].(primitive.A)
 	categoryBreakdown := make(map[string]int)
-	for _, cat := range categories {
-		if category, ok := cat.(string); ok && category != "" {
-			categoryBreakdown[category]++
+	if categories, ok := result["categories"]; ok && categories != nil {
+		if categoriesArray, ok := categories.(primitive.A); ok {
+			for _, cat := range categoriesArray {
+				if category, ok := cat.(string); ok && category != "" {
+					categoryBreakdown[category]++
+				}
+			}
 		}
 	}
 

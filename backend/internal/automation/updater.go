@@ -23,7 +23,7 @@ type UpdateHandler struct {
 // NewUpdateHandler creates a new update handler
 func NewUpdateHandler(db *mongo.Database) *UpdateHandler {
 	scraper := services.NewScraper(db)
-	
+
 	return &UpdateHandler{
 		db:      db,
 		scraper: scraper,
@@ -39,8 +39,8 @@ func (uh *UpdateHandler) HandleJob(job *Job, queue *JobQueue, proxyIndex int) er
 
 	log.Printf("Updating extension: %s", extensionID)
 
-	// Scrape extension data using dedicated proxy if available
-	extensionData, err := uh.scraper.ScrapeExtensionWithProxy(extensionID, proxyIndex)
+	// Scrape extension data using browser scraper
+	extensionData, err := uh.scraper.ScrapeExtension(extensionID)
 	if err != nil {
 		return fmt.Errorf("failed to scrape extension %s: %w", extensionID, err)
 	}
@@ -52,24 +52,24 @@ func (uh *UpdateHandler) HandleJob(job *Job, queue *JobQueue, proxyIndex int) er
 
 	// Check if extension already exists
 	collection := uh.db.Collection("extensions")
-	
+
 	var existingExtension models.Extension
 	err = collection.FindOne(context.TODO(), bson.M{"extensionId": extensionID}).Decode(&existingExtension)
-	
+
 	if err == mongo.ErrNoDocuments {
 		// New extension - create it
 		newExtension := models.Extension{
-			ExtensionID:  extensionData.ExtensionID,
-			Name:         extensionData.Name,
-			Description:  extensionData.Description,
-			Category:     extensionData.Category,
-			Developer:    extensionData.Developer,
-			Users:        extensionData.Users,
-			Rating:       extensionData.Rating,
-			ReviewCount:  extensionData.ReviewCount,
-			Keywords:     extensionData.Keywords,
-			CreatedAt:    time.Now(),
-			UpdatedAt:    time.Now(),
+			ExtensionID: extensionData.ExtensionID,
+			Name:        extensionData.Name,
+			Description: extensionData.Description,
+			Category:    extensionData.Category,
+			Developer:   extensionData.Developer,
+			Users:       extensionData.Users,
+			Rating:      extensionData.Rating,
+			ReviewCount: extensionData.ReviewCount,
+			Keywords:    extensionData.Keywords,
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
 			Snapshots: []models.Snapshot{
 				{
 					Date:        time.Now(),
@@ -97,7 +97,7 @@ func (uh *UpdateHandler) HandleJob(job *Job, queue *JobQueue, proxyIndex int) er
 	} else {
 		// Existing extension - update with new snapshot
 		hasSignificantChange := uh.hasSignificantChange(existingExtension, extensionData)
-		
+
 		// Create new snapshot
 		newSnapshot := models.Snapshot{
 			Date:        time.Now(),
@@ -109,15 +109,15 @@ func (uh *UpdateHandler) HandleJob(job *Job, queue *JobQueue, proxyIndex int) er
 		// Update extension
 		update := bson.M{
 			"$set": bson.M{
-				"name":         extensionData.Name,
-				"description":  extensionData.Description,
-				"category":     extensionData.Category,
-				"developer":    extensionData.Developer,
-				"users":        extensionData.Users,
-				"rating":       extensionData.Rating,
-				"reviewCount":  extensionData.ReviewCount,
-				"keywords":     extensionData.Keywords,
-				"updatedAt":    time.Now(),
+				"name":        extensionData.Name,
+				"description": extensionData.Description,
+				"category":    extensionData.Category,
+				"developer":   extensionData.Developer,
+				"users":       extensionData.Users,
+				"rating":      extensionData.Rating,
+				"reviewCount": extensionData.ReviewCount,
+				"keywords":    extensionData.Keywords,
+				"updatedAt":   time.Now(),
 			},
 			"$push": bson.M{
 				"snapshots": bson.M{
@@ -162,7 +162,7 @@ func (uh *UpdateHandler) hasSignificantChange(existing models.Extension, new *mo
 	}
 
 	latest := existing.Snapshots[len(existing.Snapshots)-1]
-	
+
 	// Check for significant user growth (>10% or >10k users)
 	userGrowth := float64(new.Users-latest.Users) / float64(latest.Users)
 	if userGrowth > 0.1 || (new.Users-latest.Users) > 10000 {
@@ -190,13 +190,13 @@ func (uh *UpdateHandler) hasSignificantChange(existing models.Extension, new *mo
 func (uh *UpdateHandler) updateExtensionPriority(extensionID string, data *models.Extension) {
 	// This would be implemented to update a scheduling collection
 	// For now, we'll just log the priority determination
-	
+
 	priority := uh.determineUpdatePriority(data)
 	frequency := uh.determineUpdateFrequency(data)
-	
-	log.Printf("Extension %s assigned priority %s with frequency %s", 
+
+	log.Printf("Extension %s assigned priority %s with frequency %s",
 		extensionID, priority, frequency)
-	
+
 	// TODO: Update scheduling collection in MongoDB
 	// collection := uh.db.Collection("update_schedule")
 	// ... implement scheduling logic
@@ -208,12 +208,12 @@ func (uh *UpdateHandler) determineUpdatePriority(data *models.Extension) Priorit
 	if data.Users >= 1000000 {
 		return PriorityHigh
 	}
-	
+
 	// Medium priority: 100K-1M users
 	if data.Users >= 100000 {
 		return PriorityMedium
 	}
-	
+
 	// Low priority: <100K users
 	return PriorityLow
 }
@@ -239,7 +239,7 @@ func (uh *UpdateHandler) scheduleRelatedDiscovery(parentJob *Job, extensionID st
 			"extension_id": extensionID,
 		},
 	}
-	
+
 	err := queue.EnqueueJob(relatedJob)
 	if err != nil {
 		log.Printf("Failed to schedule related discovery for %s: %v", extensionID, err)
@@ -260,7 +260,7 @@ func (uh *UpdateHandler) schedulePriorityUpdate(parentJob *Job, extensionID stri
 			"reason":       "significant_change",
 		},
 	}
-	
+
 	err := queue.EnqueueJob(priorityJob)
 	if err != nil {
 		log.Printf("Failed to schedule priority update for %s: %v", extensionID, err)
@@ -276,44 +276,44 @@ func (uh *UpdateHandler) isValidExtensionData(extension *models.Extension) bool 
 		log.Printf("Extension validation failed: missing extension ID")
 		return false
 	}
-	
+
 	if extension.Name == "" {
 		log.Printf("Extension validation failed: missing name for %s", extension.ExtensionID)
 		return false
 	}
-	
+
 	// Name should be reasonable length (not just whitespace or single chars)
 	if len(strings.TrimSpace(extension.Name)) < 2 {
 		log.Printf("Extension validation failed: name too short for %s: '%s'", extension.ExtensionID, extension.Name)
 		return false
 	}
-	
+
 	// Users count should be reasonable (extensions typically have at least some users)
 	if extension.Users < 0 {
 		log.Printf("Extension validation failed: negative user count for %s: %d", extension.ExtensionID, extension.Users)
 		return false
 	}
-	
+
 	// Rating should be valid range (0-5 stars, or 0 if no ratings)
 	if extension.Rating < 0 || extension.Rating > 5 {
 		log.Printf("Extension validation failed: invalid rating for %s: %f", extension.ExtensionID, extension.Rating)
 		return false
 	}
-	
+
 	// Review count should not be negative
 	if extension.ReviewCount < 0 {
 		log.Printf("Extension validation failed: negative review count for %s: %d", extension.ExtensionID, extension.ReviewCount)
 		return false
 	}
-	
+
 	// If it has a rating > 0, it should have some reviews (basic consistency check)
 	if extension.Rating > 0 && extension.ReviewCount == 0 && extension.Users > 1000 {
-		log.Printf("Extension validation warning: has rating but no reviews for %s (rating: %f, reviews: %d, users: %d)", 
+		log.Printf("Extension validation warning: has rating but no reviews for %s (rating: %f, reviews: %d, users: %d)",
 			extension.ExtensionID, extension.Rating, extension.ReviewCount, extension.Users)
 		// This is just a warning, not a failure
 	}
-	
-	log.Printf("Extension data validated successfully for %s: name='%s', users=%d, rating=%.1f", 
+
+	log.Printf("Extension data validated successfully for %s: name='%s', users=%d, rating=%.1f",
 		extension.ExtensionID, extension.Name, extension.Users, extension.Rating)
 	return true
 }
@@ -369,16 +369,16 @@ func (uh *UpdateHandler) GetProxyStats() map[string]interface{} {
 // GetUpdateStats returns statistics about the update process
 func (uh *UpdateHandler) GetUpdateStats() map[string]interface{} {
 	collection := uh.db.Collection("extensions")
-	
+
 	// Count total extensions
 	totalExtensions, _ := collection.CountDocuments(context.TODO(), bson.M{})
-	
+
 	// Count extensions updated in last 24 hours
 	yesterday := time.Now().AddDate(0, 0, -1)
 	recentlyUpdated, _ := collection.CountDocuments(context.TODO(), bson.M{
 		"updatedAt": bson.M{"$gte": yesterday},
 	})
-	
+
 	// Count extensions by user range
 	pipeline := []bson.M{
 		{
@@ -406,7 +406,7 @@ func (uh *UpdateHandler) GetUpdateStats() map[string]interface{} {
 			},
 		},
 	}
-	
+
 	cursor, err := collection.Aggregate(context.TODO(), pipeline)
 	userRanges := make(map[string]int)
 	if err == nil {
@@ -421,11 +421,11 @@ func (uh *UpdateHandler) GetUpdateStats() map[string]interface{} {
 			}
 		}
 	}
-	
+
 	return map[string]interface{}{
-		"total_extensions":     totalExtensions,
-		"recently_updated":     recentlyUpdated,
-		"extensions_by_users":  userRanges,
-		"last_updated":         time.Now(),
+		"total_extensions":    totalExtensions,
+		"recently_updated":    recentlyUpdated,
+		"extensions_by_users": userRanges,
+		"last_updated":        time.Now(),
 	}
 }

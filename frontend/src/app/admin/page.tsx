@@ -103,7 +103,9 @@ export default function AdminPage() {
   const [refreshRate, setRefreshRate] = useState(2000); // Default 2 seconds
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'scheduling'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'scheduling' | 'system'>('overview');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [systemStatus, setSystemStatus] = useState<any>(null);
 
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
@@ -270,6 +272,128 @@ export default function AdminPage() {
     setLastRefresh(new Date());
   };
 
+  const fetchSystemStatus = async () => {
+    if (!adminPassword) {
+      toast.error('Admin password required');
+      return;
+    }
+    
+    try {
+      const response = await fetch(`${API_BASE}/api/admin/status`, {
+        headers: {
+          'X-Admin-Password': adminPassword
+        }
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setSystemStatus(data);
+      } else {
+        toast.error(data.error || 'Failed to fetch system status');
+      }
+    } catch (error) {
+      toast.error('Error fetching system status: ' + error);
+    }
+  };
+
+  const clearDatabase = async () => {
+    if (!adminPassword) {
+      toast.error('Admin password required');
+      return;
+    }
+    
+    if (!confirm('Are you sure you want to clear ALL database collections? This action cannot be undone.')) {
+      return;
+    }
+    
+    setActionLoading('clear-database');
+    try {
+      const response = await fetch(`${API_BASE}/api/admin/clear/database`, {
+        method: 'POST',
+        headers: {
+          'X-Admin-Password': adminPassword
+        }
+      });
+      const data = await response.json();
+      
+      if (response.ok) {
+        toast.success(`Database cleared successfully. Cleared: ${data.cleared_collections?.join(', ')}`);
+        await fetchSystemStatus();
+        await refreshAllData();
+      } else {
+        toast.error(data.error || 'Failed to clear database');
+      }
+    } catch (error) {
+      toast.error('Error clearing database: ' + error);
+    }
+    setActionLoading(null);
+  };
+
+  const clearRedis = async () => {
+    if (!adminPassword) {
+      toast.error('Admin password required');
+      return;
+    }
+    
+    if (!confirm('Are you sure you want to clear ALL Redis data? This will clear the job queue.')) {
+      return;
+    }
+    
+    setActionLoading('clear-redis');
+    try {
+      const response = await fetch(`${API_BASE}/api/admin/clear/redis`, {
+        method: 'POST',
+        headers: {
+          'X-Admin-Password': adminPassword
+        }
+      });
+      const data = await response.json();
+      
+      if (response.ok) {
+        toast.success('Redis cleared successfully');
+        await fetchSystemStatus();
+        await refreshAllData();
+      } else {
+        toast.error(data.error || 'Failed to clear Redis');
+      }
+    } catch (error) {
+      toast.error('Error clearing Redis: ' + error);
+    }
+    setActionLoading(null);
+  };
+
+  const clearAll = async () => {
+    if (!adminPassword) {
+      toast.error('Admin password required');
+      return;
+    }
+    
+    if (!confirm('Are you sure you want to clear ALL data (database AND Redis)? This action cannot be undone.')) {
+      return;
+    }
+    
+    setActionLoading('clear-all');
+    try {
+      const response = await fetch(`${API_BASE}/api/admin/clear/all`, {
+        method: 'POST',
+        headers: {
+          'X-Admin-Password': adminPassword
+        }
+      });
+      const data = await response.json();
+      
+      if (response.ok || response.status === 206) { // 206 = partial content (some operations succeeded)
+        toast.success('System cleared successfully');
+        await fetchSystemStatus();
+        await refreshAllData();
+      } else {
+        toast.error(data.error || 'Failed to clear system');
+      }
+    } catch (error) {
+      toast.error('Error clearing system: ' + error);
+    }
+    setActionLoading(null);
+  };
+
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
@@ -409,6 +533,16 @@ export default function AdminPage() {
               }`}
             >
               Job Scheduling
+            </button>
+            <button
+              onClick={() => setActiveTab('system')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'system'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              System Management
             </button>
           </nav>
         </div>
@@ -857,6 +991,151 @@ export default function AdminPage() {
                   {actionLoading === 'update' ? 'Scheduling...' : 'Schedule Update Job'}
                 </button>
               </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {activeTab === 'system' && (
+        <>
+          {/* Admin Authentication */}
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-8">
+            <div className="flex items-center">
+              <svg className="w-5 h-5 text-yellow-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-yellow-800">Admin Authentication Required</h3>
+                <p className="text-sm text-yellow-700">These operations require admin password authentication and are irreversible.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Admin Password Input */}
+          <div className="bg-white rounded-lg shadow p-6 mb-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Admin Authentication</h2>
+            <div className="flex gap-4 items-end">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Admin Password</label>
+                <input
+                  type="password"
+                  value={adminPassword}
+                  onChange={(e) => setAdminPassword(e.target.value)}
+                  placeholder="Enter admin password..."
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                />
+              </div>
+              <button
+                onClick={fetchSystemStatus}
+                disabled={!adminPassword}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400"
+              >
+                Check Status
+              </button>
+            </div>
+          </div>
+
+          {/* System Status */}
+          {systemStatus && (
+            <div className="bg-white rounded-lg shadow p-6 mb-8">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">System Status</h2>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Database Status */}
+                <div>
+                  <h3 className="text-lg font-medium text-gray-800 mb-3">Database Collections</h3>
+                  <div className="space-y-2">
+                    {Object.entries(systemStatus.database || {}).map(([collection, info]: [string, any]) => (
+                      <div key={collection} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                        <span className="text-sm font-medium text-gray-700">{collection}</span>
+                        <span className="text-sm text-gray-600">
+                          {info.error ? (
+                            <span className="text-red-600">Error: {info.error}</span>
+                          ) : (
+                            `${info.count} documents`
+                          )}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Redis Status */}
+                <div>
+                  <h3 className="text-lg font-medium text-gray-800 mb-3">Redis Status</h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                      <span className="text-sm font-medium text-gray-700">Connection</span>
+                      <span className={`text-sm ${systemStatus.redis?.connection === 'ok' ? 'text-green-600' : 'text-red-600'}`}>
+                        {systemStatus.redis?.connection || 'Unknown'}
+                      </span>
+                    </div>
+                    {systemStatus.redis?.keyspace_info && (
+                      <div className="p-2 bg-gray-50 rounded">
+                        <span className="text-sm font-medium text-gray-700">Keyspace Info</span>
+                        <pre className="text-xs text-gray-600 mt-1 whitespace-pre-wrap">
+                          {systemStatus.redis.keyspace_info}
+                        </pre>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Data Management Actions */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Clear Database</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Removes all data from database collections (extensions, analytics, jobs, completed_jobs).
+              </p>
+              <button
+                onClick={clearDatabase}
+                disabled={!adminPassword || actionLoading === 'clear-database'}
+                className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-400"
+              >
+                {actionLoading === 'clear-database' ? 'Clearing...' : 'Clear Database'}
+              </button>
+            </div>
+
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Clear Redis</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Clears all Redis data including job queues, cache, and session data.
+              </p>
+              <button
+                onClick={clearRedis}
+                disabled={!adminPassword || actionLoading === 'clear-redis'}
+                className="w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:bg-gray-400"
+              >
+                {actionLoading === 'clear-redis' ? 'Clearing...' : 'Clear Redis'}
+              </button>
+            </div>
+
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Clear All Data</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Completely resets the system by clearing both database and Redis data.
+              </p>
+              <button
+                onClick={clearAll}
+                disabled={!adminPassword || actionLoading === 'clear-all'}
+                className="w-full px-4 py-2 bg-red-800 text-white rounded-lg hover:bg-red-900 disabled:bg-gray-400"
+              >
+                {actionLoading === 'clear-all' ? 'Clearing...' : 'Clear All Data'}
+              </button>
+            </div>
+          </div>
+
+          {/* Recent System Operations Log */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">System Operations</h2>
+            <div className="text-sm text-gray-600">
+              <p>• Database and Redis clearing operations are logged and irreversible</p>
+              <p>• Always stop automation before clearing data</p>
+              <p>• System status is updated automatically after operations</p>
+              <p>• Use these operations only for testing and development</p>
             </div>
           </div>
         </>

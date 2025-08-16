@@ -37,7 +37,7 @@ func main() {
 	config := cors.DefaultConfig()
 	config.AllowOrigins = []string{"http://localhost:3000"}
 	config.AllowMethods = []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
-	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
+	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization", "X-Admin-Password", "x-admin-password"}
 	router.Use(cors.New(config))
 
 	// Initialize handlers
@@ -54,6 +54,9 @@ func main() {
 		log.Fatal("Failed to initialize automation handler:", err)
 	}
 	defer automationHandler.Close()
+	
+	// Initialize admin handler
+	adminHandler := handlers.NewAdminHandler(db, redisURL)
 
 	// Routes
 	api := router.Group("/api")
@@ -104,6 +107,13 @@ func main() {
 
 		admin := api.Group("/admin")
 		{
+			// Admin system management
+			admin.GET("/health", adminHandler.AdminHealth)
+			admin.GET("/status", adminHandler.GetSystemStatus)
+			admin.POST("/clear/database", adminHandler.ClearDatabase)
+			admin.POST("/clear/redis", adminHandler.ClearRedis)
+			admin.POST("/clear/all", adminHandler.ClearAll)
+			
 			dashboard := admin.Group("/dashboard")
 			{
 				dashboard.GET("/overview", h.GetDashboardOverview)
