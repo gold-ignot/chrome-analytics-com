@@ -1,58 +1,70 @@
 {
   "cjpalhdlnbpafiamejdnhcphjbkeiagm": {
-    "duration": "1.634948979s",
+    "duration": "15.254797457s",
     "extension": {
       "id": "000000000000000000000000",
       "extensionId": "cjpalhdlnbpafiamejdnhcphjbkeiagm",
-      "name": "",
-      "description": "",
+      "name": "uBlock Origin",
+      "description": "Finally, an efficient blocker. Easy on CPU and memory.",
       "category": "Productivity",
       "developer": "",
-      "users": 0,
-      "rating": 0,
+      "users": 19000000,
+      "rating": 4.5,
       "reviewCount": 0,
-      "keywords": [],
-      "createdAt": "2025-08-16T16:24:42.098017+03:00",
-      "updatedAt": "2025-08-16T16:24:42.098017+03:00",
+      "keywords": [
+        "finally",
+        "efficient",
+        "blocker",
+        "easy",
+        "memory",
+        "ublock",
+        "origin"
+      ],
+      "createdAt": "2025-08-16T16:35:52.003158+03:00",
+      "updatedAt": "2025-08-16T16:35:52.003158+03:00",
       "snapshots": [
         {
-          "date": "2025-08-16T16:24:42.589978+03:00",
-          "users": 0,
-          "rating": 0,
+          "date": "2025-08-16T16:35:52.003159+03:00",
+          "users": 19000000,
+          "rating": 4.5,
           "reviewCount": 0
         }
       ]
     },
     "name": "uBlock Origin",
-    "score": 0.8333333333333333,
+    "score": 4.166666666666667,
     "success": true,
     "validation": {
-      "description": false,
+      "description": true,
       "developer": false,
-      "name": false,
-      "rating": false,
+      "name": true,
+      "rating": true,
       "reviews": true,
-      "users": false
+      "users": true
     }
   },
   "ejidjjhkpiempkbhmpbfngldlkglhimk": {
-    "duration": "1.300720993s",
+    "duration": "14.0541074s",
     "extension": {
       "id": "000000000000000000000000",
       "extensionId": "ejidjjhkpiempkbhmpbfngldlkglhimk",
-      "name": "",
+      "name": "Item not available",
       "description": "",
       "category": "Productivity",
       "developer": "",
       "users": 0,
       "rating": 0,
       "reviewCount": 0,
-      "keywords": [],
-      "createdAt": "2025-08-16T16:25:01.341016+03:00",
-      "updatedAt": "2025-08-16T16:25:01.341016+03:00",
+      "keywords": [
+        "item",
+        "not",
+        "available"
+      ],
+      "createdAt": "2025-08-16T16:36:36.8667+03:00",
+      "updatedAt": "2025-08-16T16:36:36.8667+03:00",
       "snapshots": [
         {
-          "date": "2025-08-16T16:25:01.558719+03:00",
+          "date": "2025-08-16T16:36:36.866702+03:00",
           "users": 0,
           "rating": 0,
           "reviewCount": 0
@@ -60,19 +72,19 @@
       ]
     },
     "name": "Web Developer",
-    "score": 0.8333333333333333,
+    "score": 1.6666666666666665,
     "success": true,
     "validation": {
       "description": false,
       "developer": false,
-      "name": false,
+      "name": true,
       "rating": false,
       "reviews": true,
       "users": false
     }
   },
   "gighmmpiobklfepjocnamgkkbiglidom": {
-    "duration": "1.092970613s",
+    "duration": "1.055283908s",
     "extension": {
       "id": "000000000000000000000000",
       "extensionId": "gighmmpiobklfepjocnamgkkbiglidom",
@@ -81,16 +93,16 @@
       "category": "Productivity",
       "developer": "",
       "users": 0,
-      "rating": 4.2,
+      "rating": 0.4,
       "reviewCount": 0,
       "keywords": [],
-      "createdAt": "2025-08-16T16:24:48.737086+03:00",
-      "updatedAt": "2025-08-16T16:24:48.737086+03:00",
+      "createdAt": "2025-08-16T16:35:57.594271+03:00",
+      "updatedAt": "2025-08-16T16:35:57.594271+03:00",
       "snapshots": [
         {
-          "date": "2025-08-16T16:24:49.233557+03:00",
+          "date": "2025-08-16T16:35:58.058881+03:00",
           "users": 0,
-          "rating": 4.2,
+          "rating": 0.4,
           "reviewCount": 0
         }
       ]
@@ -108,59 +120,68 @@
     }
   },
   "hkgfoiooedgoejojocmhlaklaeopbecg": {
-    "duration": "1.588622737s",
+    "duration": "14.752415445s",
     "extension": {
       "id": "000000000000000000000000",
       "extensionId": "hkgfoiooedgoejojocmhlaklaeopbecg",
       "name": "",
-      "description": "",
+      "description": "Watch video using Picture-in-Picture",
       "category": "Productivity",
       "developer": "",
-      "users": 0,
-      "rating": 0,
+      "users": 3000000,
+      "rating": 4,
       "reviewCount": 0,
-      "keywords": [],
-      "createdAt": "2025-08-16T16:24:54.812002+03:00",
-      "updatedAt": "2025-08-16T16:24:54.812002+03:00",
+      "keywords": [
+        "watch",
+        "video",
+        "using",
+        "picture-in-picture"
+      ],
+      "createdAt": "2025-08-16T16:36:17.811645+03:00",
+      "updatedAt": "2025-08-16T16:36:17.811646+03:00",
       "snapshots": [
         {
-          "date": "2025-08-16T16:24:55.297459+03:00",
-          "users": 0,
-          "rating": 0,
+          "date": "2025-08-16T16:36:17.811647+03:00",
+          "users": 3000000,
+          "rating": 4,
           "reviewCount": 0
         }
       ]
     },
     "name": "Picture-in-Picture Extension",
-    "score": 0.8333333333333333,
+    "score": 3.333333333333333,
     "success": true,
     "validation": {
-      "description": false,
+      "description": true,
       "developer": false,
       "name": false,
-      "rating": false,
+      "rating": true,
       "reviews": true,
-      "users": false
+      "users": true
     }
   },
   "nmmhkkegccagdldgiimedpiccmgmieda": {
-    "duration": "1.304055904s",
+    "duration": "14.940672972s",
     "extension": {
       "id": "000000000000000000000000",
       "extensionId": "nmmhkkegccagdldgiimedpiccmgmieda",
-      "name": "",
+      "name": "Item not available",
       "description": "",
       "category": "Productivity",
       "developer": "",
       "users": 0,
       "rating": 0,
       "reviewCount": 0,
-      "keywords": [],
-      "createdAt": "2025-08-16T16:24:35.73185+03:00",
-      "updatedAt": "2025-08-16T16:24:35.73185+03:00",
+      "keywords": [
+        "item",
+        "not",
+        "available"
+      ],
+      "createdAt": "2025-08-16T16:35:31.746948+03:00",
+      "updatedAt": "2025-08-16T16:35:31.746949+03:00",
       "snapshots": [
         {
-          "date": "2025-08-16T16:24:35.968281+03:00",
+          "date": "2025-08-16T16:35:31.74697+03:00",
           "users": 0,
           "rating": 0,
           "reviewCount": 0
@@ -168,12 +189,12 @@
       ]
     },
     "name": "Google Wallet",
-    "score": 0.8333333333333333,
+    "score": 1.6666666666666665,
     "success": true,
     "validation": {
       "description": false,
       "developer": false,
-      "name": false,
+      "name": true,
       "rating": false,
       "reviews": true,
       "users": false

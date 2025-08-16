@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
@@ -135,6 +136,29 @@ func main() {
 		}
 
 		c.JSON(200, gin.H{"results": results})
+	})
+
+	// Test proxy endpoint
+	r.POST("/test-proxy", func(c *gin.Context) {
+		var req struct {
+			Proxy *ProxyInfo `json:"proxy,omitempty"`
+		}
+		
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
+			return
+		}
+		
+		result, err := scraper.TestProxy(req.Proxy)
+		if err != nil {
+			c.JSON(500, gin.H{
+				"success": false,
+				"error": err.Error(),
+			})
+			return
+		}
+		
+		c.JSON(200, result)
 	})
 
 	log.Println("Browser Scraper Service listening on :8081")
@@ -382,6 +406,110 @@ func (bs *BrowserScraper) extractRating(html string) float64 {
 	}
 
 	return 0.0
+}
+
+// TestProxy tests proxy connectivity using httpbin.org/ip
+func (bs *BrowserScraper) TestProxy(proxy *ProxyInfo) (map[string]interface{}, error) {
+	log.Printf("Testing proxy connection to httpbin.org/ip")
+	
+	timeout := 30 * time.Second
+	
+	// Chrome options
+	opts := append(chromedp.DefaultExecAllocatorOptions[:],
+		chromedp.ExecPath("/usr/bin/chromium-browser"),
+		chromedp.Flag("headless", true),
+		chromedp.Flag("disable-gpu", true),
+		chromedp.Flag("disable-dev-shm-usage", true),
+		chromedp.Flag("disable-extensions", true),
+		chromedp.Flag("no-sandbox", true),
+		chromedp.Flag("disable-background-networking", true),
+		chromedp.Flag("disable-default-apps", true),
+		chromedp.Flag("disable-sync", true),
+		chromedp.Flag("disable-translate", true),
+		chromedp.Flag("hide-scrollbars", true),
+		chromedp.Flag("mute-audio", true),
+		chromedp.Flag("disable-blink-features", "AutomationControlled"),
+		chromedp.UserAgent(bs.getRandomUserAgent()),
+		chromedp.WindowSize(bs.getRandomWindowSize()),
+	)
+
+	// Add proxy configuration if provided
+	var proxyAuthHandler *ProxyAuthHandler
+	var proxyIP string
+	
+	if proxy != nil {
+		if proxy.Username != "" && proxy.Password != "" {
+			// Create local proxy with authentication
+			proxyAuthHandler = NewProxyAuthHandler(proxy.Host, proxy.Port, proxy.Username, proxy.Password)
+			localProxyURL, err := proxyAuthHandler.Start()
+			if err != nil {
+				return nil, fmt.Errorf("failed to start local proxy: %w", err)
+			}
+			opts = append(opts, chromedp.ProxyServer(localProxyURL))
+			log.Printf("Using authenticated proxy via local proxy: %s:%s", proxy.Host, proxy.Port)
+			proxyIP = fmt.Sprintf("%s:%s", proxy.Host, proxy.Port)
+		} else {
+			// Use proxy without auth
+			proxyURL := fmt.Sprintf("http://%s:%s", proxy.Host, proxy.Port)
+			opts = append(opts, chromedp.ProxyServer(proxyURL))
+			log.Printf("Using proxy: %s:%s", proxy.Host, proxy.Port)
+			proxyIP = fmt.Sprintf("%s:%s", proxy.Host, proxy.Port)
+		}
+	} else {
+		log.Printf("No proxy configured, using direct connection")
+		proxyIP = "direct"
+	}
+
+	allocCtx, cancel := chromedp.NewExecAllocator(context.Background(), opts...)
+	defer cancel()
+
+	ctx, cancel := chromedp.NewContext(allocCtx)
+	defer cancel()
+
+	// Set timeout
+	ctx, cancel = context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	var pageContent string
+	
+	// Navigate to httpbin.org/ip to get the IP address
+	err := chromedp.Run(ctx,
+		chromedp.Navigate("https://httpbin.org/ip"),
+		chromedp.WaitVisible("body", chromedp.ByQuery),
+		chromedp.Sleep(2*time.Second),
+		chromedp.InnerHTML("body", &pageContent, chromedp.ByQuery),
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get IP: %w", err)
+	}
+
+	// Parse the JSON response
+	var ipResponse map[string]interface{}
+	if err := json.Unmarshal([]byte(pageContent), &ipResponse); err != nil {
+		// If JSON parsing fails, try to extract IP from the content
+		ipResponse = map[string]interface{}{
+			"origin": "Could not parse: " + pageContent,
+		}
+	}
+
+	result := map[string]interface{}{
+		"proxy_configured": proxyIP,
+		"actual_ip":        ipResponse["origin"],
+		"success":          true,
+		"timestamp":        time.Now().UTC().Format(time.RFC3339),
+	}
+
+	// Check if using proxy (the IP should be different from local machine's IP)
+	if proxy != nil {
+		result["using_proxy"] = true
+		log.Printf("Proxy test completed. Configured proxy: %s, Actual IP: %v", proxyIP, ipResponse["origin"])
+	} else {
+		result["using_proxy"] = false
+		log.Printf("Direct connection test completed. Actual IP: %v", ipResponse["origin"])
+	}
+
+	return result, nil
 }
 
 func (bs *BrowserScraper) extractReviewCount(html string) int64 {
