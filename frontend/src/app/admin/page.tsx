@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Chart from '@/components/Chart';
 import { apiClient, Extension } from '@/lib/api';
 
@@ -468,9 +469,54 @@ export default function AdminPage() {
                 <div>
                   <p className="text-sm font-medium text-orange-800">Queue Status</p>
                   <p className="text-2xl font-bold text-orange-900">{totalQueuedJobs}</p>
-                  <p className="text-xs text-orange-600">jobs queued</p>
+                  <p className="text-xs text-orange-600">jobs waiting</p>
                 </div>
                 <ClockIcon />
+              </div>
+            </div>
+          </div>
+
+          {/* Completed Jobs Stats Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border border-green-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-green-800">Completed Jobs</p>
+                  <p className="text-2xl font-bold text-green-900">{completedJobsStats?.total_completed || 0}</p>
+                  <p className="text-xs text-green-600">all time</p>
+                </div>
+                <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-blue-800">Completed (24h)</p>
+                  <p className="text-2xl font-bold text-blue-900">{completedJobsStats?.completed_last_24h || 0}</p>
+                  <p className="text-xs text-blue-600">last 24 hours</p>
+                </div>
+                <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                </svg>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-purple-800">Success Rate</p>
+                  <p className="text-2xl font-bold text-purple-900">
+                    {completedJobsStats?.total_completed ? 
+                      Math.round((completedJobsStats.total_completed / (completedJobsStats.total_completed + Math.round(completedJobsStats.total_completed * 0.02))) * 100) : 0}%
+                  </p>
+                  <p className="text-xs text-purple-600">completion rate</p>
+                </div>
+                <svg className="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+                </svg>
               </div>
             </div>
           </div>
@@ -659,117 +705,63 @@ export default function AdminPage() {
             </div>
           </div>
 
-          {/* Job Status Cards - Queue and Completed side by side */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-6 border border-orange-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-orange-800">Queue Status</p>
-                  <p className="text-2xl font-bold text-orange-900">{totalQueuedJobs}</p>
-                  <p className="text-xs text-orange-600">jobs waiting</p>
-                </div>
-                <ClockIcon />
-              </div>
-            </div>
 
-            <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border border-green-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-green-800">Completed Jobs</p>
-                  <p className="text-2xl font-bold text-green-900">{completedJobsStats?.total_completed || 0}</p>
-                  <p className="text-xs text-green-600">all time</p>
-                </div>
-                <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+          {/* Queue Chart */}
+          <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-6 mb-8">
+            <h2 className="text-xl font-semibold text-slate-900 mb-6">Queue Status Chart</h2>
+            {queueStats?.queue_stats && Object.keys(queueStats.queue_stats).length > 0 ? (
+              <div className="h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={Object.entries(queueStats.queue_stats).map(([queue, count]) => ({
+                      name: queue.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+                      count: count,
+                      jobs: count
+                    }))}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                    <XAxis 
+                      dataKey="name" 
+                      tick={{ fontSize: 12, fill: '#64748b' }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                    />
+                    <YAxis 
+                      tick={{ fontSize: 12, fill: '#64748b' }}
+                      label={{ value: 'Jobs', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle' } }}
+                      domain={[0, (dataMax) => Math.max(dataMax * 1.1, 10)]}
+                      allowDecimals={false}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: '#1e293b', 
+                        border: 'none', 
+                        borderRadius: '8px',
+                        color: '#ffffff',
+                        fontSize: '14px'
+                      }}
+                      formatter={(value, name) => [`${value} jobs`, 'Queue']}
+                      labelStyle={{ color: '#cbd5e1' }}
+                    />
+                    <Bar 
+                      dataKey="jobs" 
+                      fill="#f97316" 
+                      radius={[4, 4, 0, 0]}
+                      name="Jobs in Queue"
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <svg className="w-12 h-12 mx-auto mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
+                <p className="text-slate-500 italic">No jobs in queue</p>
               </div>
-            </div>
-
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-blue-800">Completed (24h)</p>
-                  <p className="text-2xl font-bold text-blue-900">{completedJobsStats?.completed_last_24h || 0}</p>
-                  <p className="text-xs text-blue-600">last 24 hours</p>
-                </div>
-                <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                </svg>
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-purple-800">Success Rate</p>
-                  <p className="text-2xl font-bold text-purple-900">
-                    {completedJobsStats?.total_completed ? 
-                      Math.round((completedJobsStats.total_completed / (completedJobsStats.total_completed + Math.round(completedJobsStats.total_completed * 0.02))) * 100) : 0}%
-                  </p>
-                  <p className="text-xs text-purple-600">completion rate</p>
-                </div>
-                <svg className="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          {/* Detailed Queue and Job Type Breakdown */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-6">
-              <h2 className="text-xl font-semibold text-slate-900 mb-4">Queue Breakdown</h2>
-              <div className="space-y-4">
-                {Object.entries(queueStats?.queue_stats || {}).map(([queue, count]) => {
-                  const maxCount = Math.max(...Object.values(queueStats?.queue_stats || {}));
-                  const percentage = maxCount > 0 ? (count / maxCount) * 100 : 0;
-                  return (
-                    <div key={queue} className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-slate-600 capitalize">{queue.replace(/_/g, ' ')}</span>
-                        <span className="font-medium text-slate-900">{count}</span>
-                      </div>
-                      <div className="w-full bg-slate-200 rounded-full h-2">
-                        <div 
-                          className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500" 
-                          style={{ width: `${Math.max(percentage, 5)}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  );
-                })}
-                {Object.keys(queueStats?.queue_stats || {}).length === 0 && (
-                  <p className="text-slate-500 italic text-center py-4">No jobs in queue</p>
-                )}
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-6">
-              <h2 className="text-xl font-semibold text-slate-900 mb-4">Job Types Completed</h2>
-              <div className="space-y-4">
-                {Object.entries(completedJobsStats?.completed_by_type || {}).map(([type, count]) => {
-                  const total = Object.values(completedJobsStats?.completed_by_type || {}).reduce((sum, c) => sum + c, 0);
-                  const percentage = total > 0 ? (count / total) * 100 : 0;
-                  return (
-                    <div key={type} className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-slate-600 capitalize">{type}</span>
-                        <span className="font-medium text-slate-900">{count}</span>
-                      </div>
-                      <div className="w-full bg-slate-200 rounded-full h-2">
-                        <div 
-                          className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full transition-all duration-500" 
-                          style={{ width: `${Math.max(percentage, 5)}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  );
-                })}
-                {Object.keys(completedJobsStats?.completed_by_type || {}).length === 0 && (
-                  <p className="text-slate-500 italic text-center py-4">No completed jobs yet</p>
-                )}
-              </div>
-            </div>
+            )}
           </div>
         </>
       )}
