@@ -109,6 +109,7 @@ func main() {
 		{
 			// Admin system management
 			admin.GET("/health", adminHandler.AdminHealth)
+			admin.GET("/debug-headers", adminHandler.DebugHeaders)
 			admin.GET("/status", adminHandler.GetSystemStatus)
 			admin.POST("/clear/database", adminHandler.ClearDatabase)
 			admin.POST("/clear/redis", adminHandler.ClearRedis)

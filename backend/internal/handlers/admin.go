@@ -305,3 +305,24 @@ func (ah *AdminHandler) AdminHealth(c *gin.Context) {
 		"auth_methods": []string{"X-Admin-Password header", "password query parameter"},
 	})
 }
+
+// DebugHeaders shows all request headers for debugging
+func (ah *AdminHandler) DebugHeaders(c *gin.Context) {
+	adminPassword := os.Getenv("ADMIN_PASSWORD")
+	if adminPassword == "" {
+		adminPassword = "password123"
+	}
+	
+	providedPassword := c.GetHeader("X-Admin-Password")
+	if providedPassword == "" {
+		providedPassword = c.GetHeader("x-admin-password")
+	}
+	
+	c.JSON(http.StatusOK, gin.H{
+		"all_headers": c.Request.Header,
+		"admin_password_header": providedPassword,
+		"expected_password": adminPassword,
+		"password_match": providedPassword == adminPassword,
+		"timestamp": time.Now().UTC(),
+	})
+}
