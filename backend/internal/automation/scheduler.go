@@ -72,7 +72,14 @@ func (s *Scheduler) Stop() {
 	log.Println("Stopping automation scheduler...")
 	s.running = false
 	s.ticker.Stop()
-	close(s.stopCh)
+	
+	// Close channel only if it hasn't been closed already
+	select {
+	case <-s.stopCh:
+		// Channel is already closed
+	default:
+		close(s.stopCh)
+	}
 }
 
 // run is the main scheduler loop
