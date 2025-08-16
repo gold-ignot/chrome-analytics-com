@@ -373,30 +373,46 @@ func (e *Extractor) ExtractReviewCount(html string) string {
 	
 	var reviewCount string
 	
-	// Look for patterns like "26.7K ratings", "(26.7K ratings)"
-	doc.Find("span, div").Each(func(i int, s *goquery.Selection) {
+	// Look for patterns like "(26.7K ratings)" first (most reliable)
+	doc.Find("*").Each(func(i int, s *goquery.Selection) {
 		text := strings.TrimSpace(s.Text())
-		if strings.Contains(text, "ratings") || strings.Contains(text, "reviews") {
-			// Extract the number part
-			if strings.Contains(text, "(") && strings.Contains(text, ")") {
-				start := strings.Index(text, "(")
-				end := strings.Index(text, ")")
-				if start >= 0 && end > start {
-					reviewCount = strings.TrimSpace(text[start+1 : end])
-				}
-			} else {
-				// Direct format like "26.7K ratings"
-				parts := strings.Fields(text)
+		if strings.Contains(text, "ratings") && strings.Contains(text, "(") && strings.Contains(text, ")") {
+			start := strings.Index(text, "(")
+			end := strings.Index(text, ")")
+			if start >= 0 && end > start {
+				content := strings.TrimSpace(text[start+1 : end])
+				// Look for pattern like "26.7K ratings"
+				parts := strings.Fields(content)
 				for _, part := range parts {
-					if strings.Contains(part, "K") || strings.Contains(part, "M") || 
-					   (len(part) > 0 && part[0] >= '0' && part[0] <= '9') {
-						reviewCount = part
-						break
+					if strings.Contains(part, "K") || strings.Contains(part, "M") || strings.Contains(part, ".") {
+						if strings.ContainsAny(part, "0123456789") {
+							reviewCount = part
+							return
+						}
 					}
 				}
 			}
 		}
 	})
+	
+	// If no parentheses format, look for direct "X.XK ratings" format
+	if reviewCount == "" {
+		doc.Find("*").Each(func(i int, s *goquery.Selection) {
+			text := strings.TrimSpace(s.Text())
+			if strings.Contains(text, "ratings") && len(text) < 30 {
+				parts := strings.Fields(text)
+				for i, part := range parts {
+					if part == "ratings" && i > 0 {
+						candidate := parts[i-1]
+						if strings.Contains(candidate, "K") || strings.Contains(candidate, "M") || strings.Contains(candidate, ".") {
+							reviewCount = candidate
+							return
+						}
+					}
+				}
+			}
+		})
+	}
 	
 	return reviewCount
 }
@@ -479,15 +495,20 @@ func (e *Extractor) ExtractUserCount(html string) string {
 	}
 	
 	var userCount string
-	doc.Find("span, div").Each(func(i int, s *goquery.Selection) {
+	doc.Find("*").Each(func(i int, s *goquery.Selection) {
 		text := strings.TrimSpace(s.Text())
-		if strings.Contains(text, "users") {
-			// Extract the number part before "users"
-			parts := strings.Fields(text)
-			for i, part := range parts {
-				if part == "users" && i > 0 {
-					userCount = parts[i-1]
-					break
+		if strings.Contains(text, "users") && len(text) < 50 {
+			// Clean extract just the number before "users"
+			words := strings.Fields(text)
+			for i, word := range words {
+				if word == "users" && i > 0 {
+					// Get the previous word which should be the count
+					candidate := words[i-1]
+					// Check if it contains numbers and commas
+					if strings.ContainsAny(candidate, "0123456789,") {
+						userCount = candidate
+						return
+					}
 				}
 			}
 		}
