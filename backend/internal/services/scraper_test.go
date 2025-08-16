@@ -1,161 +1,141 @@
 package services
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"path/filepath"
 	"testing"
 
 	"chrome-analytics-backend/internal/models"
 )
 
-func TestScraper_ExtractFromHTML(t *testing.T) {
-	// Load test HTML file
-	testHTML, err := os.ReadFile(filepath.Join("..", "..", "test", "fixtures", "chrome-webstore-sample.html"))
-	if err != nil {
-		t.Fatalf("Failed to load test HTML: %v", err)
+// MockBrowserClient is a test implementation of BrowserClient
+type MockBrowserClient struct {
+	response *models.Extension
+	err      error
+}
+
+func (m *MockBrowserClient) ScrapeExtension(extensionID string) (*models.Extension, error) {
+	return m.response, m.err
+}
+
+func (m *MockBrowserClient) ScrapeExtensionWithProxy(extensionID string, proxy *ProxyInfo) (*models.Extension, error) {
+	return m.response, m.err
+}
+
+func (m *MockBrowserClient) ScrapeExtensionWithTimeout(extensionID string, timeoutSeconds int) (*models.Extension, error) {
+	return m.response, m.err
+}
+
+func (m *MockBrowserClient) HealthCheck() error {
+	return m.err
+}
+
+func TestScraper_BrowserScraping(t *testing.T) {
+	// Create mock browser client that returns expected data
+	expectedExtension := &models.Extension{
+		ExtensionID: "gighmmpiobklfepjocnamgkkbiglidom",
+		Name:        "AdBlock — best ad blocker",
+		Description: "Block ads and pop-ups on YouTube, Facebook, Twitch, and your favorite websites.",
+		Developer:   "getadblock.com",
+		Users:       int64(10000000),
+		Rating:      4.5,
+		ReviewCount: int64(171234),
+		Category:    "Productivity",
 	}
 
-	// Create test server that returns our sample HTML
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/html")
-		w.WriteHeader(http.StatusOK)
-		w.Write(testHTML)
-	}))
-	defer ts.Close()
+	mockBrowserClient := &MockBrowserClient{
+		response: expectedExtension,
+		err:      nil,
+	}
 
 	// Create scraper with nil database (for testing)
 	scraper := NewScraper(nil)
-	// Override the Chrome Web Store URL to point to our test server
-	scraper.baseURL = ts.URL + "/detail/"
+	scraper.SetBrowserClient(mockBrowserClient)
 
 	// Test scraping
-	testCases := []struct {
-		name        string
-		extensionID string
-		expected    *models.Extension
-	}{
-		{
-			name:        "AdBlock Extension",
-			extensionID: "gighmmpiobklfepjocnamgkkbiglidom",
-			expected: &models.Extension{
-				ExtensionID: "gighmmpiobklfepjocnamgkkbiglidom",
-				Name:        "AdBlock — best ad blocker",
-				Description: "Block ads and pop-ups on YouTube, Facebook, Twitch, and your favorite websites.",
-				Developer:   "getadblock.com",
-				Users:       int64(10000000),
-				Rating:      4.5,
-				ReviewCount: int64(171234),
-				Category:    "Productivity",
-			},
-		},
+	extension, err := scraper.ScrapeExtension("gighmmpiobklfepjocnamgkkbiglidom")
+	if err != nil {
+		t.Errorf("ScrapeExtension failed: %v", err)
+		return
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			extension, err := scraper.ScrapeExtension(tc.extensionID)
-			if err != nil {
-				t.Errorf("ScrapeExtension failed: %v", err)
-				return
-			}
-
-			// Validate results
-			if extension.Name != tc.expected.Name {
-				t.Errorf("Name mismatch: got %q, want %q", extension.Name, tc.expected.Name)
-			}
-			if extension.Description != tc.expected.Description {
-				t.Errorf("Description mismatch: got %q, want %q", extension.Description, tc.expected.Description)
-			}
-			if extension.Developer != tc.expected.Developer {
-				t.Errorf("Developer mismatch: got %q, want %q", extension.Developer, tc.expected.Developer)
-			}
-			if extension.Users != tc.expected.Users {
-				t.Errorf("Users mismatch: got %d, want %d", extension.Users, tc.expected.Users)
-			}
-			if extension.Rating != tc.expected.Rating {
-				t.Errorf("Rating mismatch: got %f, want %f", extension.Rating, tc.expected.Rating)
-			}
-			if extension.ReviewCount != tc.expected.ReviewCount {
-				t.Errorf("ReviewCount mismatch: got %d, want %d", extension.ReviewCount, tc.expected.ReviewCount)
-			}
-		})
+	// Validate results
+	if extension.Name != expectedExtension.Name {
+		t.Errorf("Name mismatch: got %q, want %q", extension.Name, expectedExtension.Name)
+	}
+	if extension.Description != expectedExtension.Description {
+		t.Errorf("Description mismatch: got %q, want %q", extension.Description, expectedExtension.Description)
+	}
+	if extension.Developer != expectedExtension.Developer {
+		t.Errorf("Developer mismatch: got %q, want %q", extension.Developer, expectedExtension.Developer)
+	}
+	if extension.Users != expectedExtension.Users {
+		t.Errorf("Users mismatch: got %d, want %d", extension.Users, expectedExtension.Users)
+	}
+	if extension.Rating != expectedExtension.Rating {
+		t.Errorf("Rating mismatch: got %f, want %f", extension.Rating, expectedExtension.Rating)
+	}
+	if extension.ReviewCount != expectedExtension.ReviewCount {
+		t.Errorf("ReviewCount mismatch: got %d, want %d", extension.ReviewCount, expectedExtension.ReviewCount)
 	}
 }
 
-func TestScraper_ParseUserCount(t *testing.T) {
-	testCases := []struct {
-		input    string
-		expected int64
-	}{
-		{"10,000,000+ users", 10000000},
-		{"10,000,000+", 10000000},
-		{"1,234,567 users", 1234567},
-		{"500,000", 500000},
-		{"50K+ users", 50000},
-		{"5M users", 5000000},
-		{"123", 123},
-		{"", 0},
-		{"invalid", 0},
-	}
+func TestScraper_BrowserClient_Integration(t *testing.T) {
+	// Create a mock browser scraper server that mimics the real browser scraper API
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/health" {
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(map[string]string{"status": "healthy"})
+			return
+		}
 
-	scraper := &Scraper{}
-	for _, tc := range testCases {
-		t.Run(tc.input, func(t *testing.T) {
-			result := scraper.parseUserCount(tc.input)
-			if result != tc.expected {
-				t.Errorf("parseUserCount(%q) = %d, want %d", tc.input, result, tc.expected)
+		if r.URL.Path == "/scrape" && r.Method == "POST" {
+			// Mock successful scraping response
+			response := BrowserScrapeResponse{
+				Success:     true,
+				ExtensionID: "test-extension-id",
+				Name:        "Test Extension",
+				Developer:   "Test Developer",
+				Description: "Test Description",
+				Users:       12345,
+				Rating:      4.2,
+				ReviewCount: 567,
+				Keywords:    []string{"test", "extension"},
 			}
-		})
-	}
-}
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(response)
+			return
+		}
 
-func TestScraper_ParseRating(t *testing.T) {
-	testCases := []struct {
-		input    string
-		expected float64
-	}{
-		{"4.5", 4.5},
-		{"5.0", 5.0},
-		{"3.7 out of 5", 3.7},
-		{"Rated 4.2 out of 5", 4.2},
-		{"", 0.0},
-		{"invalid", 0.0},
-	}
+		http.NotFound(w, r)
+	}))
+	defer ts.Close()
 
-	scraper := &Scraper{}
-	for _, tc := range testCases {
-		t.Run(tc.input, func(t *testing.T) {
-			result := scraper.parseRating(tc.input)
-			if result != tc.expected {
-				t.Errorf("parseRating(%q) = %f, want %f", tc.input, result, tc.expected)
-			}
-		})
-	}
-}
+	// Create browser client pointing to our test server
+	browserClient := NewBrowserClient(ts.URL)
 
-func TestScraper_ParseReviewCount(t *testing.T) {
-	testCases := []struct {
-		input    string
-		expected int64
-	}{
-		{"171,234 reviews", 171234},
-		{"171,234", 171234},
-		{"1,234", 1234},
-		{"500 reviews", 500},
-		{"12", 12},
-		{"", 0},
-		{"no reviews", 0},
+	// Create scraper and set the mock browser client
+	scraper := NewScraper(nil)
+	scraper.SetBrowserClient(browserClient)
+
+	// Test scraping
+	extension, err := scraper.ScrapeExtension("test-extension-id")
+	if err != nil {
+		t.Errorf("ScrapeExtension failed: %v", err)
+		return
 	}
 
-	scraper := &Scraper{}
-	for _, tc := range testCases {
-		t.Run(tc.input, func(t *testing.T) {
-			result := scraper.parseReviewCount(tc.input)
-			if result != tc.expected {
-				t.Errorf("parseReviewCount(%q) = %d, want %d", tc.input, result, tc.expected)
-			}
-		})
+	// Validate results
+	if extension.Name != "Test Extension" {
+		t.Errorf("Name mismatch: got %q, want %q", extension.Name, "Test Extension")
+	}
+	if extension.Developer != "Test Developer" {
+		t.Errorf("Developer mismatch: got %q, want %q", extension.Developer, "Test Developer")
+	}
+	if extension.Users != 12345 {
+		t.Errorf("Users mismatch: got %d, want %d", extension.Users, 12345)
 	}
 }
 

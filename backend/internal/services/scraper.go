@@ -12,10 +12,17 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+// BrowserScraper interface defines the methods needed for browser scraping
+type BrowserScraper interface {
+	ScrapeExtension(extensionID string) (*models.Extension, error)
+	ScrapeExtensionWithProxy(extensionID string, proxy *ProxyInfo) (*models.Extension, error)
+	HealthCheck() error
+}
+
 type Scraper struct {
 	db            *mongo.Database
 	proxyManager  *ProxyManager
-	browserClient *BrowserClient
+	browserClient BrowserScraper
 }
 
 func NewScraper(db *mongo.Database) *Scraper {
@@ -37,7 +44,7 @@ func NewScraper(db *mongo.Database) *Scraper {
 }
 
 // SetBrowserClient allows overriding the browser client (useful for testing)
-func (s *Scraper) SetBrowserClient(client *BrowserClient) {
+func (s *Scraper) SetBrowserClient(client BrowserScraper) {
 	s.browserClient = client
 }
 
