@@ -196,7 +196,19 @@ export default function ExtensionDetailPage() {
             </button>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">{extension.name}</h1>
-              <p className="text-gray-600">by {extension.developer || 'Unknown Developer'}</p>
+              <div className="flex items-center gap-4 text-gray-600">
+                <span>by {extension.developer || 'Unknown Developer'}</span>
+                {extension.developerUrl && (
+                  <a 
+                    href={extension.developerUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800 text-sm"
+                  >
+                    Developer Website →
+                  </a>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -221,6 +233,87 @@ export default function ExtensionDetailPage() {
                   {extension.description || 'No description available'}
                 </p>
               </div>
+            </div>
+          </div>
+
+          {/* Extension Metadata */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Extension Details</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {extension.version && (
+                <div className="flex items-center space-x-2">
+                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                  </svg>
+                  <span className="text-sm text-gray-600">Version:</span>
+                  <span className="text-sm font-medium text-gray-900">{extension.version}</span>
+                </div>
+              )}
+              
+              {extension.fileSize && (
+                <div className="flex items-center space-x-2">
+                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                  <span className="text-sm text-gray-600">Size:</span>
+                  <span className="text-sm font-medium text-gray-900">{extension.fileSize}</span>
+                </div>
+              )}
+              
+              {extension.lastUpdated && (
+                <div className="flex items-center space-x-2">
+                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-sm text-gray-600">Updated:</span>
+                  <span className="text-sm font-medium text-gray-900">{extension.lastUpdated}</span>
+                </div>
+              )}
+            </div>
+            
+            {/* Links */}
+            <div className="flex flex-wrap gap-3 mt-4 pt-4 border-t border-gray-200">
+              {extension.website && (
+                <a 
+                  href={extension.website} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-800"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                  <span>Website</span>
+                </a>
+              )}
+              
+              {extension.supportUrl && (
+                <a 
+                  href={extension.supportUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-800"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                  <span>Support</span>
+                </a>
+              )}
+              
+              {extension.privacyUrl && (
+                <a 
+                  href={extension.privacyUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-800"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                  <span>Privacy Policy</span>
+                </a>
+              )}
             </div>
           </div>
 
@@ -699,24 +792,45 @@ export default function ExtensionDetailPage() {
               )}
             </div>
 
-            {/* Keywords */}
+            {/* Keywords & Permissions */}
             <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Keywords</h2>
-              
-              {extension.keywords.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {extension.keywords.map((keyword, index) => (
-                    <span
-                      key={index}
-                      className="text-xs px-2 py-1 bg-gray-50 text-gray-600 rounded"
-                    >
-                      {keyword}
-                    </span>
-                  ))}
+              <div className="space-y-6">
+                {/* Keywords Section */}
+                <div>
+                  <h3 className="text-md font-semibold text-gray-900 mb-3">Keywords</h3>
+                  {extension.keywords && extension.keywords.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {extension.keywords.map((keyword, index) => (
+                        <span
+                          key={index}
+                          className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-200"
+                        >
+                          {keyword}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-sm">No keywords available</p>
+                  )}
                 </div>
-              ) : (
-                <p className="text-gray-500">No keywords available</p>
-              )}
+
+                {/* Permissions Section */}
+                {extension.permissions && extension.permissions.length > 0 && (
+                  <div className="pt-4 border-t border-gray-200">
+                    <h3 className="text-md font-semibold text-gray-900 mb-3">Permissions</h3>
+                    <div className="space-y-2">
+                      {extension.permissions.map((permission, index) => (
+                        <div key={index} className="flex items-center space-x-2">
+                          <svg className="w-4 h-4 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                          </svg>
+                          <span className="text-sm text-gray-700">{permission}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

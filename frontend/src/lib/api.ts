@@ -7,6 +7,14 @@ export interface Extension {
   description: string;
   category: string;
   developer: string;
+  developerUrl?: string;
+  website?: string;
+  supportUrl?: string;
+  privacyUrl?: string;
+  version?: string;
+  fileSize?: string;
+  lastUpdated?: string;
+  permissions?: string[];
   users: number;
   rating: number;
   reviewCount: number;

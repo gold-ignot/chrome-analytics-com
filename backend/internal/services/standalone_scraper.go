@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"chrome-analytics-backend/internal/models"
+	"github.com/PuerkitoBio/goquery"
 )
 
 type StandaloneScraper struct {
@@ -20,6 +21,7 @@ type StandaloneScraper struct {
 	proxyClient  *http.Client
 	metrics      *ScraperMetrics
 	proxyManager *StandaloneProxyManager
+	extractor    *Extractor
 	mu           sync.RWMutex
 }
 
@@ -522,19 +524,24 @@ func (ss *StandaloneScraper) fetchPageHTML(url string) (string, error) {
 
 // extractFullDescription extracts the complete extension description
 func (ss *StandaloneScraper) extractFullDescription(html string) string {
-	// Look for various description patterns in order of preference
+	// Look for various description patterns in order of preference (excluding unreliable meta tags)
 	descPatterns := []string{
+		// Chrome Web Store Overview section (highest priority for full description)
+		`(?s)<section[^>]*class="[^"]*MHH2Z[^"]*"[^>]*>.*?<h2[^>]*>[^<]*Overview[^<]*</h2>.*?<div[^>]*class="[^"]*RNnO5e[^"]*"[^>]*>.*?<div[^>]*class="[^"]*JJ3H1e[^"]*"[^>]*>(.*?)</div>`,
+		`(?s)<div[^>]*class="[^"]*JJ3H1e[^"]*"[^>]*>(.*?)</div>`,
+		// Chrome Web Store specific patterns
+		`(?s)<div[^>]*class="[^"]*C-b-p-j-Oa[^"]*"[^>]*>([^<]{50,})</div>`,
+		`(?s)<div[^>]*class="[^"]*overview[^"]*"[^>]*>([^<]{50,})</div>`,
+		`(?s)<section[^>]*class="[^"]*description[^"]*"[^>]*>.*?<p[^>]*>([^<]{50,})</p>`,
 		// JSON-LD structured data with more flexible matching
 		`"description"\s*:\s*"([^"]+)"`,
 		// Try to find full description in JavaScript data
 		`window\[.*?\]\s*=\s*\[.*?"([^"]{100,})".*?\]`,
-		// Meta description
-		`<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']`,
-		// OG description
-		`<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']+)["']`,
-		// Look for longer text content in various containers
+		// Look for longer text content in various containers (actual page content only)
 		`(?s)<div[^>]*data-value[^>]*>([^<]{100,})</div>`,
 		`(?s)<div[^>]*class="[^"]*description[^"]*"[^>]*>([^<]{50,})</div>`,
+		`(?s)<p[^>]*class="[^"]*description[^"]*"[^>]*>([^<]{50,})</p>`,
+		`(?s)<div[^>]*id="[^"]*description[^"]*"[^>]*>([^<]{50,})</div>`,
 		`(?s)<p[^>]*>([^<]{100,})</p>`,
 	}
 
@@ -545,15 +552,23 @@ func (ss *StandaloneScraper) extractFullDescription(html string) string {
 		for _, match := range matches {
 			if len(match) > 1 {
 				desc := strings.TrimSpace(match[1])
+				
+				// Remove HTML tags and clean up content
+				desc = regexp.MustCompile(`<[^>]*>`).ReplaceAllString(desc, " ")
+				
 				// Decode HTML entities
 				desc = strings.ReplaceAll(desc, "&quot;", "\"")
 				desc = strings.ReplaceAll(desc, "&amp;", "&")
 				desc = strings.ReplaceAll(desc, "&lt;", "<")
 				desc = strings.ReplaceAll(desc, "&gt;", ">")
 				desc = strings.ReplaceAll(desc, "&#39;", "'")
+				desc = strings.ReplaceAll(desc, "&nbsp;", " ")
 				desc = strings.ReplaceAll(desc, "\\n", " ")
 				desc = strings.ReplaceAll(desc, "\\t", " ")
+				
+				// Clean up whitespace
 				desc = regexp.MustCompile(`\s+`).ReplaceAllString(desc, " ")
+				desc = strings.TrimSpace(desc)
 				
 				// Prefer longer descriptions
 				if len(desc) > len(bestDesc) && len(desc) > 50 {
@@ -788,28 +803,20 @@ func (ss *StandaloneScraper) extractAdditionalMetadata(extension *models.Extensi
 		}
 	}
 
-	// Improve developer extraction with better patterns
-	developerPatterns := []string{
-		`"author":\s*"([^"]+)"`,
-		`"publisher":\s*"([^"]+)"`,
-		`"developer":\s*{\s*"name":\s*"([^"]+)"`,
-		`(?i)offered\s+by\s+([^<\n,]+)`,
-		`(?i)by\s+([^<\n,]+)`,
-	}
+	// Remove the duplicate developer extraction that was causing corruption
+	// The developer field is already extracted earlier with proper patterns
+
+	// Extract developer URL
+	extension.DeveloperURL = ss.extractDeveloperURL(html)
 	
-	for _, pattern := range developerPatterns {
-		regex := regexp.MustCompile(pattern)
-		if match := regex.FindStringSubmatch(html); len(match) > 1 {
-			dev := strings.TrimSpace(match[1])
-			// Clean up common issues
-			dev = strings.ReplaceAll(dev, "\\", "")
-			dev = regexp.MustCompile(`\s+`).ReplaceAllString(dev, " ")
-			if len(dev) > 2 && len(dev) < 100 && !ss.isCommonWord(dev) {
-				extension.Developer = dev
-				break
-			}
-		}
-	}
+	// Extract additional metadata
+	extension.Website = ss.extractWebsite(html)
+	extension.SupportURL = ss.extractSupportURL(html)
+	extension.PrivacyURL = ss.extractPrivacyURL(html)
+	extension.Version = ss.extractVersion(html)
+	extension.FileSize = ss.extractFileSize(html)
+	extension.LastUpdated = ss.extractLastUpdated(html)
+	extension.Permissions = ss.extractPermissionStrings(html)
 }
 
 // isCommonWord checks if a string is a common word that shouldn't be a permission
@@ -822,6 +829,194 @@ func (ss *StandaloneScraper) isCommonWord(word string) bool {
 		}
 	}
 	return false
+}
+
+// ExtractDeveloperURL extracts the developer's website URL using CSS selectors (public for testing)
+func (ss *StandaloneScraper) ExtractDeveloperURL(html string) string {
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
+	if err != nil {
+		return ""
+	}
+	
+	// Look for "Offered by" section and find links
+	var devURL string
+	doc.Find("li").Each(func(i int, s *goquery.Selection) {
+		firstDiv := s.Find("div").First()
+		if strings.Contains(strings.TrimSpace(firstDiv.Text()), "Offered by") {
+			// Look for links in this li or nearby
+			s.Find("a").Each(func(j int, link *goquery.Selection) {
+				href, exists := link.Attr("href")
+				if exists && strings.HasPrefix(href, "http") {
+					if !strings.Contains(href, "chrome.google.com") && !strings.Contains(href, "chromewebstore.google.com") {
+						devURL = href
+					}
+				}
+			})
+		}
+	})
+
+	// Also check for general links with privacy/website context
+	if devURL == "" {
+		doc.Find("a").Each(func(i int, s *goquery.Selection) {
+			href, exists := s.Attr("href")
+			if exists && strings.HasPrefix(href, "http") {
+				linkText := strings.ToLower(strings.TrimSpace(s.Text()))
+				if strings.Contains(linkText, "privacy") || strings.Contains(linkText, "website") {
+					if !strings.Contains(href, "chrome.google.com") && !strings.Contains(href, "chromewebstore.google.com") {
+						devURL = href
+					}
+				}
+			}
+		})
+	}
+
+	return devURL
+}
+
+// extractDeveloperURL is the internal wrapper
+func (ss *StandaloneScraper) extractDeveloperURL(html string) string {
+	return ss.ExtractDeveloperURL(html)
+}
+
+// extractWebsite extracts the extension's official website URL
+func (ss *StandaloneScraper) extractWebsite(html string) string {
+	patterns := []string{
+		// Website link with text content
+		`(?i)<a[^>]*href=["'](https?://[^"']+)["'][^>]*>[^<]*(?:official\s+)?website[^<]*</a>`,
+		`(?i)<a[^>]*href=["'](https?://[^"']+)["'][^>]*>[^<]*homepage[^<]*</a>`,
+		// Links section patterns
+		`(?s)<div[^>]*>[^<]*Links?[^<]*</div>.*?<a[^>]*href=["'](https?://(?!chrome)[^"']+)["']`,
+		// External link patterns in extension info sections
+		`(?s)<section[^>]*>.*?<a[^>]*href=["'](https?://(?!chrome|support\.google)[^"']+)["'][^>]*>[^<]*(?:visit|website|homepage)[^<]*</a>`,
+	}
+	
+	return ss.extractURL(html, patterns)
+}
+
+// extractSupportURL extracts the support/help URL
+func (ss *StandaloneScraper) extractSupportURL(html string) string {
+	patterns := []string{
+		// Support link with text content
+		`(?i)<a[^>]*href=["'](https?://[^"']+)["'][^>]*>[^<]*support[^<]*</a>`,
+		`(?i)<a[^>]*href=["'](https?://[^"']+)["'][^>]*>[^<]*help[^<]*</a>`,
+		`(?i)<a[^>]*href=["'](https?://[^"']+)["'][^>]*>[^<]*contact[^<]*</a>`,
+		// Support section patterns
+		`(?s)<div[^>]*>[^<]*Support[^<]*</div>.*?<a[^>]*href=["'](https?://[^"']+)["']`,
+		`(?s)<section[^>]*>.*?support.*?<a[^>]*href=["'](https?://[^"']+)["']`,
+	}
+	
+	return ss.extractURL(html, patterns)
+}
+
+// extractPrivacyURL extracts the privacy policy URL
+func (ss *StandaloneScraper) extractPrivacyURL(html string) string {
+	patterns := []string{
+		// Privacy policy link with text content
+		`(?i)<a[^>]*href=["'](https?://[^"']+)["'][^>]*>[^<]*privacy\s+policy[^<]*</a>`,
+		`(?i)<a[^>]*href=["'](https?://[^"']+)["'][^>]*>[^<]*privacy[^<]*</a>`,
+		// Privacy section patterns  
+		`(?s)<div[^>]*>[^<]*Privacy[^<]*</div>.*?<a[^>]*href=["'](https?://[^"']+)["']`,
+		`(?s)<section[^>]*>.*?privacy.*?<a[^>]*href=["'](https?://[^"']+)["']`,
+	}
+	
+	return ss.extractURL(html, patterns)
+}
+
+// extractURL is a helper function to extract URLs using patterns
+func (ss *StandaloneScraper) extractURL(html string, patterns []string) string {
+	for _, pattern := range patterns {
+		regex := regexp.MustCompile(pattern)
+		if match := regex.FindStringSubmatch(html); len(match) > 1 {
+			url := strings.TrimSpace(match[1])
+			url = strings.ReplaceAll(url, "\\", "")
+			if strings.HasPrefix(url, "http") && len(url) > 10 && len(url) < 500 {
+				if !strings.Contains(url, "chrome.google.com") && 
+				   !strings.Contains(url, "chromewebstore.google.com") {
+					return url
+				}
+			}
+		}
+	}
+	return ""
+}
+
+// ExtractVersion extracts the extension version using CSS selectors (public for testing)
+func (ss *StandaloneScraper) ExtractVersion(html string) string {
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
+	if err != nil {
+		return ""
+	}
+	
+	var version string
+	doc.Find("li").Each(func(i int, s *goquery.Selection) {
+		firstDiv := s.Find("div").First()
+		if strings.TrimSpace(firstDiv.Text()) == "Version" {
+			secondDiv := firstDiv.Next()
+			version = strings.TrimSpace(secondDiv.Text())
+		}
+	})
+	return version
+}
+
+// extractVersion is the internal wrapper
+func (ss *StandaloneScraper) extractVersion(html string) string {
+	return ss.ExtractVersion(html)
+}
+
+// ExtractFileSize extracts the extension file size using CSS selectors (public for testing)
+func (ss *StandaloneScraper) ExtractFileSize(html string) string {
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
+	if err != nil {
+		return ""
+	}
+	
+	var size string
+	doc.Find("li").Each(func(i int, s *goquery.Selection) {
+		firstDiv := s.Find("div").First()
+		if strings.TrimSpace(firstDiv.Text()) == "Size" {
+			secondDiv := firstDiv.Next()
+			size = strings.TrimSpace(secondDiv.Text())
+		}
+	})
+	return size
+}
+
+// extractFileSize is the internal wrapper
+func (ss *StandaloneScraper) extractFileSize(html string) string {
+	return ss.ExtractFileSize(html)
+}
+
+// ExtractLastUpdated extracts the last updated date using CSS selectors (public for testing)
+func (ss *StandaloneScraper) ExtractLastUpdated(html string) string {
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
+	if err != nil {
+		return ""
+	}
+	
+	var updated string
+	doc.Find("li").Each(func(i int, s *goquery.Selection) {
+		firstDiv := s.Find("div").First()
+		if strings.TrimSpace(firstDiv.Text()) == "Updated" {
+			secondDiv := firstDiv.Next()
+			updated = strings.TrimSpace(secondDiv.Text())
+		}
+	})
+	return updated
+}
+
+// extractLastUpdated is the internal wrapper
+func (ss *StandaloneScraper) extractLastUpdated(html string) string {
+	return ss.ExtractLastUpdated(html)
+}
+
+// extractPermissionStrings extracts extension permissions and converts to string slice
+func (ss *StandaloneScraper) extractPermissionStrings(html string) []string {
+	permissions := ss.extractPermissions(html)
+	result := make([]string, len(permissions))
+	for i, perm := range permissions {
+		result[i] = perm.Permission
+	}
+	return result
 }
 
 // recordProxySuccess records a successful proxy request

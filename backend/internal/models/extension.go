@@ -13,6 +13,14 @@ type Extension struct {
 	Description string             `json:"description" bson:"description"`
 	Category    string             `json:"category" bson:"category"`
 	Developer   string             `json:"developer" bson:"developer"`
+	DeveloperURL string            `json:"developerUrl" bson:"developerUrl"`
+	Website     string             `json:"website" bson:"website"`
+	SupportURL  string             `json:"supportUrl" bson:"supportUrl"`
+	PrivacyURL  string             `json:"privacyUrl" bson:"privacyUrl"`
+	Version     string             `json:"version" bson:"version"`
+	FileSize    string             `json:"fileSize" bson:"fileSize"`
+	LastUpdated string             `json:"lastUpdated" bson:"lastUpdated"`
+	Permissions []string           `json:"permissions" bson:"permissions"`
 	Users       int64              `json:"users" bson:"users"`
 	Rating      float64            `json:"rating" bson:"rating"`
 	ReviewCount int64              `json:"reviewCount" bson:"reviewCount"`
