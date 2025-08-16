@@ -58,9 +58,25 @@ func (s *Scraper) ScrapeExtension(extensionID string) (*models.Extension, error)
 		return extension, nil
 	}
 
-	// If HTTP scraping failed or returned empty data, try browser scraping
-	log.Printf("HTTP scraping for %s returned insufficient data, trying browser scraping", extensionID)
-	browserExtension, browserErr := s.browserClient.ScrapeExtension(extensionID)
+	// If HTTP scraping failed or returned empty data, try browser scraping with proxy
+	log.Printf("HTTP scraping for %s returned insufficient data, trying browser scraping with proxy", extensionID)
+	
+	var browserExtension *models.Extension
+	var browserErr error
+	
+	if s.proxyManager != nil {
+		// Get a random proxy for browser scraping
+		proxy, err := s.proxyManager.GetRandomProxy()
+		if err != nil {
+			log.Printf("Failed to get proxy for browser scraping: %v", err)
+			browserExtension, browserErr = s.browserClient.ScrapeExtension(extensionID)
+		} else {
+			log.Printf("Using proxy %s for browser scraping", proxy.URL)
+			browserExtension, browserErr = s.browserClient.ScrapeExtensionWithProxy(extensionID, proxy)
+		}
+	} else {
+		browserExtension, browserErr = s.browserClient.ScrapeExtension(extensionID)
+	}
 	
 	if browserErr == nil && s.hasValidData(browserExtension) {
 		log.Printf("Successfully scraped %s using browser method", extensionID)

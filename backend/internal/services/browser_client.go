@@ -16,8 +16,16 @@ type BrowserClient struct {
 }
 
 type BrowserScrapeRequest struct {
-	ExtensionID string `json:"extension_id"`
-	Timeout     int    `json:"timeout,omitempty"`
+	ExtensionID string     `json:"extension_id"`
+	Timeout     int        `json:"timeout,omitempty"`
+	Proxy       *ProxyInfo `json:"proxy,omitempty"`
+}
+
+type ProxyInfo struct {
+	Host     string `json:"host"`
+	Port     string `json:"port"`
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 type BrowserScrapeResponse struct {
@@ -52,12 +60,38 @@ func (bc *BrowserClient) ScrapeExtension(extensionID string) (*models.Extension,
 	return bc.ScrapeExtensionWithTimeout(extensionID, 30)
 }
 
+// ScrapeExtensionWithProxy scrapes using a specific proxy
+func (bc *BrowserClient) ScrapeExtensionWithProxy(extensionID string, proxy *Proxy) (*models.Extension, error) {
+	var proxyInfo *ProxyInfo
+	if proxy != nil {
+		proxyInfo = &ProxyInfo{
+			Host:     proxy.Host,
+			Port:     proxy.Port,
+			Username: proxy.Username,
+			Password: proxy.Password,
+		}
+	}
+	
+	reqData := BrowserScrapeRequest{
+		ExtensionID: extensionID,
+		Timeout:     30,
+		Proxy:       proxyInfo,
+	}
+
+	return bc.scrapeWithRequest(reqData)
+}
+
 // ScrapeExtensionWithTimeout scrapes with a custom timeout
 func (bc *BrowserClient) ScrapeExtensionWithTimeout(extensionID string, timeoutSeconds int) (*models.Extension, error) {
 	reqData := BrowserScrapeRequest{
 		ExtensionID: extensionID,
 		Timeout:     timeoutSeconds,
 	}
+	
+	return bc.scrapeWithRequest(reqData)
+}
+
+func (bc *BrowserClient) scrapeWithRequest(reqData BrowserScrapeRequest) (*models.Extension, error) {
 
 	jsonData, err := json.Marshal(reqData)
 	if err != nil {

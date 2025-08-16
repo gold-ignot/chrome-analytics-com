@@ -15,8 +15,16 @@ import (
 )
 
 type ScrapeRequest struct {
-	ExtensionID string `json:"extension_id" binding:"required"`
-	Timeout     int    `json:"timeout,omitempty"` // Optional timeout in seconds
+	ExtensionID string     `json:"extension_id" binding:"required"`
+	Timeout     int        `json:"timeout,omitempty"`     // Optional timeout in seconds
+	Proxy       *ProxyInfo `json:"proxy,omitempty"`       // Optional proxy configuration
+}
+
+type ProxyInfo struct {
+	Host     string `json:"host"`
+	Port     string `json:"port"`
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 type ScrapeResponse struct {
@@ -69,7 +77,7 @@ func main() {
 
 		log.Printf("Scraping extension: %s (timeout: %v)", req.ExtensionID, timeout)
 
-		result, err := scraper.scrapeExtension(req.ExtensionID, timeout)
+		result, err := scraper.scrapeExtension(req.ExtensionID, timeout, req.Proxy)
 		if err != nil {
 			log.Printf("Scraping failed for %s: %v", req.ExtensionID, err)
 			c.JSON(500, ScrapeResponse{
@@ -108,7 +116,7 @@ func main() {
 
 		var results []ScrapeResponse
 		for _, extensionID := range req.ExtensionIDs {
-			result, err := scraper.scrapeExtension(extensionID, timeout)
+			result, err := scraper.scrapeExtension(extensionID, timeout, nil) // Batch requests don't use proxy for now
 			if err != nil {
 				result = &ScrapeResponse{
 					Success:     false,
@@ -132,7 +140,7 @@ func main() {
 	log.Fatal(http.ListenAndServe(":8081", r))
 }
 
-func (bs *BrowserScraper) scrapeExtension(extensionID string, timeout time.Duration) (*ScrapeResponse, error) {
+func (bs *BrowserScraper) scrapeExtension(extensionID string, timeout time.Duration, proxy *ProxyInfo) (*ScrapeResponse, error) {
 	url := fmt.Sprintf("https://chromewebstore.google.com/detail/%s", extensionID)
 
 	// Create chrome context with alpine-compatible options
@@ -148,6 +156,13 @@ func (bs *BrowserScraper) scrapeExtension(extensionID string, timeout time.Durat
 		chromedp.Flag("disable-features", "VizDisplayCompositor"),
 		chromedp.UserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"),
 	)
+
+	// Add proxy configuration if provided
+	if proxy != nil {
+		proxyURL := fmt.Sprintf("%s:%s", proxy.Host, proxy.Port)
+		opts = append(opts, chromedp.ProxyServer(proxyURL))
+		log.Printf("Using proxy: %s", proxyURL)
+	}
 
 	allocCtx, cancel := chromedp.NewExecAllocator(context.Background(), opts...)
 	defer cancel()
