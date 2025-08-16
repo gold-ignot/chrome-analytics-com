@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"chrome-analytics-backend/internal/database"
 	"chrome-analytics-backend/internal/services"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/joho/godotenv"
@@ -27,20 +28,14 @@ func main() {
 	fmt.Printf("Testing scraper with extension ID: %s\n", extensionID)
 	fmt.Println("=" + strings.Repeat("=", 50))
 
-	// Create proxy manager and scraper
-	proxyFile := os.Getenv("PROXY_FILE")
-	if proxyFile == "" {
-		proxyFile = "proxies.txt" // Default proxy file
-	}
-	
-	proxyManager, err := services.NewProxyManager(proxyFile)
+	// Initialize database and scraper
+	db, err := database.Connect()
 	if err != nil {
-		fmt.Printf("Warning: Failed to load proxies: %v\n", err)
-		// Create empty proxy manager
-		proxyManager, _ = services.NewProxyManager("/dev/null")
+		log.Fatal("Failed to connect to database:", err)
 	}
+	defer database.Disconnect()
 	
-	scraper := services.NewScraper(proxyManager)
+	scraper := services.NewScraper(db)
 
 	// Attempt to scrape
 	fmt.Println("\n1. Attempting to scrape extension...")

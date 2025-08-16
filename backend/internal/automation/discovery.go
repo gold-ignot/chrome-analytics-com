@@ -10,17 +10,14 @@ import (
 	"strings"
 	"time"
 
-	"chrome-analytics-backend/internal/services"
-
 	"github.com/PuerkitoBio/goquery"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // DiscoveryHandler handles extension discovery jobs
 type DiscoveryHandler struct {
-	db           *mongo.Database
-	client       *http.Client
-	proxyManager *services.ProxyManager
+	db     *mongo.Database
+	client *http.Client
 }
 
 // DiscoveryJob types
@@ -69,17 +66,9 @@ func NewDiscoveryHandler(db *mongo.Database) *DiscoveryHandler {
 		},
 	}
 
-	// Initialize proxy manager
-	proxyManager, err := services.NewProxyManager("proxies.txt")
-	if err != nil {
-		log.Printf("Failed to initialize proxy manager for discovery: %v, using direct connection", err)
-		proxyManager = nil
-	}
-
 	return &DiscoveryHandler{
-		db:           db,
-		client:       client,
-		proxyManager: proxyManager,
+		db:     db,
+		client: client,
 	}
 }
 
@@ -132,7 +121,7 @@ func (dh *DiscoveryHandler) handleCategoryDiscovery(job *Job, queue *JobQueue) e
 	}
 
 	// Scrape the category page
-	extensionURLs, hasMore, err := dh.scrapeCategoryPage(categoryURL, proxyIndex)
+	extensionURLs, hasMore, err := dh.scrapeCategoryPage(categoryURL)
 	if err != nil {
 		return fmt.Errorf("failed to scrape category page: %w", err)
 	}
@@ -194,7 +183,7 @@ func (dh *DiscoveryHandler) handleCategoryDiscovery(job *Job, queue *JobQueue) e
 }
 
 // handleSearchDiscovery searches for extensions using keywords
-func (dh *DiscoveryHandler) handleSearchDiscovery(job *Job, queue *JobQueue, proxyIndex int) error {
+func (dh *DiscoveryHandler) handleSearchDiscovery(job *Job, queue *JobQueue) error {
 	keyword, ok := job.Payload["keyword"].(string)
 	if !ok {
 		return fmt.Errorf("keyword not specified in job payload")
@@ -206,7 +195,7 @@ func (dh *DiscoveryHandler) handleSearchDiscovery(job *Job, queue *JobQueue, pro
 	searchURL := fmt.Sprintf("https://chromewebstore.google.com/search/%s", url.QueryEscape(keyword))
 
 	// Scrape search results
-	extensionURLs, err := dh.scrapeSearchResults(searchURL, proxyIndex)
+	extensionURLs, err := dh.scrapeSearchResults(searchURL)
 	if err != nil {
 		return fmt.Errorf("failed to scrape search results: %w", err)
 	}
@@ -248,7 +237,7 @@ func (dh *DiscoveryHandler) handleSearchDiscovery(job *Job, queue *JobQueue, pro
 }
 
 // handleRelatedDiscovery finds related extensions from an existing extension page
-func (dh *DiscoveryHandler) handleRelatedDiscovery(job *Job, queue *JobQueue, proxyIndex int) error {
+func (dh *DiscoveryHandler) handleRelatedDiscovery(job *Job, queue *JobQueue) error {
 	extensionID, ok := job.Payload["extension_id"].(string)
 	if !ok {
 		return fmt.Errorf("extension_id not specified in job payload")
@@ -260,7 +249,7 @@ func (dh *DiscoveryHandler) handleRelatedDiscovery(job *Job, queue *JobQueue, pr
 	extensionURL := fmt.Sprintf("https://chromewebstore.google.com/detail/%s", extensionID)
 
 	// Scrape related extensions
-	relatedURLs, err := dh.scrapeRelatedExtensions(extensionURL, proxyIndex)
+	relatedURLs, err := dh.scrapeRelatedExtensions(extensionURL)
 	if err != nil {
 		return fmt.Errorf("failed to scrape related extensions: %w", err)
 	}
@@ -302,7 +291,7 @@ func (dh *DiscoveryHandler) handleRelatedDiscovery(job *Job, queue *JobQueue, pr
 }
 
 // handlePopularDiscovery crawls popular/trending extension lists
-func (dh *DiscoveryHandler) handlePopularDiscovery(job *Job, queue *JobQueue, proxyIndex int) error {
+func (dh *DiscoveryHandler) handlePopularDiscovery(job *Job, queue *JobQueue) error {
 	log.Println("Discovering popular extensions")
 
 	// Popular extensions URLs to check - using main categories page
@@ -313,7 +302,7 @@ func (dh *DiscoveryHandler) handlePopularDiscovery(job *Job, queue *JobQueue, pr
 	totalFound := 0
 
 	for _, popURL := range popularURLs {
-		extensionURLs, _, err := dh.scrapeCategoryPage(popURL, proxyIndex)
+		extensionURLs, _, err := dh.scrapeCategoryPage(popURL)
 		if err != nil {
 			log.Printf("Failed to scrape popular page %s: %v", popURL, err)
 			continue
@@ -359,7 +348,7 @@ func (dh *DiscoveryHandler) handlePopularDiscovery(job *Job, queue *JobQueue, pr
 }
 
 // scrapeCategoryPage scrapes extensions from a category page
-func (dh *DiscoveryHandler) scrapeCategoryPage(pageURL string, proxyIndex int) ([]string, bool, error) {
+func (dh *DiscoveryHandler) scrapeCategoryPage(pageURL string) ([]string, bool, error) {
 	req, err := http.NewRequest("GET", pageURL, nil)
 	if err != nil {
 		return nil, false, err
@@ -367,44 +356,8 @@ func (dh *DiscoveryHandler) scrapeCategoryPage(pageURL string, proxyIndex int) (
 
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36")
 	
-	// Use proxy if available
-	client := dh.client
-	var proxyURL string
-	if dh.proxyManager != nil {
-		if proxyIndex >= 0 {
-			// Use dedicated proxy
-			proxyClient, err := dh.proxyManager.CreateHTTPClientWithProxyIndex(proxyIndex)
-			if err != nil {
-				log.Printf("Failed to create dedicated proxy client %d for discovery, using direct connection: %v", proxyIndex, err)
-			} else {
-				client = proxyClient
-				proxy, _ := dh.proxyManager.GetProxyByIndex(proxyIndex)
-				if proxy != nil {
-					proxyURL = proxy.URL
-				}
-				log.Printf("Using dedicated proxy %d for discovery URL %s", proxyIndex, pageURL)
-			}
-		} else {
-			// Use random proxy (fallback)
-			proxyClient, err := dh.proxyManager.CreateHTTPClientWithRandomProxy()
-			if err != nil {
-				log.Printf("Failed to create random proxy client for discovery, using direct connection: %v", err)
-			} else {
-				client = proxyClient
-				proxy, _ := dh.proxyManager.GetRandomProxy()
-				if proxy != nil {
-					proxyURL = proxy.URL
-				}
-			}
-		}
-	}
-	
-	resp, err := client.Do(req)
+	resp, err := dh.client.Do(req)
 	if err != nil {
-		// Mark proxy as unhealthy if it failed
-		if dh.proxyManager != nil && proxyURL != "" {
-			dh.proxyManager.MarkProxyUnhealthy(proxyURL)
-		}
 		return nil, false, err
 	}
 	defer resp.Body.Close()
@@ -438,7 +391,7 @@ func (dh *DiscoveryHandler) scrapeCategoryPage(pageURL string, proxyIndex int) (
 }
 
 // scrapeSearchResults scrapes extension URLs from search results
-func (dh *DiscoveryHandler) scrapeSearchResults(searchURL string, proxyIndex int) ([]string, error) {
+func (dh *DiscoveryHandler) scrapeSearchResults(searchURL string) ([]string, error) {
 	req, err := http.NewRequest("GET", searchURL, nil)
 	if err != nil {
 		return nil, err
@@ -446,44 +399,8 @@ func (dh *DiscoveryHandler) scrapeSearchResults(searchURL string, proxyIndex int
 
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36")
 	
-	// Use proxy if available
-	client := dh.client
-	var proxyURL string
-	if dh.proxyManager != nil {
-		if proxyIndex >= 0 {
-			// Use dedicated proxy
-			proxyClient, err := dh.proxyManager.CreateHTTPClientWithProxyIndex(proxyIndex)
-			if err != nil {
-				log.Printf("Failed to create dedicated proxy client %d for search, using direct connection: %v", proxyIndex, err)
-			} else {
-				client = proxyClient
-				proxy, _ := dh.proxyManager.GetProxyByIndex(proxyIndex)
-				if proxy != nil {
-					proxyURL = proxy.URL
-				}
-				log.Printf("Using dedicated proxy %d for search URL %s", proxyIndex, searchURL)
-			}
-		} else {
-			// Use random proxy (fallback)
-			proxyClient, err := dh.proxyManager.CreateHTTPClientWithRandomProxy()
-			if err != nil {
-				log.Printf("Failed to create random proxy client for search, using direct connection: %v", err)
-			} else {
-				client = proxyClient
-				proxy, _ := dh.proxyManager.GetRandomProxy()
-				if proxy != nil {
-					proxyURL = proxy.URL
-				}
-			}
-		}
-	}
-	
-	resp, err := client.Do(req)
+	resp, err := dh.client.Do(req)
 	if err != nil {
-		// Mark proxy as unhealthy if it failed
-		if dh.proxyManager != nil && proxyURL != "" {
-			dh.proxyManager.MarkProxyUnhealthy(proxyURL)
-		}
 		return nil, err
 	}
 	defer resp.Body.Close()
@@ -513,7 +430,7 @@ func (dh *DiscoveryHandler) scrapeSearchResults(searchURL string, proxyIndex int
 }
 
 // scrapeRelatedExtensions finds related extensions from an extension page
-func (dh *DiscoveryHandler) scrapeRelatedExtensions(extensionURL string, proxyIndex int) ([]string, error) {
+func (dh *DiscoveryHandler) scrapeRelatedExtensions(extensionURL string) ([]string, error) {
 	req, err := http.NewRequest("GET", extensionURL, nil)
 	if err != nil {
 		return nil, err
@@ -521,44 +438,8 @@ func (dh *DiscoveryHandler) scrapeRelatedExtensions(extensionURL string, proxyIn
 
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36")
 	
-	// Use proxy if available
-	client := dh.client
-	var proxyURL string
-	if dh.proxyManager != nil {
-		if proxyIndex >= 0 {
-			// Use dedicated proxy
-			proxyClient, err := dh.proxyManager.CreateHTTPClientWithProxyIndex(proxyIndex)
-			if err != nil {
-				log.Printf("Failed to create dedicated proxy client %d for related discovery, using direct connection: %v", proxyIndex, err)
-			} else {
-				client = proxyClient
-				proxy, _ := dh.proxyManager.GetProxyByIndex(proxyIndex)
-				if proxy != nil {
-					proxyURL = proxy.URL
-				}
-				log.Printf("Using dedicated proxy %d for related discovery URL %s", proxyIndex, extensionURL)
-			}
-		} else {
-			// Use random proxy (fallback)
-			proxyClient, err := dh.proxyManager.CreateHTTPClientWithRandomProxy()
-			if err != nil {
-				log.Printf("Failed to create random proxy client for related discovery, using direct connection: %v", err)
-			} else {
-				client = proxyClient
-				proxy, _ := dh.proxyManager.GetRandomProxy()
-				if proxy != nil {
-					proxyURL = proxy.URL
-				}
-			}
-		}
-	}
-	
-	resp, err := client.Do(req)
+	resp, err := dh.client.Do(req)
 	if err != nil {
-		// Mark proxy as unhealthy if it failed
-		if dh.proxyManager != nil && proxyURL != "" {
-			dh.proxyManager.MarkProxyUnhealthy(proxyURL)
-		}
 		return nil, err
 	}
 	defer resp.Body.Close()
