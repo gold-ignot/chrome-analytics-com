@@ -1,18 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
 	"chrome-analytics-backend/internal/services"
 )
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
 
 func main() {
 	// Read the downloaded HTML file
@@ -28,66 +22,89 @@ func main() {
 	// Create an extractor instance
 	extractor := services.NewExtractor()
 	
-	fmt.Println("=== Testing Extractor with CSS Selectors ===")
+	// Create an ordered structure for meaningful JSON output
+	type OrderedExtensionData struct {
+		// Basic Information
+		ID                string `json:"id"`
+		Slug              string `json:"slug"`
+		LogoURL           string `json:"logoURL"`
+		MarkdownDescription string `json:"markdownDescription"`
+		
+		// Classification
+		Category    string `json:"category"`
+		Subcategory string `json:"subcategory"`
+		
+		// Technical Details
+		Version      string   `json:"version"`
+		FileSize     string   `json:"fileSize"`
+		LastUpdated  string   `json:"lastUpdated"`
+		Features     []string `json:"features"`
+		Languages    []string `json:"languages"`
+		Status       []string `json:"status"`
+		
+		// Ratings & Reviews
+		Rating      float64 `json:"rating"`
+		ReviewCount int     `json:"reviewCount"`
+		UserCount   int     `json:"userCount"`
+		
+		// Developer Information
+		DeveloperName string `json:"developerName"`
+		DeveloperURL  string `json:"developerURL"`
+		Website       string `json:"website"`
+		SupportURL    string `json:"supportURL"`
+		SupportEmail  string `json:"supportEmail"`
+		
+		// Media & Related
+		Screenshots       []string                   `json:"screenshots"`
+		RelatedExtensions []map[string]string        `json:"relatedExtensions"`
+	}
 	
-	// Test the extraction methods directly
-	version := extractor.ExtractVersion(html)
-	fmt.Printf("Version: '%s'\n", version)
-	
-	fileSize := extractor.ExtractFileSize(html)
-	fmt.Printf("File Size: '%s'\n", fileSize)
-	
-	lastUpdated := extractor.ExtractLastUpdated(html)
-	fmt.Printf("Last Updated: '%s'\n", lastUpdated)
-	
-	developerURL := extractor.ExtractDeveloperURL(html)
-	fmt.Printf("Developer URL: '%s'\n", developerURL)
-	
-	website := extractor.ExtractWebsite(html)
-	fmt.Printf("Website: '%s'\n", website)
-	
-	supportURL := extractor.ExtractSupportURL(html)
-	fmt.Printf("Support URL: '%s'\n", supportURL)
-	
-	privacyURL := extractor.ExtractPrivacyURL(html)
-	fmt.Printf("Privacy URL: '%s'\n", privacyURL)
-	
-	logoURL := extractor.ExtractLogo(html)
-	fmt.Printf("Logo URL: '%s'\n", logoURL)
-	
-	features := extractor.ExtractFeatures(html)
-	fmt.Printf("Features: %v\n", features)
-	
-	languages := extractor.ExtractLanguages(html)
-	fmt.Printf("Languages: '%s'\n", languages)
-	
-	fullDesc := extractor.ExtractFullDescription(html)
-	fmt.Printf("Full Description: '%s'\n", fullDesc[:min(200, len(fullDesc))]+"...")
-	
-	screenshots := extractor.ExtractScreenshots(html)
-	fmt.Printf("Screenshots: %v\n", screenshots)
-	
+	// Extract category separately since it returns two values
 	category, subcategory := extractor.ExtractCategory(html)
-	fmt.Printf("Category: '%s', Subcategory: '%s'\n", category, subcategory)
 	
-	status := extractor.ExtractStatus(html)
-	fmt.Printf("Status: %v\n", status)
+	// Populate the ordered structure
+	data := OrderedExtensionData{
+		// Basic Information
+		ID:                  extractor.ExtractID(html),
+		Slug:                extractor.ExtractSlug(html),
+		LogoURL:             extractor.ExtractLogo(html),
+		MarkdownDescription: extractor.ExtractMarkdownDescription(html),
+		
+		// Classification
+		Category:    category,
+		Subcategory: subcategory,
+		
+		// Technical Details
+		Version:     extractor.ExtractVersion(html),
+		FileSize:    extractor.ExtractFileSize(html),
+		LastUpdated: extractor.ExtractLastUpdated(html),
+		Features:    extractor.ExtractFeatures(html),
+		Languages:   extractor.ExtractLanguages(html),
+		Status:      extractor.ExtractStatus(html),
+		
+		// Ratings & Reviews
+		Rating:      extractor.ExtractRating(html),
+		ReviewCount: extractor.ExtractReviewCount(html),
+		UserCount:   extractor.ExtractUserCount(html),
+		
+		// Developer Information
+		DeveloperName: extractor.ExtractDeveloperName(html),
+		DeveloperURL:  extractor.ExtractDeveloperURL(html),
+		Website:       extractor.ExtractWebsite(html),
+		SupportURL:    extractor.ExtractSupportURL(html),
+		SupportEmail:  extractor.ExtractSupportEmail(html),
+		
+		// Media & Related
+		Screenshots:       extractor.ExtractBetterScreenshots(html),
+		RelatedExtensions: extractor.ExtractRelatedExtensions(html),
+	}
 	
-	reviewCount := extractor.ExtractReviewCount(html)
-	fmt.Printf("Review Count: '%s'\n", reviewCount)
+	// Output as formatted JSON
+	jsonBytes, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error marshaling to JSON: %v\n", err)
+		return
+	}
 	
-	privacyDetails := extractor.ExtractPrivacyDetails(html)
-	fmt.Printf("Privacy Details: %v\n", privacyDetails)
-	
-	rating := extractor.ExtractRating(html)
-	fmt.Printf("Rating: '%s'\n", rating)
-	
-	userCount := extractor.ExtractUserCount(html)
-	fmt.Printf("User Count: '%s'\n", userCount)
-	
-	betterScreenshots := extractor.ExtractBetterScreenshots(html)
-	fmt.Printf("Better Screenshots: %v\n", betterScreenshots)
-	
-	related := extractor.ExtractRelatedExtensions(html)
-	fmt.Printf("Related Extensions: %v\n", related)
+	fmt.Println(string(jsonBytes))
 }

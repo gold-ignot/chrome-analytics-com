@@ -14,6 +14,7 @@ require (
 )
 
 require (
+	github.com/JohannesKaufmann/html-to-markdown v1.6.0 // indirect
 	github.com/andybalholm/cascadia v1.3.3 // indirect
 	github.com/bytedance/sonic v1.10.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect

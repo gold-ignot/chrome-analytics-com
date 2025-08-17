@@ -17,14 +17,15 @@ type Extension struct {
 	Developer   string             `json:"developer" bson:"developer"`
 	LogoURL     string             `json:"logoUrl" bson:"logoUrl"`
 	DeveloperURL string            `json:"developerUrl" bson:"developerUrl"`
-	Website     string             `json:"website" bson:"website"`
-	SupportURL  string             `json:"supportUrl" bson:"supportUrl"`
+	Website      string             `json:"website" bson:"website"`
+	SupportURL   string             `json:"supportUrl" bson:"supportUrl"`
+	SupportEmail string             `json:"supportEmail" bson:"supportEmail"`
 	PrivacyURL  string             `json:"privacyUrl" bson:"privacyUrl"`
 	Version     string             `json:"version" bson:"version"`
 	FileSize    string             `json:"fileSize" bson:"fileSize"`
 	LastUpdated string             `json:"lastUpdated" bson:"lastUpdated"`
 	Features      []string           `json:"features" bson:"features"`
-	Languages     string             `json:"languages" bson:"languages"`
+	Languages     []string           `json:"languages" bson:"languages"`
 	Screenshots   []string           `json:"screenshots" bson:"screenshots"`
 	PrivacyDetails []string          `json:"privacyDetails" bson:"privacyDetails"`
 	Permissions []string           `json:"permissions" bson:"permissions"`
