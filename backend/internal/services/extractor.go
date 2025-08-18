@@ -202,18 +202,53 @@ func (e *Extractor) ExtractWebsite(html string) string {
 				// Look for typical developer website domains
 				if strings.Contains(href, ".com") || strings.Contains(href, ".org") || 
 				   strings.Contains(href, ".net") || strings.Contains(href, ".io") {
-					// Skip specific non-website URLs
-					if !strings.Contains(href, "/support") && !strings.Contains(href, "/privacy") && 
-					   !strings.Contains(href, "/policy") && !strings.Contains(href, "/terms") {
+					
+					// Prioritize actual websites over support/policy links
+					isMainSite := !strings.Contains(href, "/support") && !strings.Contains(href, "/privacy") && 
+								 !strings.Contains(href, "/policy") && !strings.Contains(href, "/terms") &&
+								 !strings.Contains(href, "/wiki") && !strings.Contains(href, "/issues")
+					
+					if isMainSite {
 						website = href
 						return
+					} else if website == "" {
+						// Use GitHub main repository as fallback for open source projects
+						if strings.Contains(href, "github.com") && !strings.Contains(href, "/wiki") && 
+						   !strings.Contains(href, "/issues") && !strings.Contains(href, "/graphs") &&
+						   !strings.Contains(href, "/releases") {
+							// Clean GitHub URLs by removing fragments
+							cleanURL := href
+							if idx := strings.Index(href, "#"); idx > 0 {
+								cleanURL = href[:idx]
+							}
+							website = cleanURL
+						}
 					}
 				}
 			}
 		})
 	}
 	
-	// As last resort, use the developer URL
+	// As last resort, try to derive a main repository URL from support URL if it's GitHub
+	if website == "" {
+		supportURL := e.ExtractSupportURL(html)
+		if strings.Contains(supportURL, "github.com") {
+			// Convert GitHub wiki/policy URLs to main repository URLs
+			if strings.Contains(supportURL, "/wiki/") {
+				parts := strings.Split(supportURL, "/wiki/")
+				if len(parts) > 0 {
+					website = parts[0]
+				}
+			} else if strings.Contains(supportURL, "/issues") {
+				parts := strings.Split(supportURL, "/issues")
+				if len(parts) > 0 {
+					website = parts[0]
+				}
+			}
+		}
+	}
+	
+	// Final fallback: use the developer URL
 	if website == "" {
 		website = e.ExtractDeveloperURL(html)
 	}

@@ -140,5 +140,5 @@
   (string) (len=10) "supportURL": (string) (len=53) "https://github.com/gorhill/uBlock/wiki/Privacy-policy",
   (string) (len=9) "userCount": (int) 8000000,
   (string) (len=7) "version": (string) (len=13) "2025.812.1339",
-  (string) (len=7) "website": (string) ""
+  (string) (len=7) "website": (string) (len=33) "https://github.com/gorhill/uBlock"
 }
