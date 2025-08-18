@@ -10,10 +10,10 @@ import (
 
 func main() {
 	// Read the downloaded HTML file
-	htmlBytes, err := os.ReadFile("../../test/fixtures/extension.html")
+	htmlBytes, err := os.ReadFile("test/fixtures/ublock-origin.html")
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error reading extension.html: %v\n", err)
-		fmt.Println("Please run 'go run test_extractor.go' first to download the HTML file")
+		fmt.Fprintf(os.Stderr, "Error reading ublock-origin.html: %v\n", err)
+		fmt.Println("HTML file not found. Run the comprehensive tests instead: go test ./internal/services -v")
 		return
 	}
 	

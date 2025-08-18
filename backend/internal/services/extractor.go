@@ -1,6 +1,7 @@
 package services
 
 import (
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -164,11 +165,11 @@ func (e *Extractor) ExtractSupportURL(html string) string {
 	// Look for support, help, or contact links (excluding Google/Chrome Store URLs and email links)
 	doc.Find("a").Each(func(i int, s *goquery.Selection) {
 		href, exists := s.Attr("href")
-		if exists && strings.HasPrefix(href, "http") {
+		if exists && strings.HasPrefix(href, "http") && !strings.HasPrefix(href, "mailto:") {
 			linkText := strings.ToLower(strings.TrimSpace(s.Text()))
-			if strings.Contains(linkText, "support") || strings.Contains(linkText, "help") || strings.Contains(linkText, "contact") {
-				// Skip Google/Chrome Store support URLs
-				if !strings.Contains(href, "google.com") && !strings.Contains(href, "chrome") {
+			if strings.Contains(linkText, "support") || strings.Contains(linkText, "help") || strings.Contains(linkText, "contact") || strings.Contains(linkText, "privacy") {
+				// Skip Google/Chrome Store support URLs but allow GitHub URLs
+				if !strings.Contains(href, "google.com") && !strings.Contains(href, "chrome.google.com") && !strings.Contains(href, "chromewebstore.google.com") {
 					supportURL = href
 					return
 				}
@@ -181,42 +182,59 @@ func (e *Extractor) ExtractSupportURL(html string) string {
 
 // ExtractSupportEmail extracts support/contact email addresses
 func (e *Extractor) ExtractSupportEmail(html string) string {
-	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
-	if err != nil {
-		return ""
-	}
+	// Use regex to find email addresses in the HTML
+	re := regexp.MustCompile(`([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})`)
+	matches := re.FindAllString(html, -1)
 	
-	var supportEmail string
+	// Filter out common email domains that are not useful for support
+	excludeDomains := []string{"google.com", "gmail.com", "googlemail.com", "chrome.google.com"}
 	
-	// Look for email addresses that look like contact emails
-	doc.Find("*").Each(func(i int, s *goquery.Selection) {
-		text := strings.TrimSpace(s.Text())
-		// Look for email addresses that look like contact emails
-		if strings.Contains(text, "@") && len(text) < 50 { // Reasonable length limit
-			// Look for emails that suggest contact/support
-			if strings.Contains(strings.ToLower(text), "info@") || 
-			   strings.Contains(strings.ToLower(text), "support@") || 
-			   strings.Contains(strings.ToLower(text), "contact@") ||
-			   strings.Contains(strings.ToLower(text), "help@") {
-				// Simple email extraction using regex-like approach
-				words := strings.Fields(text)
-				for _, word := range words {
-					// Check if word looks like an email
-					if strings.Contains(word, "@") && strings.Contains(word, ".") && len(word) < 50 {
-						// Clean up the word (remove trailing punctuation)
-						email := strings.TrimRight(word, ".,;!?")
-						// Basic email validation
-						if strings.Count(email, "@") == 1 && strings.Contains(email, ".") {
-							supportEmail = email
-							return
-						}
-					}
-				}
+	// First pass: look for common support email patterns
+	for _, email := range matches {
+		emailLower := strings.ToLower(email)
+		
+		// Skip excluded domains
+		isExcluded := false
+		for _, domain := range excludeDomains {
+			if strings.Contains(emailLower, "@"+domain) {
+				isExcluded = true
+				break
 			}
 		}
-	})
+		if isExcluded {
+			continue
+		}
+		
+		// Look for common support email patterns
+		if strings.Contains(emailLower, "info@") || 
+		   strings.Contains(emailLower, "support@") || 
+		   strings.Contains(emailLower, "contact@") ||
+		   strings.Contains(emailLower, "help@") ||
+		   strings.Contains(emailLower, "hello@") ||
+		   strings.Contains(emailLower, "mail@") {
+			return email
+		}
+	}
 	
-	return supportEmail
+	// Second pass: if no common support patterns found, return the first non-excluded email
+	// This catches developer emails that might not follow common patterns
+	for _, email := range matches {
+		emailLower := strings.ToLower(email)
+		
+		// Skip excluded domains
+		isExcluded := false
+		for _, domain := range excludeDomains {
+			if strings.Contains(emailLower, "@"+domain) {
+				isExcluded = true
+				break
+			}
+		}
+		if !isExcluded {
+			return email
+		}
+	}
+	
+	return ""
 }
 
 // ExtractPrivacyURL extracts the privacy policy URL using CSS selectors
@@ -688,41 +706,16 @@ func (e *Extractor) ExtractUserCount(html string) int {
 	
 	var userCountStr string
 	
-	// Look for user count in a more targeted way - search for specific patterns
+	// Look for patterns like "19,000,000 users" in text nodes
 	doc.Find("*").Each(func(i int, s *goquery.Selection) {
 		text := strings.TrimSpace(s.Text())
-		// Look for patterns like "1,000,000+ users" or "Tools1,000,000 users" (concatenated)
-		if strings.Contains(text, "users") {
-			// This handles cases where text is concatenated like "Tools1,000,000 users"
-			
-			// Find the pattern in the text
-			if idx := strings.Index(text, "users"); idx != -1 {
-				// Look backwards from "users" to find the number
-				beforeUsers := text[:idx]
-				words := strings.Fields(beforeUsers)
-				if len(words) > 0 {
-					lastWord := words[len(words)-1]
-					// Check if last word is a number (might be concatenated with other text)
-					for j := len(lastWord) - 1; j >= 0; j-- {
-						if lastWord[j] >= '0' && lastWord[j] <= '9' || lastWord[j] == ',' || lastWord[j] == '.' {
-							continue
-						} else {
-							// Found non-numeric character, extract from j+1 onwards
-							candidate := lastWord[j+1:]
-							if strings.ContainsAny(candidate, "0123456789") && len(candidate) > 3 {
-								userCountStr = candidate
-								return
-							}
-							break
-						}
-					}
-					// If the whole lastWord is numeric
-					if strings.ContainsAny(lastWord, "0123456789") && len(lastWord) > 3 {
-						userCountStr = lastWord
-						return
-					}
-				}
-			}
+		
+		// Use regex to find patterns like "1,000,000 users" or "19,000,000 users"
+		re := regexp.MustCompile(`(\d{1,3}(?:,\d{3})*(?:\.\d+)?[KM]?)\s+users`)
+		matches := re.FindStringSubmatch(text)
+		if len(matches) > 1 {
+			userCountStr = matches[1]
+			return
 		}
 	})
 	
@@ -740,100 +733,54 @@ func (e *Extractor) ExtractRelatedExtensions(html string) []map[string]string {
 	var related []map[string]string
 	seenExtensions := make(map[string]bool)
 	
-	// Look for the "Related" section specifically by finding h2 with "Related" text
-	doc.Find("h2").Each(func(i int, h2 *goquery.Selection) {
-		h2Text := strings.ToLower(strings.TrimSpace(h2.Text()))
-		if h2Text == "related" {
-			// Find the parent section that contains this h2
-			section := h2.Parent()
-			if section.Length() == 0 {
-				section = h2.ParentsFiltered("section").First()
+	// Look for sections that might contain related extensions
+	// This is often in the sidebar or bottom of the page
+	doc.Find("a").Each(func(i int, link *goquery.Selection) {
+		href, exists := link.Attr("href")
+		if exists && strings.Contains(href, "/detail/") {
+			// Skip the current extension's own links (reviews, support, report)
+			if strings.Contains(href, "/reviews") || strings.Contains(href, "/support") || strings.Contains(href, "/report") {
+				return
 			}
 			
-			// Look for extension links within this related section
-			section.Find("a").Each(func(j int, link *goquery.Selection) {
-				href, exists := link.Attr("href")
-				if exists && strings.Contains(href, "/detail/") {
-					// Extract extension name from the href path
-					parts := strings.Split(href, "/")
-					var name string
-					var extensionID string
-					
-					// Parse URL like "/detail/upload-file-for-chatgpt/mflpknlcbonicfgikkmlloejpaigjapm"
-					for i, part := range parts {
-						if part == "detail" && i+2 < len(parts) {
-							name = parts[i+1]
-							extensionID = parts[i+2]
-							break
-						}
-					}
-					
-					// Clean up the name by replacing dashes with spaces and capitalizing
-					if name != "" && extensionID != "" {
-						cleanName := strings.ReplaceAll(name, "-", " ")
-						cleanName = strings.Title(cleanName)
-						
-						key := extensionID // Use extension ID as unique key
-						if !seenExtensions[key] {
-							seenExtensions[key] = true
-							ext := map[string]string{
-								"name": cleanName,
-								"url":  href,
-								"id":   extensionID,
-							}
-							related = append(related, ext)
-						}
-					}
+			// Extract extension info from href
+			parts := strings.Split(href, "/")
+			var name string
+			var extensionID string
+			
+			// Parse URL like "./detail/extension-name/extensionid" or "/detail/extension-name/extensionid" 
+			for j, part := range parts {
+				if part == "detail" && j+2 < len(parts) {
+					name = parts[j+1]
+					extensionID = parts[j+2]
+					break
 				}
-			})
+			}
+			
+			// Get the link text as the extension name if available
+			linkText := strings.TrimSpace(link.Text())
+			if linkText != "" && !strings.Contains(strings.ToLower(linkText), "rating") {
+				name = linkText
+			} else if name != "" {
+				// Clean up the name from URL slug
+				name = strings.ReplaceAll(name, "-", " ")
+				name = strings.Title(name)
+			}
+			
+			if name != "" && extensionID != "" && len(extensionID) == 32 {
+				key := extensionID // Use extension ID as unique key
+				if !seenExtensions[key] {
+					seenExtensions[key] = true
+					ext := map[string]string{
+						"name": name,
+						"url":  href,
+						"id":   extensionID,
+					}
+					related = append(related, ext)
+				}
+			}
 		}
 	})
-	
-	// If no related extensions found via h2, look for sections with "related" text
-	if len(related) == 0 {
-		doc.Find("div, section").Each(func(i int, s *goquery.Selection) {
-			text := strings.ToLower(strings.TrimSpace(s.Text()))
-			if strings.Contains(text, "related") || strings.Contains(text, "recommended") || strings.Contains(text, "similar") {
-				// Look for extension links within this section
-				s.Find("a").Each(func(j int, link *goquery.Selection) {
-					href, exists := link.Attr("href")
-					if exists && strings.Contains(href, "/detail/") {
-						// Extract extension info from href
-						parts := strings.Split(href, "/")
-						var name string
-						var extensionID string
-						
-						for i, part := range parts {
-							if part == "detail" && i+2 < len(parts) {
-								name = parts[i+1]
-								extensionID = parts[i+2]
-								break
-							}
-						}
-						
-						if name != "" && extensionID != "" {
-							cleanName := strings.ReplaceAll(name, "-", " ")
-							cleanName = strings.Title(cleanName)
-							
-							key := extensionID
-							if !seenExtensions[key] {
-								seenExtensions[key] = true
-								ext := map[string]string{
-									"name": cleanName,
-									"url":  href,
-									"id":   extensionID,
-								}
-								related = append(related, ext)
-								if len(related) >= 10 { // Limit to reasonable number
-									return
-								}
-							}
-						}
-					}
-				})
-			}
-		})
-	}
 	
 	return related
 }
@@ -1083,7 +1030,7 @@ func (e *Extractor) ExtractDeveloperName(html string) string {
 	
 	var developerName string
 	
-	// Look for "Offered by" section
+	// Method 1: Look for "Offered by" section
 	doc.Find("li").Each(func(i int, s *goquery.Selection) {
 		text := strings.TrimSpace(s.Text())
 		if strings.Contains(text, "Offered by") {
@@ -1098,6 +1045,43 @@ func (e *Extractor) ExtractDeveloperName(html string) string {
 			}
 		}
 	})
+	
+	// Method 2: If no "Offered by" found, look for developer name in common developer section classes
+	if developerName == "" {
+		// Look for common developer section selectors
+		selectors := []string{".mdSapd", ".developer-name", ".yyjN4 .mdSapd"}
+		
+		for _, selector := range selectors {
+			doc.Find(selector).Each(func(i int, s *goquery.Selection) {
+				text := strings.TrimSpace(s.Text())
+				if text != "" {
+					// For company names with addresses, extract just the company name part
+					// Common patterns: "COMPANY NAME\nAddress..." or "COMPANY NAME, INC.Address..."
+					
+					// First try to split by newlines
+					lines := strings.Split(text, "\n")
+					if len(lines) > 0 {
+						firstLine := strings.TrimSpace(lines[0])
+						
+						// Check if the first line contains company name + address on same line
+						// Look for patterns like "COMPANY, INC.12333 Address" (no space after company)
+						// Use regex to extract company name ending with common business suffixes
+						re := regexp.MustCompile(`^([^0-9]*(?:INC\.?|LLC\.?|CORP\.?|CO\.?|LTD\.?|COMPANY\.?))\s*[0-9].*`)
+						matches := re.FindStringSubmatch(firstLine)
+						if len(matches) > 1 {
+							developerName = strings.TrimSpace(matches[1])
+						} else {
+							// If no business suffix pattern, just take the first line
+							developerName = firstLine
+						}
+					}
+				}
+			})
+			if developerName != "" {
+				break
+			}
+		}
+	}
 	
 	return developerName
 }
