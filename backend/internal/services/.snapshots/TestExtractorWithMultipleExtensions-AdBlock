@@ -1,5 +1,6 @@
-(map[string]interface {}) (len=22) {
+(map[string]interface {}) (len=24) {
   (string) (len=8) "category": (string) (len=9) "Extension",
+  (string) (len=12) "categorySlug": (string) (len=9) "extension",
   (string) (len=13) "developerName": (string) (len=13) "ADBLOCK, INC.",
   (string) (len=12) "developerURL": (string) (len=22) "https://getadblock.com",
   (string) (len=8) "features": ([]string) (len=1) {
@@ -42,7 +43,7 @@
     (string) (len=9) "日本語",
     (string) (len=9) "한국어"
   },
-  (string) (len=11) "lastUpdated": (string) (len=15) "August 14, 2025",
+  (string) (len=11) "lastUpdated": (string) (len=10) "2025-08-14",
   (string) (len=7) "logoURL": (string) (len=128) "https://lh3.googleusercontent.com/mgNKV-3VMXD556WVUiWSbcukQQN-il4Zlqq03efTjG2B5j9YP7Fxr3idTQ_G0JFD7E6o4TMwvTQTleDn_8UdFLf5VQ=s60",
   (string) (len=19) "markdownDescription": (string) (len=4729) "Block ads on YouTube and your favorite sites for free\n\nLooking for an alternative adblocker to uBlock Origin? We are and always will be Chrome-compatible with the latest MV3 updates.\n\nAdBlock, the ad blocker trusted by over 60 million users worldwide, gives you a better browsing experience and more control over your online privacy.\n\n➤ Key free features:\n\n\\- Comprehensive ad-blocking: Say goodbye to disruptive pop-ups, banners, and video ads. Use AdBlock for YouTube, Facebook, and more, enhancing your browsing experience while boosting productivity.\n\n\\- Privacy protection: More than just an ad blocker, AdBlock can disable third-party tracking making it more difficult for advertisers to track your behavior as you browse.\n\n\\- Enhanced security: Browse safely by reducing your risk of cyber fraud and attacks from malicious ads containing malware and phishing scams that compromise your device and target your accounts, providing peace of mind while exploring the web.\n\n\\- Customization options: Tailor your ad-blocking preferences with advanced filters, allowlists, and dark mode, empowering you to personalize your browsing environment and optimize your online experience.\n\n\\- Friendly support: Get fast and reliable support from the dedicated AdBlock team and access a robust Help Center for assistance with any queries or issues, ensuring a hassle-free experience.\n\n➤ Block more than just ads with additional premium features:\n\n\\- Block additional distractions: Manage distracting elements on websites such as auto-play videos and animated GIFs, enabling focused browsing and enhanced productivity.\n\n\\- Hide cookie banners: Automatically hide annoying cookie consent banners that clutter websites, providing a cleaner and more enjoyable browsing experience.\n\n\\- Sync across devices: Backup and sync your whitelists and custom ad-blocking rules seamlessly across multiple Chrome profiles and devices, ensuring a consistent browsing experience.\n\n\\- Swap ads for fun images: Replace blocked ads with customizable images such as cats, dogs, or landscapes, adding a touch of personality to your browsing experience.\n\n\\- Change your theme: Choose from various colorful themes to customize the appearance of your ad-blocking interface, matching your preferences and style.\n\n➤ About Us:\n\nDownload AdBlock for free and experience ad-free browsing on all your favorite websites. Rest assured, this extension prioritizes user privacy and security, ensuring that your browsing history and personal information remain confidential. The extension begins blocking annoying and intrusive ads the moment you install it - you can just set it and forget it. Or you can customize your ad experience further by choosing to see unobtrusive ads or block them entirely, giving you full control over your browsing journey.\n\nWe believe in empowering users to dictate their online experience, so we participate in the Acceptable Ads program. This ensures that non-intrusive ads are not blocked by default, allowing users to opt-out easily within the extension’s settings.\n\n➤ Changelogs:\n\\[October 2024\\] Added 7-day smart allowlisting to give users more control over which sites they allowlist; also contains a potential fix for a bug where some users reported no longer having subscriptions due to corrupted data to restore default subscriptions\n\n\\[Summer 2024\\] Minor fix for premium filter lists being turn off after MV3 migration. Added ad-blocking count to show users the number of total requests blocked.\n\n\\[May 2024\\] Rolled out the Manifest V3 version of AdBlock and released a new AdBlock menu design. Premium users can now block cookie banners and other distractions in fewer clicks.\n\n\\[Jan and Feb 2024\\] Released the ability to block cookie banners for Premium, better performance on YouTube and other sites across the web; various bug fixes; added support in languages including Japanese and Turkish, Hungarian, Thai, Croatian, Serbian, Slovenian, Bosnian, and more\n\n\\[Dec 2023\\] Added new functionality that skips video ads while you stream, better functionality while you browse\n\n\\[Nov 2023\\] Various bug fixes including the toolbar icon incorrectly showing a site is allowlisted while the extension is still active\n\n\\[Fall 2023\\] Fixed a few bugs so users have a smoother experience using the ad-blocking extension, including a broken link in our help flow. Improved infrastructure that increases the functionality and longevity of the extension.\n\n\\[Spring 2023\\] Improved YouTube and Twitch channel allowlists as you can now allow ads on specific streaming channels, not just individual videos.\n\n\\[Fall 2022\\] Improved functionality, improved infrastructure for Manifest V3, various bug fixes including lags on websites",
   (string) (len=6) "rating": (float64) 4.5,
@@ -50,62 +51,62 @@
     (map[string]string) (len=3) {
       (string) (len=2) "id": (string) (len=32) "lgblnfidahcdcjddiepkckcfdhpknnjh",
       (string) (len=4) "name": (string) (len=25) "Ad Blocker Stands Adblock",
-      (string) (len=3) "url": (string) (len=67) "./detail/ad-blocker-stands-adblock/lgblnfidahcdcjddiepkckcfdhpknnjh"
+      (string) (len=3) "url": (string) (len=99) "https://chromewebstore.google.com/detail/ad-blocker-stands-adblock/lgblnfidahcdcjddiepkckcfdhpknnjh"
     },
     (map[string]string) (len=3) {
       (string) (len=2) "id": (string) (len=32) "mdomkpjejpboocpojfikalapgholajdc",
       (string) (len=4) "name": (string) (len=18) "Adblock For Twitch",
-      (string) (len=3) "url": (string) (len=60) "./detail/adblock-for-twitch/mdomkpjejpboocpojfikalapgholajdc"
+      (string) (len=3) "url": (string) (len=92) "https://chromewebstore.google.com/detail/adblock-for-twitch/mdomkpjejpboocpojfikalapgholajdc"
     },
     (map[string]string) (len=3) {
       (string) (len=2) "id": (string) (len=32) "gcfcpohokifjldeandkfjoboemihipmb",
       (string) (len=4) "name": (string) (len=22) "Undetectable Adblocker",
-      (string) (len=3) "url": (string) (len=64) "./detail/undetectable-adblocker/gcfcpohokifjldeandkfjoboemihipmb"
+      (string) (len=3) "url": (string) (len=96) "https://chromewebstore.google.com/detail/undetectable-adblocker/gcfcpohokifjldeandkfjoboemihipmb"
     },
     (map[string]string) (len=3) {
       (string) (len=2) "id": (string) (len=32) "lehcglgkjkamolcflammloedahjocbbg",
       (string) (len=4) "name": (string) (len=14) "Stream Cleaner",
-      (string) (len=3) "url": (string) (len=56) "./detail/stream-cleaner/lehcglgkjkamolcflammloedahjocbbg"
+      (string) (len=3) "url": (string) (len=88) "https://chromewebstore.google.com/detail/stream-cleaner/lehcglgkjkamolcflammloedahjocbbg"
     },
     (map[string]string) (len=3) {
       (string) (len=2) "id": (string) (len=32) "cfhdojbkjhnklbpkdaibdccddilifddb",
       (string) (len=4) "name": (string) (len=25) "Adblock Plus Free Ad Bloc",
-      (string) (len=3) "url": (string) (len=67) "./detail/adblock-plus-free-ad-bloc/cfhdojbkjhnklbpkdaibdccddilifddb"
+      (string) (len=3) "url": (string) (len=99) "https://chromewebstore.google.com/detail/adblock-plus-free-ad-bloc/cfhdojbkjhnklbpkdaibdccddilifddb"
     },
     (map[string]string) (len=3) {
       (string) (len=2) "id": (string) (len=32) "cmedhionkhpnakcndndgjdbohmhepckk",
       (string) (len=4) "name": (string) (len=19) "Adblock For Youtube",
-      (string) (len=3) "url": (string) (len=61) "./detail/adblock-for-youtube/cmedhionkhpnakcndndgjdbohmhepckk"
+      (string) (len=3) "url": (string) (len=93) "https://chromewebstore.google.com/detail/adblock-for-youtube/cmedhionkhpnakcndndgjdbohmhepckk"
     },
     (map[string]string) (len=3) {
       (string) (len=2) "id": (string) (len=32) "emngkmlligggbbiioginlkphcmffbncb",
       (string) (len=4) "name": (string) (len=18) "Adblock On Youtube",
-      (string) (len=3) "url": (string) (len=60) "./detail/adblock-on-youtube/emngkmlligggbbiioginlkphcmffbncb"
+      (string) (len=3) "url": (string) (len=92) "https://chromewebstore.google.com/detail/adblock-on-youtube/emngkmlligggbbiioginlkphcmffbncb"
     },
     (map[string]string) (len=3) {
       (string) (len=2) "id": (string) (len=32) "efdkmejbldmccndljocbkmpankbjhaao",
       (string) (len=4) "name": (string) (len=9) "Ttv Noads",
-      (string) (len=3) "url": (string) (len=51) "./detail/ttv-noads/efdkmejbldmccndljocbkmpankbjhaao"
+      (string) (len=3) "url": (string) (len=83) "https://chromewebstore.google.com/detail/ttv-noads/efdkmejbldmccndljocbkmpankbjhaao"
     },
     (map[string]string) (len=3) {
       (string) (len=2) "id": (string) (len=32) "jiaopkfkampgnnkckajcbdgannoipcne",
       (string) (len=4) "name": (string) (len=25) "Adblock Unlimited Adblock",
-      (string) (len=3) "url": (string) (len=67) "./detail/adblock-unlimited-adblock/jiaopkfkampgnnkckajcbdgannoipcne"
+      (string) (len=3) "url": (string) (len=99) "https://chromewebstore.google.com/detail/adblock-unlimited-adblock/jiaopkfkampgnnkckajcbdgannoipcne"
     },
     (map[string]string) (len=3) {
       (string) (len=2) "id": (string) (len=32) "bkkbcggnhapdmkeljlodobbkopceiche",
       (string) (len=4) "name": (string) (len=25) "Pop Up Blocker For Chrome",
-      (string) (len=3) "url": (string) (len=67) "./detail/pop-up-blocker-for-chrome/bkkbcggnhapdmkeljlodobbkopceiche"
+      (string) (len=3) "url": (string) (len=99) "https://chromewebstore.google.com/detail/pop-up-blocker-for-chrome/bkkbcggnhapdmkeljlodobbkopceiche"
     },
     (map[string]string) (len=3) {
       (string) (len=2) "id": (string) (len=32) "ohahllgiabjaoigichmmfljhkcfikeof",
       (string) (len=4) "name": (string) (len=18) "Adblocker Ultimate",
-      (string) (len=3) "url": (string) (len=60) "./detail/adblocker-ultimate/ohahllgiabjaoigichmmfljhkcfikeof"
+      (string) (len=3) "url": (string) (len=92) "https://chromewebstore.google.com/detail/adblocker-ultimate/ohahllgiabjaoigichmmfljhkcfikeof"
     },
     (map[string]string) (len=3) {
       (string) (len=2) "id": (string) (len=32) "gikbpaigdncgooaokibbmbmginfbgjaa",
       (string) (len=4) "name": (string) (len=11) "Stopall Ads",
-      (string) (len=3) "url": (string) (len=53) "./detail/stopall-ads/gikbpaigdncgooaokibbmbmginfbgjaa"
+      (string) (len=3) "url": (string) (len=85) "https://chromewebstore.google.com/detail/stopall-ads/gikbpaigdncgooaokibbmbmginfbgjaa"
     }
   },
   (string) (len=11) "reviewCount": (int) 290500,
@@ -121,6 +122,7 @@
     (string) (len=8) "Featured"
   },
   (string) (len=11) "subcategory": (string) (len=19) "Workflow & Planning",
+  (string) (len=15) "subcategorySlug": (string) (len=17) "workflow-planning",
   (string) (len=12) "supportEmail": (string) (len=19) "help@getadblock.com",
   (string) (len=10) "supportURL": (string) (len=29) "http://getadblock.com/support",
   (string) (len=9) "userCount": (int) 58000000,

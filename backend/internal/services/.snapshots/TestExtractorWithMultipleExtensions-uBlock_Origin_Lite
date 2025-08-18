@@ -1,5 +1,6 @@
-(map[string]interface {}) (len=22) {
+(map[string]interface {}) (len=24) {
   (string) (len=8) "category": (string) (len=9) "Extension",
+  (string) (len=12) "categorySlug": (string) (len=9) "extension",
   (string) (len=13) "developerName": (string) (len=22) "Raymond Hill (gorhill)",
   (string) (len=12) "developerURL": (string) "",
   (string) (len=8) "features": ([]string) <nil>,
@@ -58,7 +59,7 @@
     (string) (len=9) "日本語",
     (string) (len=9) "한국어"
   },
-  (string) (len=11) "lastUpdated": (string) (len=15) "August 14, 2025",
+  (string) (len=11) "lastUpdated": (string) (len=10) "2025-08-14",
   (string) (len=7) "logoURL": (string) (len=128) "https://lh3.googleusercontent.com/lsanoOfx5N_t-7gh5Qg9FGIirVEjdCqalZXyLZYRd5d7Fydm83FQhu4Oq0JmlRyMtyF_LfwuQQZyKRTHs6emnFirsA=s60",
   (string) (len=19) "markdownDescription": (string) (len=897) "An efficient content blocker. Blocks ads, trackers, miners, and more immediately upon installation.\n\nuBO Lite (uBOL) is an efficient MV3-based content blocker.\n\nThe default ruleset corresponds to uBlock Origin's default filterset:\n\n\\- uBlock Origin's built-in filter lists\n\\- EasyList\n\\- EasyPrivacy\n\\- Peter Lowe’s Ad and tracking server list\n\nYou can enable more rulesets by visiting the options page -- click the \\_Cogs\\_ icon in the popup panel.\n\nuBOL is entirely declarative, meaning there is no need for a permanent uBOL process for the filtering to occur, and CSS/JS injection-based content filtering is performed reliably by the browser itself rather than by the extension. This means that uBOL itself does not consume CPU/memory resources while content blocking is ongoing -- uBOL's service worker process is required \\_only\\_ when you interact with the popup panel or the option pages.",
   (string) (len=6) "rating": (float64) 4.5,
@@ -66,62 +67,62 @@
     (map[string]string) (len=3) {
       (string) (len=2) "id": (string) (len=32) "enamippconapkdmgfgjchkhakpfinmaj",
       (string) (len=4) "name": (string) (len=25) "Dearrow Better Titles And",
-      (string) (len=3) "url": (string) (len=67) "./detail/dearrow-better-titles-and/enamippconapkdmgfgjchkhakpfinmaj"
+      (string) (len=3) "url": (string) (len=99) "https://chromewebstore.google.com/detail/dearrow-better-titles-and/enamippconapkdmgfgjchkhakpfinmaj"
     },
     (map[string]string) (len=3) {
       (string) (len=2) "id": (string) (len=32) "gmjaaefflbggfiacjihajgijemdlhkeb",
       (string) (len=4) "name": (string) (len=25) "Adshield Ultimate Ad Bloc",
-      (string) (len=3) "url": (string) (len=67) "./detail/adshield-ultimate-ad-bloc/gmjaaefflbggfiacjihajgijemdlhkeb"
+      (string) (len=3) "url": (string) (len=99) "https://chromewebstore.google.com/detail/adshield-ultimate-ad-bloc/gmjaaefflbggfiacjihajgijemdlhkeb"
     },
     (map[string]string) (len=3) {
       (string) (len=2) "id": (string) (len=32) "lehcglgkjkamolcflammloedahjocbbg",
       (string) (len=4) "name": (string) (len=14) "Stream Cleaner",
-      (string) (len=3) "url": (string) (len=56) "./detail/stream-cleaner/lehcglgkjkamolcflammloedahjocbbg"
+      (string) (len=3) "url": (string) (len=88) "https://chromewebstore.google.com/detail/stream-cleaner/lehcglgkjkamolcflammloedahjocbbg"
     },
     (map[string]string) (len=3) {
       (string) (len=2) "id": (string) (len=32) "edibdbjcniadpccecjdfdjjppcpchdlm",
       (string) (len=4) "name": (string) (len=25) "I Still Dont Care About C",
-      (string) (len=3) "url": (string) (len=67) "./detail/i-still-dont-care-about-c/edibdbjcniadpccecjdfdjjppcpchdlm"
+      (string) (len=3) "url": (string) (len=99) "https://chromewebstore.google.com/detail/i-still-dont-care-about-c/edibdbjcniadpccecjdfdjjppcpchdlm"
     },
     (map[string]string) (len=3) {
       (string) (len=2) "id": (string) (len=32) "mnjggcdmjocbbbhaepdhchncahnbgone",
       (string) (len=4) "name": (string) (len=24) "Sponsorblock For Youtube",
-      (string) (len=3) "url": (string) (len=66) "./detail/sponsorblock-for-youtube/mnjggcdmjocbbbhaepdhchncahnbgone"
+      (string) (len=3) "url": (string) (len=98) "https://chromewebstore.google.com/detail/sponsorblock-for-youtube/mnjggcdmjocbbbhaepdhchncahnbgone"
     },
     (map[string]string) (len=3) {
       (string) (len=2) "id": (string) (len=32) "cjpalhdlnbpafiamejdnhcphjbkeiagm",
       (string) (len=4) "name": (string) (len=13) "Ublock Origin",
-      (string) (len=3) "url": (string) (len=55) "./detail/ublock-origin/cjpalhdlnbpafiamejdnhcphjbkeiagm"
+      (string) (len=3) "url": (string) (len=87) "https://chromewebstore.google.com/detail/ublock-origin/cjpalhdlnbpafiamejdnhcphjbkeiagm"
     },
     (map[string]string) (len=3) {
       (string) (len=2) "id": (string) (len=32) "epcnnfbjfcgphgdmggkamkmgojdagdnn",
       (string) (len=4) "name": (string) (len=6) "Ublock",
-      (string) (len=3) "url": (string) (len=48) "./detail/ublock/epcnnfbjfcgphgdmggkamkmgojdagdnn"
+      (string) (len=3) "url": (string) (len=80) "https://chromewebstore.google.com/detail/ublock/epcnnfbjfcgphgdmggkamkmgojdagdnn"
     },
     (map[string]string) (len=3) {
       (string) (len=2) "id": (string) (len=32) "gkeojjjcdcopjkbelgbcpckplegclfeg",
       (string) (len=4) "name": (string) (len=13) "Adguard Extra",
-      (string) (len=3) "url": (string) (len=55) "./detail/adguard-extra/gkeojjjcdcopjkbelgbcpckplegclfeg"
+      (string) (len=3) "url": (string) (len=87) "https://chromewebstore.google.com/detail/adguard-extra/gkeojjjcdcopjkbelgbcpckplegclfeg"
     },
     (map[string]string) (len=3) {
       (string) (len=2) "id": (string) (len=32) "mglpocjcjbekdckiahfhagndealpkpbj",
       (string) (len=4) "name": (string) (len=18) "Adguard Extra Beta",
-      (string) (len=3) "url": (string) (len=60) "./detail/adguard-extra-beta/mglpocjcjbekdckiahfhagndealpkpbj"
+      (string) (len=3) "url": (string) (len=92) "https://chromewebstore.google.com/detail/adguard-extra-beta/mglpocjcjbekdckiahfhagndealpkpbj"
     },
     (map[string]string) (len=3) {
       (string) (len=2) "id": (string) (len=32) "famhaodemcealnpfepcfbnofjjcccjap",
       (string) (len=4) "name": (string) (len=25) "Youtube Adblock Coffee Br",
-      (string) (len=3) "url": (string) (len=67) "./detail/youtube-adblock-coffee-br/famhaodemcealnpfepcfbnofjjcccjap"
+      (string) (len=3) "url": (string) (len=99) "https://chromewebstore.google.com/detail/youtube-adblock-coffee-br/famhaodemcealnpfepcfbnofjjcccjap"
     },
     (map[string]string) (len=3) {
       (string) (len=2) "id": (string) (len=32) "apjcbfpjihpedihablmalmbbhjpklbdf",
       (string) (len=4) "name": (string) (len=22) "Adguard Adblocker Beta",
-      (string) (len=3) "url": (string) (len=64) "./detail/adguard-adblocker-beta/apjcbfpjihpedihablmalmbbhjpklbdf"
+      (string) (len=3) "url": (string) (len=96) "https://chromewebstore.google.com/detail/adguard-adblocker-beta/apjcbfpjihpedihablmalmbbhjpklbdf"
     },
     (map[string]string) (len=3) {
       (string) (len=2) "id": (string) (len=32) "bpaoeijjlplfjbagceilcgbkcdjbomjd",
       (string) (len=4) "name": (string) (len=11) "Ttv Lol Pro",
-      (string) (len=3) "url": (string) (len=53) "./detail/ttv-lol-pro/bpaoeijjlplfjbagceilcgbkcdjbomjd"
+      (string) (len=3) "url": (string) (len=85) "https://chromewebstore.google.com/detail/ttv-lol-pro/bpaoeijjlplfjbagceilcgbkcdjbomjd"
     }
   },
   (string) (len=11) "reviewCount": (int) 1900,
@@ -134,6 +135,7 @@
     (string) (len=8) "Featured"
   },
   (string) (len=11) "subcategory": (string) (len=18) "Privacy & Security",
+  (string) (len=15) "subcategorySlug": (string) (len=16) "privacy-security",
   (string) (len=12) "supportEmail": (string) (len=19) "ubo@raymondhill.net",
   (string) (len=10) "supportURL": (string) (len=53) "https://github.com/gorhill/uBlock/wiki/Privacy-policy",
   (string) (len=9) "userCount": (int) 8000000,

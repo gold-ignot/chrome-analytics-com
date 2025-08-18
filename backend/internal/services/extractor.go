@@ -4,6 +4,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	md "github.com/JohannesKaufmann/html-to-markdown"
@@ -15,6 +16,24 @@ type Extractor struct{}
 // NewExtractor creates a new extractor instance
 func NewExtractor() *Extractor {
 	return &Extractor{}
+}
+
+// generateSlug converts a string to a URL-friendly slug
+func (e *Extractor) generateSlug(text string) string {
+	if text == "" {
+		return ""
+	}
+	
+	// Convert to lowercase
+	slug := strings.ToLower(text)
+	
+	// Replace spaces and special characters with hyphens
+	slug = regexp.MustCompile(`[^\p{L}\p{N}]+`).ReplaceAllString(slug, "-")
+	
+	// Remove leading and trailing hyphens
+	slug = strings.Trim(slug, "-")
+	
+	return slug
 }
 
 // ExtractVersion extracts the extension version using CSS selectors
@@ -69,6 +88,31 @@ func (e *Extractor) ExtractLastUpdated(html string) string {
 		}
 	})
 	return updated
+}
+
+// ExtractLastUpdatedDate extracts the last updated date and parses it to ISO 8601 format
+func (e *Extractor) ExtractLastUpdatedDate(html string) string {
+	dateStr := e.ExtractLastUpdated(html)
+	if dateStr == "" {
+		return ""
+	}
+	
+	// Parse formats like "July 12, 2025" or "August 14, 2025"
+	layouts := []string{
+		"January 2, 2006",
+		"Jan 2, 2006",
+		"January 02, 2006",
+		"Jan 02, 2006",
+	}
+	
+	for _, layout := range layouts {
+		if parsedTime, err := time.Parse(layout, dateStr); err == nil {
+			return parsedTime.Format("2006-01-02")
+		}
+	}
+	
+	// If parsing fails, return the original string
+	return dateStr
 }
 
 // ExtractDeveloperURL extracts the developer's website URL using CSS selectors
@@ -131,7 +175,7 @@ func (e *Extractor) ExtractWebsite(html string) string {
 	
 	var website string
 	
-	// Look for specific website links
+	// Look for specific website links first
 	doc.Find("a").Each(func(i int, s *goquery.Selection) {
 		href, exists := s.Attr("href")
 		if exists && strings.HasPrefix(href, "http") {
@@ -145,7 +189,31 @@ func (e *Extractor) ExtractWebsite(html string) string {
 		}
 	})
 	
-	// If no specific website link found, use the developer URL as website
+	// If no specific website link found, look for common developer website patterns
+	if website == "" {
+		doc.Find("a").Each(func(i int, s *goquery.Selection) {
+			href, exists := s.Attr("href")
+			if exists && strings.HasPrefix(href, "http") {
+				// Skip Google/Chrome URLs but allow GitHub for developer projects
+				if strings.Contains(href, "google.com") || strings.Contains(href, "chrome") {
+					return
+				}
+				
+				// Look for typical developer website domains
+				if strings.Contains(href, ".com") || strings.Contains(href, ".org") || 
+				   strings.Contains(href, ".net") || strings.Contains(href, ".io") {
+					// Skip specific non-website URLs
+					if !strings.Contains(href, "/support") && !strings.Contains(href, "/privacy") && 
+					   !strings.Contains(href, "/policy") && !strings.Contains(href, "/terms") {
+						website = href
+						return
+					}
+				}
+			}
+		})
+	}
+	
+	// As last resort, use the developer URL
 	if website == "" {
 		website = e.ExtractDeveloperURL(html)
 	}
@@ -478,6 +546,18 @@ func (e *Extractor) ExtractCategory(html string) (string, string) {
 	return category, subcategory
 }
 
+// ExtractCategorySlug extracts the category and returns a URL-friendly slug
+func (e *Extractor) ExtractCategorySlug(html string) string {
+	category, _ := e.ExtractCategory(html)
+	return e.generateSlug(category)
+}
+
+// ExtractSubcategorySlug extracts the subcategory and returns a URL-friendly slug
+func (e *Extractor) ExtractSubcategorySlug(html string) string {
+	_, subcategory := e.ExtractCategory(html)
+	return e.generateSlug(subcategory)
+}
+
 // ExtractStatus extracts status like "Featured"
 func (e *Extractor) ExtractStatus(html string) []string {
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
@@ -771,9 +851,21 @@ func (e *Extractor) ExtractRelatedExtensions(html string) []map[string]string {
 				key := extensionID // Use extension ID as unique key
 				if !seenExtensions[key] {
 					seenExtensions[key] = true
+					
+					// Convert relative URLs to absolute Chrome Web Store URLs
+					cleanURL := href
+					if strings.HasPrefix(href, "./") {
+						cleanURL = strings.TrimPrefix(href, "./")
+					} else if strings.HasPrefix(href, "/") {
+						cleanURL = strings.TrimPrefix(href, "/")
+					}
+					
+					// Build proper Chrome Web Store URL
+					fullURL := "https://chromewebstore.google.com/" + cleanURL
+					
 					ext := map[string]string{
 						"name": name,
-						"url":  href,
+						"url":  fullURL,
 						"id":   extensionID,
 					}
 					related = append(related, ext)

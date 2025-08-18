@@ -31,8 +31,10 @@ func main() {
 		MarkdownDescription string `json:"markdownDescription"`
 		
 		// Classification
-		Category    string `json:"category"`
-		Subcategory string `json:"subcategory"`
+		Category         string `json:"category"`
+		CategorySlug     string `json:"categorySlug"`
+		Subcategory      string `json:"subcategory"`
+		SubcategorySlug  string `json:"subcategorySlug"`
 		
 		// Technical Details
 		Version      string   `json:"version"`
@@ -71,13 +73,15 @@ func main() {
 		MarkdownDescription: extractor.ExtractMarkdownDescription(html),
 		
 		// Classification
-		Category:    category,
-		Subcategory: subcategory,
+		Category:         category,
+		CategorySlug:     extractor.ExtractCategorySlug(html),
+		Subcategory:      subcategory,
+		SubcategorySlug:  extractor.ExtractSubcategorySlug(html),
 		
 		// Technical Details
 		Version:     extractor.ExtractVersion(html),
 		FileSize:    extractor.ExtractFileSize(html),
-		LastUpdated: extractor.ExtractLastUpdated(html),
+		LastUpdated: extractor.ExtractLastUpdatedDate(html),
 		Features:    extractor.ExtractFeatures(html),
 		Languages:   extractor.ExtractLanguages(html),
 		Status:      extractor.ExtractStatus(html),
