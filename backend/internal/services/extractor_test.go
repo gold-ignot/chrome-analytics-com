@@ -191,6 +191,7 @@ func extractAllData(extractor *Extractor, html string) map[string]interface{} {
 		"id":                  extractor.ExtractID(html),
 		"slug":                extractor.ExtractSlug(html),
 		"logoURL":             extractor.ExtractLogo(html),
+		"description":         extractor.ExtractDescription(html),
 		"markdownDescription": extractor.ExtractMarkdownDescription(html),
 		"category":            category,
 		"categorySlug":        extractor.ExtractCategorySlug(html),
@@ -210,6 +211,7 @@ func extractAllData(extractor *Extractor, html string) map[string]interface{} {
 		"website":             extractor.ExtractWebsite(html),
 		"supportURL":          extractor.ExtractSupportURL(html),
 		"supportEmail":        extractor.ExtractSupportEmail(html),
+		"privacyURL":          extractor.ExtractPrivacyURL(html),
 		"screenshots":         extractor.ExtractBetterScreenshots(html),
 		"relatedExtensions":   extractor.ExtractRelatedExtensions(html),
 	}

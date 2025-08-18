@@ -162,6 +162,25 @@ func (e *Extractor) ExtractDeveloperURL(html string) string {
 			}
 		})
 	}
+	
+	// If still no developer URL found, try to derive from GitHub support URL (for open source projects)
+	if devURL == "" {
+		supportURL := e.ExtractSupportURL(html)
+		if strings.Contains(supportURL, "github.com") {
+			// Convert GitHub wiki/policy URLs to main repository URLs (same logic as website extraction)
+			if strings.Contains(supportURL, "/wiki/") {
+				parts := strings.Split(supportURL, "/wiki/")
+				if len(parts) > 0 {
+					devURL = parts[0]
+				}
+			} else if strings.Contains(supportURL, "/issues") {
+				parts := strings.Split(supportURL, "/issues")
+				if len(parts) > 0 {
+					devURL = parts[0]
+				}
+			}
+		}
+	}
 
 	return devURL
 }
@@ -1146,6 +1165,44 @@ func (e *Extractor) ExtractMarkdownDescription(html string) string {
 	}
 	
 	return markdownDesc
+}
+
+// ExtractDescription creates a plain text description by extracting clean text content
+func (e *Extractor) ExtractDescription(html string) string {
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
+	if err != nil {
+		return ""
+	}
+	
+	// Find the main description section
+	var descriptionText string
+	doc.Find("section").Each(func(i int, s *goquery.Selection) {
+		// Find the Overview section
+		if strings.Contains(s.Text(), "Overview") {
+			// Get the text content of paragraphs
+			s.Find("p").Each(func(j int, p *goquery.Selection) {
+				text := strings.TrimSpace(p.Text())
+				if text != "" && !strings.Contains(text, "Overview") {
+					if descriptionText != "" {
+						descriptionText += "\n\n"
+					}
+					descriptionText += text
+				}
+			})
+		}
+	})
+	
+	// Clean up the text - remove excessive whitespace
+	if descriptionText != "" {
+		// Replace multiple newlines with double newlines
+		descriptionText = regexp.MustCompile(`\n{3,}`).ReplaceAllString(descriptionText, "\n\n")
+		// Replace multiple spaces with single spaces
+		descriptionText = regexp.MustCompile(`\s{2,}`).ReplaceAllString(descriptionText, " ")
+		// Trim any leading/trailing whitespace
+		descriptionText = strings.TrimSpace(descriptionText)
+	}
+	
+	return descriptionText
 }
 
 // ExtractDeveloperName extracts the actual developer/company name

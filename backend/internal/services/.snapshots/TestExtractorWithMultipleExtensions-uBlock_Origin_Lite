@@ -1,8 +1,9 @@
-(map[string]interface {}) (len=24) {
+(map[string]interface {}) (len=26) {
   (string) (len=8) "category": (string) (len=9) "Extension",
   (string) (len=12) "categorySlug": (string) (len=9) "extension",
+  (string) (len=11) "description": (string) (len=884) "An efficient content blocker. Blocks ads, trackers, miners, and more immediately upon installation. uBO Lite (uBOL) is an efficient MV3-based content blocker. The default ruleset corresponds to uBlock Origin's default filterset: - uBlock Origin's built-in filter lists\n- EasyList\n- EasyPrivacy\n- Peter Lowe’s Ad and tracking server list You can enable more rulesets by visiting the options page -- click the _Cogs_ icon in the popup panel. uBOL is entirely declarative, meaning there is no need for a permanent uBOL process for the filtering to occur, and CSS/JS injection-based content filtering is performed reliably by the browser itself rather than by the extension. This means that uBOL itself does not consume CPU/memory resources while content blocking is ongoing -- uBOL's service worker process is required _only_ when you interact with the popup panel or the option pages.",
   (string) (len=13) "developerName": (string) (len=22) "Raymond Hill (gorhill)",
-  (string) (len=12) "developerURL": (string) "",
+  (string) (len=12) "developerURL": (string) (len=33) "https://github.com/gorhill/uBlock",
   (string) (len=8) "features": ([]string) <nil>,
   (string) (len=8) "fileSize": (string) (len=8) "11.43MiB",
   (string) (len=2) "id": (string) (len=32) "ddkjiahejlhfcafbddmgiahcphecmpfh",
@@ -62,6 +63,7 @@
   (string) (len=11) "lastUpdated": (string) (len=10) "2025-08-14",
   (string) (len=7) "logoURL": (string) (len=128) "https://lh3.googleusercontent.com/lsanoOfx5N_t-7gh5Qg9FGIirVEjdCqalZXyLZYRd5d7Fydm83FQhu4Oq0JmlRyMtyF_LfwuQQZyKRTHs6emnFirsA=s60",
   (string) (len=19) "markdownDescription": (string) (len=897) "An efficient content blocker. Blocks ads, trackers, miners, and more immediately upon installation.\n\nuBO Lite (uBOL) is an efficient MV3-based content blocker.\n\nThe default ruleset corresponds to uBlock Origin's default filterset:\n\n\\- uBlock Origin's built-in filter lists\n\\- EasyList\n\\- EasyPrivacy\n\\- Peter Lowe’s Ad and tracking server list\n\nYou can enable more rulesets by visiting the options page -- click the \\_Cogs\\_ icon in the popup panel.\n\nuBOL is entirely declarative, meaning there is no need for a permanent uBOL process for the filtering to occur, and CSS/JS injection-based content filtering is performed reliably by the browser itself rather than by the extension. This means that uBOL itself does not consume CPU/memory resources while content blocking is ongoing -- uBOL's service worker process is required \\_only\\_ when you interact with the popup panel or the option pages.",
+  (string) (len=10) "privacyURL": (string) (len=51) "https://myaccount.google.com/privacypolicy?hl=en-US",
   (string) (len=6) "rating": (float64) 4.5,
   (string) (len=17) "relatedExtensions": ([]map[string]string) (len=12) {
     (map[string]string) (len=3) {

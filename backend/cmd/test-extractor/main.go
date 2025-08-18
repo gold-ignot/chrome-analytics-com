@@ -25,9 +25,10 @@ func main() {
 	// Create an ordered structure for meaningful JSON output
 	type OrderedExtensionData struct {
 		// Basic Information
-		ID                string `json:"id"`
-		Slug              string `json:"slug"`
-		LogoURL           string `json:"logoURL"`
+		ID                  string `json:"id"`
+		Slug                string `json:"slug"`
+		LogoURL             string `json:"logoURL"`
+		Description         string `json:"description"`
 		MarkdownDescription string `json:"markdownDescription"`
 		
 		// Classification
@@ -55,6 +56,7 @@ func main() {
 		Website       string `json:"website"`
 		SupportURL    string `json:"supportURL"`
 		SupportEmail  string `json:"supportEmail"`
+		PrivacyURL    string `json:"privacyURL"`
 		
 		// Media & Related
 		Screenshots       []string                   `json:"screenshots"`
@@ -70,6 +72,7 @@ func main() {
 		ID:                  extractor.ExtractID(html),
 		Slug:                extractor.ExtractSlug(html),
 		LogoURL:             extractor.ExtractLogo(html),
+		Description:         extractor.ExtractDescription(html),
 		MarkdownDescription: extractor.ExtractMarkdownDescription(html),
 		
 		// Classification
@@ -97,6 +100,7 @@ func main() {
 		Website:       extractor.ExtractWebsite(html),
 		SupportURL:    extractor.ExtractSupportURL(html),
 		SupportEmail:  extractor.ExtractSupportEmail(html),
+		PrivacyURL:    extractor.ExtractPrivacyURL(html),
 		
 		// Media & Related
 		Screenshots:       extractor.ExtractBetterScreenshots(html),
