@@ -54,7 +54,7 @@ export default function Home() {
   };
 
   const handleExtensionClick = (extension: Extension) => {
-    window.location.href = `/extension/${extension.extensionId}`;
+    window.location.href = `/extension/${extension.extension_id}`;
   };
 
   const handleSearch = (query: string) => {
@@ -151,7 +151,7 @@ export default function Home() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {extensions.map((extension) => (
                 <ExtensionCard
-                  key={extension.id}
+                  key={extension.extension_id}
                   extension={extension}
                   onClick={() => handleExtensionClick(extension)}
                 />

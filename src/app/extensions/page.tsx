@@ -15,12 +15,15 @@ export default function ExtensionsPage() {
   const [total, setTotal] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [sortBy, setSortBy] = useState('users');
+  const [sortOrder, setSortOrder] = useState('desc');
 
   const limit = 12;
 
   useEffect(() => {
     fetchExtensions();
-  }, [currentPage, searchQuery]);
+  }, [currentPage, searchQuery, selectedCategory, sortBy, sortOrder]);
 
   const fetchExtensions = async () => {
     try {
@@ -34,7 +37,7 @@ export default function ExtensionsPage() {
         response = await apiClient.searchExtensions(searchQuery, currentPage, limit);
       } else {
         setIsSearching(false);
-        response = await apiClient.getExtensions(currentPage, limit);
+        response = await apiClient.getExtensions(currentPage, limit, sortBy, sortOrder, selectedCategory);
       }
 
       setExtensions(response.extensions);
@@ -59,7 +62,7 @@ export default function ExtensionsPage() {
   };
 
   const handleExtensionClick = (extension: Extension) => {
-    window.location.href = `/extension/${extension.extensionId}`;
+    window.location.href = `/extension/${extension.extension_id}`;
   };
 
   return (
@@ -92,7 +95,7 @@ export default function ExtensionsPage() {
               ) : (
                 <>
                   {isSearching ? (
-                    <>Found {total} result{total !== 1 ? 's' : ''} for "{searchQuery}"</>
+                    <>Found {total} result{total !== 1 ? 's' : ''} for &quot;{searchQuery}&quot;</>
                   ) : (
                     <>{total} extension{total !== 1 ? 's' : ''} total</>
                   )}
@@ -116,6 +119,65 @@ export default function ExtensionsPage() {
               </button>
             )}
           </div>
+
+          {/* Filters and Sorting */}
+          {!isSearching && (
+            <div className="flex flex-col sm:flex-row gap-4 mb-6 p-4 bg-white rounded-lg border border-gray-200">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => {
+                    setSelectedCategory(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">All Categories</option>
+                  <option value="Productivity">Productivity</option>
+                  <option value="Shopping">Shopping</option>
+                  <option value="Developer Tools">Developer Tools</option>
+                  <option value="Communication">Communication</option>
+                  <option value="Entertainment">Entertainment</option>
+                  <option value="News & Weather">News & Weather</option>
+                  <option value="Social & Communication">Social & Communication</option>
+                  <option value="Accessibility">Accessibility</option>
+                  <option value="Photos">Photos</option>
+                  <option value="Search Tools">Search Tools</option>
+                </select>
+              </div>
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Sort by</label>
+                <select
+                  value={sortBy}
+                  onChange={(e) => {
+                    setSortBy(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="users">Most Users</option>
+                  <option value="rating">Highest Rated</option>
+                  <option value="reviews">Most Reviews</option>
+                  <option value="recent">Recently Updated</option>
+                </select>
+              </div>
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Order</label>
+                <select
+                  value={sortOrder}
+                  onChange={(e) => {
+                    setSortOrder(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="desc">High to Low</option>
+                  <option value="asc">Low to High</option>
+                </select>
+              </div>
+            </div>
+          )}
 
           {/* Error State */}
           {error && (
@@ -161,7 +223,7 @@ export default function ExtensionsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                     {extensions.map((extension) => (
                       <ExtensionCard
-                        key={extension.id}
+                        key={extension.extension_id}
                         extension={extension}
                         onClick={() => handleExtensionClick(extension)}
                       />
