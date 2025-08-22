@@ -27,8 +27,8 @@ export default function Home() {
     try {
       setLoading(true);
       setError(null);
-      // Sort by createdAt to get the most recently discovered extensions
-      const response = await apiClient.getExtensions(1, 6, 'recent', 'desc');
+      // Sort by users to get the most popular extensions
+      const response = await apiClient.getExtensions(1, 6, 'users', 'desc');
       setExtensions(response.extensions || []);
       setTotalExtensions(response.total);
     } catch (err) {
@@ -42,8 +42,8 @@ export default function Home() {
 
   const fetchFeaturedExtensionsBackground = async () => {
     try {
-      // Background refresh without loading state - get recent extensions
-      const response = await apiClient.getExtensions(1, 6, 'recent', 'desc');
+      // Background refresh without loading state - get popular extensions
+      const response = await apiClient.getExtensions(1, 6, 'users', 'desc');
       setExtensions(response.extensions || []);
       setTotalExtensions(response.total);
       setError(null); // Clear any previous errors
