@@ -188,13 +188,24 @@ export default function ExtensionDetailPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
+            
+            {extension.logo_url && (
+              <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 border border-gray-200">
+                <img 
+                  src={extension.logo_url} 
+                  alt={`${extension.name} logo`}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+            
             <div>
               <h1 className="text-2xl font-bold text-gray-900">{extension.name}</h1>
               <div className="flex items-center gap-4 text-gray-600">
                 <span>by {extension.developer || 'Unknown Developer'}</span>
-                {extension.developerUrl && (
+                {extension.developer_url && (
                   <a 
-                    href={extension.developerUrl} 
+                    href={extension.developer_url} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="text-blue-600 hover:text-blue-800 text-sm"
@@ -215,20 +226,54 @@ export default function ExtensionDetailPage() {
           <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
-                <div className="flex items-center gap-3 mb-3">
+                <div className="flex items-center gap-3 mb-3 flex-wrap">
                   <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded font-medium">
                     {extension.category}
                   </span>
+                  {extension.subcategory && (
+                    <span className="text-xs px-2 py-1 bg-blue-50 text-blue-600 rounded font-medium">
+                      {extension.subcategory}
+                    </span>
+                  )}
                   <span className="text-xs text-gray-500 font-mono">
-                    ID: {extension.extensionId}
+                    ID: {extension.extension_id}
                   </span>
                 </div>
                 <p className="text-gray-700 leading-relaxed">
-                  {extension.description || 'No description available'}
+                  {extension.full_description || extension.description || 'No description available'}
                 </p>
               </div>
             </div>
           </div>
+
+          {/* Screenshots Gallery */}
+          {extension.screenshots && extension.screenshots.length > 0 && (
+            <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Screenshots</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {extension.screenshots.slice(0, 6).map((screenshot, index) => (
+                  <div key={index} className="relative group cursor-pointer">
+                    <img
+                      src={screenshot}
+                      alt={`${extension.name} screenshot ${index + 1}`}
+                      className="w-full h-48 object-cover rounded-lg border border-gray-200 group-hover:shadow-lg transition-shadow"
+                      onClick={() => window.open(screenshot, '_blank')}
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all rounded-lg flex items-center justify-center">
+                      <svg className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                      </svg>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {extension.screenshots.length > 6 && (
+                <p className="text-sm text-gray-500 mt-3">
+                  Showing 6 of {extension.screenshots.length} screenshots
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Extension Metadata */}
           <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
@@ -244,23 +289,23 @@ export default function ExtensionDetailPage() {
                 </div>
               )}
               
-              {extension.fileSize && (
+              {extension.file_size && (
                 <div className="flex items-center space-x-2">
                   <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                   </svg>
                   <span className="text-sm text-gray-600">Size:</span>
-                  <span className="text-sm font-medium text-gray-900">{extension.fileSize}</span>
+                  <span className="text-sm font-medium text-gray-900">{extension.file_size}</span>
                 </div>
               )}
               
-              {extension.lastUpdated && (
+              {extension.last_updated_at && (
                 <div className="flex items-center space-x-2">
                   <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <span className="text-sm text-gray-600">Updated:</span>
-                  <span className="text-sm font-medium text-gray-900">{extension.lastUpdated}</span>
+                  <span className="text-sm font-medium text-gray-900">{formatDate(extension.last_updated_at)}</span>
                 </div>
               )}
             </div>
@@ -281,9 +326,9 @@ export default function ExtensionDetailPage() {
                 </a>
               )}
               
-              {extension.supportUrl && (
+              {extension.support_url && (
                 <a 
-                  href={extension.supportUrl} 
+                  href={extension.support_url} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="inline-flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-800"
@@ -295,9 +340,9 @@ export default function ExtensionDetailPage() {
                 </a>
               )}
               
-              {extension.privacyUrl && (
+              {extension.privacy_url && (
                 <a 
-                  href={extension.privacyUrl} 
+                  href={extension.privacy_url} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="inline-flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-800"
@@ -691,9 +736,9 @@ export default function ExtensionDetailPage() {
                       <span className="text-sm font-medium text-emerald-900">Engagement</span>
                     </div>
                     <span className="text-xs px-2 py-1 bg-emerald-200 text-emerald-800 rounded-full font-medium">
-                      {extension.reviewCount >= 10000 ? 'High' :
-                       extension.reviewCount >= 1000 ? 'Moderate' :
-                       extension.reviewCount >= 100 ? 'Low' : 'Minimal'}
+                      {(extension.review_count || 0) >= 10000 ? 'High' :
+                       (extension.review_count || 0) >= 1000 ? 'Moderate' :
+                       (extension.review_count || 0) >= 100 ? 'Low' : 'Minimal'}
                     </span>
                   </div>
                   <div className="w-full bg-emerald-200 rounded-full h-3 mb-2">
@@ -749,6 +794,40 @@ export default function ExtensionDetailPage() {
                     <p className="text-gray-500 text-sm">No keywords available</p>
                   )}
                 </div>
+
+                {/* Features Section */}
+                {extension.features && extension.features.length > 0 && (
+                  <div className="pt-4 border-t border-gray-200">
+                    <h3 className="text-md font-semibold text-gray-900 mb-3">Features</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {extension.features.map((feature, index) => (
+                        <div key={index} className="flex items-center space-x-2">
+                          <svg className="w-4 h-4 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          <span className="text-sm text-gray-700">{feature}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Supported Languages Section */}
+                {extension.languages && extension.languages.length > 0 && (
+                  <div className="pt-4 border-t border-gray-200">
+                    <h3 className="text-md font-semibold text-gray-900 mb-3">Supported Languages</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {extension.languages.map((language, index) => (
+                        <span
+                          key={index}
+                          className="text-xs px-3 py-1 bg-purple-50 text-purple-700 rounded-full border border-purple-200 font-medium"
+                        >
+                          {language}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Permissions Section */}
                 {extension.permissions && extension.permissions.length > 0 && (
