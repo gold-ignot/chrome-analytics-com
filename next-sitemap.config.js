@@ -2,32 +2,15 @@
 module.exports = {
   siteUrl: process.env.NEXT_PUBLIC_BASE_URL || 'https://chrome-analytics.com',
   generateRobotsText: true,
-  exclude: ['/server-sitemap-index.xml'],
+  exclude: [
+    '/server-sitemap-index.xml',
+    '/server-sitemap-extensions-*.xml',
+    '/server-sitemap-categories.xml'
+  ],
   additionalPaths: async (config) => {
     const result = []
 
-    // Add category pages
-    const categories = [
-      'productivity',
-      'shopping',
-      'developer-tools', 
-      'communication',
-      'entertainment',
-      'news-weather',
-      'social-communication',
-      'accessibility',
-      'photos',
-      'search-tools'
-    ];
-
-    categories.forEach(category => {
-      result.push({
-        loc: `/category/${category}`,
-        changefreq: 'weekly',
-        priority: 0.8,
-        lastmod: new Date().toISOString(),
-      })
-    });
+    // Categories are now handled by server-sitemap-categories.xml
 
     // Add filter pages
     const filters = ['popular', 'top-rated', 'trending'];
@@ -86,6 +69,7 @@ module.exports = {
     ],
     additionalSitemaps: [
       process.env.NEXT_PUBLIC_BASE_URL + '/server-sitemap-index.xml',
+      process.env.NEXT_PUBLIC_BASE_URL + '/server-sitemap-categories.xml',
     ],
   },
   // Transform function to modify URLs or add custom fields
