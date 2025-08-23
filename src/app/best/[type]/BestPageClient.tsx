@@ -14,7 +14,7 @@ interface BestPageClientProps {
     title: string;
     category: string;
     description: string;
-    keywords: string[];
+    keywords: readonly string[];
   };
 }
 

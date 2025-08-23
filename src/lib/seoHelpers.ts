@@ -67,7 +67,7 @@ export const metadataGenerators = {
     seoDataToMetadata(generateExtensionsListSEO(searchQuery, category, extensionCount)),
   
   // For "best" pages
-  best: (type: string, typeInfo: { title: string; category: string; description: string; keywords: string[] }) => {
+  best: (type: string, typeInfo: { title: string; category: string; description: string; keywords: readonly string[] }) => {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://chrome-analytics.com';
     return {
       title: `${typeInfo.title} | Chrome Analytics`,

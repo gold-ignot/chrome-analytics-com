@@ -39,6 +39,7 @@ interface ExtensionListLayoutProps {
   onRetry: () => void;
   
   // Customization
+  showCategoryFilter?: boolean;
   emptyStateMessage?: string;
   emptySearchMessage?: string;
 }
@@ -63,6 +64,7 @@ export default function ExtensionListLayout({
   isSearching,
   onClearSearch,
   onRetry,
+  showCategoryFilter = true,
   emptyStateMessage,
   emptySearchMessage,
 }: ExtensionListLayoutProps) {
