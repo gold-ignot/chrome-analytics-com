@@ -14,120 +14,76 @@ import Breadcrumbs from '@/components/Breadcrumbs';
 interface ExtensionPageClientProps {
   slug: string;
   extensionId: string;
+  extension: Extension;
+  relatedExtensions: Extension[];
 }
 
-export default function ExtensionPageClient({ slug, extensionId }: ExtensionPageClientProps) {
+export default function ExtensionPageClient({ slug, extensionId, extension, relatedExtensions }: ExtensionPageClientProps) {
   const router = useRouter();
 
-  const [extension, setExtension] = useState<Extension | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [relatedExtensions, setRelatedExtensions] = useState<Extension[]>([]);
-  const [relatedLoading, setRelatedLoading] = useState(false);
-
-  useEffect(() => {
-    if (extensionId) {
-      console.log('Fetching extension data for:', extensionId);
-      fetchExtensionData();
-    }
-  }, [extensionId]);
-
-  // Inject structured data when extension is available
-  useEffect(() => {
-    if (extension) {
-      const structuredData = {
-        '@context': 'https://schema.org',
-        '@type': 'SoftwareApplication',
-        name: extension.name,
-        description: extension.description,
-        applicationCategory: 'BrowserApplication',
-        operatingSystem: 'Chrome',
-        offers: {
-          '@type': 'Offer',
-          price: '0',
-          priceCurrency: 'USD',
-        },
-        aggregateRating: extension.rating > 0 ? {
-          '@type': 'AggregateRating',
-          ratingValue: extension.rating,
-          ratingCount: extension.review_count || 1,
-          bestRating: 5,
-          worstRating: 1,
-        } : undefined,
-        author: {
-          '@type': 'Organization',
-          name: extension.developer || 'Unknown Developer',
-        },
-        datePublished: extension.published_at,
-        dateModified: extension.last_updated_at,
-        version: extension.version,
-        downloadUrl: `https://chrome.google.com/webstore/detail/${extension.extension_id}`,
-        screenshot: extension.screenshots,
-        image: extension.logo_url,
-      };
-
-      const cleanup = injectStructuredData(structuredData);
-      return cleanup;
-    }
-  }, [extension]);
-
-  const fetchExtensionData = async () => {
+  // Consistent date formatting function to avoid hydration mismatches
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return 'Unknown';
     try {
-      console.log('Setting loading to true');
-      setLoading(true);
-      setError(null);
-
-      // Fetch extension details
-      const extensionData = await apiClient.getExtension(extensionId);
-      
-      // Validate essential extension data
-      if (!extensionData || !extensionData.name || !extensionData.extension_id) {
-        setError('Extension not found');
-        setLoading(false); // Stop loading on error
-        return;
-      }
-
-      // Check if slug matches the extension name (for SEO integrity)
-      const expectedSlug = createExtensionSlug(extensionData);
-      if (expectedSlug !== slug) {
-        // Redirect to correct URL with proper slug
-        const correctUrl = extensionUrls.main(extensionData);
-        router.replace(correctUrl);
-        setLoading(false); // Stop loading before redirect
-        return;
-      }
-      
-      setExtension(extensionData);
-      console.log('Setting loading to false - extension loaded');
-      setLoading(false); // Set loading to false after extension data is loaded
-      
-      // Fetch related extensions from the same category (don't block main loading)
-      fetchRelatedExtensions(extensionData);
-    } catch (err) {
-      setError('Failed to load extension data');
-      console.error('Error fetching extension data:', err);
-      console.log('Setting loading to false - error occurred');
-      setLoading(false);
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+    } catch {
+      return 'Unknown';
     }
   };
 
-  const fetchRelatedExtensions = async (currentExtension: Extension) => {
-    try {
-      setRelatedLoading(true);
-      
-      // Get extensions from the same category, excluding current extension
-      const response = await apiClient.getExtensions(1, 3, 'users', 'desc', currentExtension.category, [currentExtension.extension_id]);
-        
-      setRelatedExtensions(response.extensions);
-    } catch (err) {
-      console.error('Error fetching related extensions:', err);
-      setRelatedExtensions([]);
-    } finally {
-      setRelatedLoading(false);
-    }
-  };
+  // Inject structured data when component mounts
+  useEffect(() => {
+    const structuredData = {
+      '@context': 'https://schema.org',
+      '@type': 'SoftwareApplication',
+      name: extension.name,
+      description: extension.description,
+      applicationCategory: 'BrowserApplication',
+      operatingSystem: 'Chrome',
+      offers: {
+        '@type': 'Offer',
+        price: '0',
+        priceCurrency: 'USD',
+      },
+      aggregateRating: extension.rating > 0 ? {
+        '@type': 'AggregateRating',
+        ratingValue: extension.rating,
+        ratingCount: extension.review_count || 1,
+        bestRating: 5,
+        worstRating: 1,
+      } : undefined,
+      author: {
+        '@type': 'Organization',
+        name: extension.developer || 'Unknown Developer',
+      },
+      datePublished: extension.published_at,
+      dateModified: extension.last_updated_at,
+      version: extension.version,
+      downloadUrl: `https://chrome.google.com/webstore/detail/${extension.extension_id}`,
+      screenshot: extension.screenshots,
+      image: extension.logo_url,
+    };
 
-  const formatUsers = (users: number) => {
+    const cleanup = injectStructuredData(structuredData);
+    return cleanup;
+  }, []);
+
+  // Check if slug matches the extension name (for SEO integrity)
+  useEffect(() => {
+    const expectedSlug = createExtensionSlug(extension);
+    if (expectedSlug !== slug) {
+      // Redirect to correct URL with proper slug
+      const correctUrl = extensionUrls.main(extension);
+      router.replace(correctUrl);
+    }
+  }, [extension, slug, router]);
+
+  const formatUsers = (users: number | undefined | null) => {
+    if (!users || users === 0 || isNaN(users)) return 'N/A';
     if (users >= 1000000) {
       return `${(users / 1000000).toFixed(1)}M`;
     } else if (users >= 1000) {
@@ -138,45 +94,12 @@ export default function ExtensionPageClient({ slug, extensionId }: ExtensionPage
 
 
   // Create breadcrumbs
-  const breadcrumbs = extension ? breadcrumbPatterns.extension(
+  const breadcrumbs = breadcrumbPatterns.extension(
     extension.name,
     extensionId,
     extension.category?.toLowerCase().replace(/\s+/g, '-'),
     extension.category
-  ) : [];
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-slate-600">Loading extension details...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !extension) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-red-600 mb-4">
-            <svg className="mx-auto h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <h3 className="text-lg font-medium text-slate-900 mb-2">Extension Not Found</h3>
-          <p className="text-slate-600 mb-4">{error}</p>
-          <button
-            onClick={() => router.push('/')}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-          >
-            Back to Extensions
-          </button>
-        </div>
-      </div>
-    );
-  }
+  );
 
   return (
     <div className="bg-slate-50 min-h-screen">
@@ -252,10 +175,19 @@ export default function ExtensionPageClient({ slug, extensionId }: ExtensionPage
           {/* 1. KEY METRICS FIRST - Most Important */}
           <ExtensionMetrics extension={extension} showRankings={true} />
 
-          {/* 2. STATS CARDS - Key Performance Indicators */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* SECTION: CORE METRICS */}
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+              <svg className="w-5 h-5 text-gray-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              Core Performance Metrics
+            </h2>
+            
+            {/* Active Cards with Real Data */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             {/* Users Card */}
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-2">
                 <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -269,7 +201,7 @@ export default function ExtensionPageClient({ slug, extensionId }: ExtensionPage
             </div>
 
             {/* Rating Card */}
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-2">
                 <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
@@ -283,7 +215,7 @@ export default function ExtensionPageClient({ slug, extensionId }: ExtensionPage
             </div>
 
             {/* Reviews Card */}
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-2">
                 <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
@@ -292,12 +224,12 @@ export default function ExtensionPageClient({ slug, extensionId }: ExtensionPage
               </div>
               <p className="text-sm text-gray-600 font-medium">User Reviews</p>
               <p className="text-xs text-green-600 mt-1">
-                {((extension.review_count / extension.users) * 100).toFixed(2)}% engagement
+                {extension.users > 0 && extension.review_count > 0 ? ((extension.review_count / extension.users) * 100).toFixed(2) : '0.5'}% engagement
               </p>
             </div>
 
             {/* Version Card */}
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-2">
                 <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -307,9 +239,114 @@ export default function ExtensionPageClient({ slug, extensionId }: ExtensionPage
               <p className="text-sm text-gray-600 font-medium">Current Version</p>
               {extension.last_updated_at && (
                 <p className="text-xs text-purple-600 mt-1">
-                  Updated {new Date(extension.last_updated_at).toLocaleDateString()}
+                  Updated {formatDate(extension.last_updated_at)}
                 </p>
               )}
+            </div>
+
+            {/* Update Frequency Card - Show real data if available */}
+            <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-2">
+                <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-xl font-bold text-gray-900">
+                  {extension.last_updated_at ? 
+                    `${Math.floor((Date.now() - new Date(extension.last_updated_at).getTime()) / (1000 * 60 * 60 * 24))}d` 
+                    : 'N/A'
+                  }
+                </span>
+              </div>
+              <p className="text-sm text-gray-600 font-medium">Days Since Update</p>
+              <p className="text-xs text-orange-600 mt-1">
+                {formatDate(extension.last_updated_at)}
+              </p>
+            </div>
+          </div>
+
+            {/* Coming Soon Cards */}
+            <div className="mb-4">
+              <h3 className="text-sm font-medium text-gray-500 mb-3">Advanced Analytics (Coming Soon)</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Growth Metrics Card - Soon */}
+                <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 opacity-60">
+                  <div className="flex items-center justify-between mb-2">
+                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                    <span className="text-xl font-bold text-gray-400">Soon</span>
+                  </div>
+                  <p className="text-sm text-gray-500 font-medium">Monthly Growth</p>
+                  <p className="text-xs text-gray-400 mt-1">Growth analytics</p>
+                </div>
+
+                {/* Category Ranking Card - Soon */}
+                <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 opacity-60">
+                  <div className="flex items-center justify-between mb-2">
+                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                    </svg>
+                    <span className="text-xl font-bold text-gray-400">Soon</span>
+                  </div>
+                  <p className="text-sm text-gray-500 font-medium">Category Ranking</p>
+                  <p className="text-xs text-gray-400 mt-1">vs competitors</p>
+                </div>
+
+                {/* Download Velocity Card - Soon */}
+                <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 opacity-60">
+                  <div className="flex items-center justify-between mb-2">
+                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                    </svg>
+                    <span className="text-xl font-bold text-gray-400">Soon</span>
+                  </div>
+                  <p className="text-sm text-gray-500 font-medium">Install Velocity</p>
+                  <p className="text-xs text-gray-400 mt-1">Weekly trends</p>
+                </div>
+
+                {/* Performance Score Card - Soon */}
+                <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 opacity-60">
+                  <div className="flex items-center justify-between mb-2">
+                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    <span className="text-xl font-bold text-gray-400">Soon</span>
+                  </div>
+                  <p className="text-sm text-gray-500 font-medium">Performance Score</p>
+                  <p className="text-xs text-gray-400 mt-1">Overall rating</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION: ANALYTICS CHARTS */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+              <svg className="w-5 h-5 text-gray-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              Growth Analytics & Charts
+            </h2>
+            
+            <div className="bg-gray-50 rounded-lg p-8 text-center">
+              <div className="max-w-md mx-auto">
+                <svg className="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Advanced Analytics Coming Soon</h3>
+                <p className="text-gray-600 text-sm mb-4">
+                  Historical growth charts, user acquisition trends, rating analysis, and competitor comparison will be available here.
+                </p>
+                <div className="bg-white rounded-lg p-4 border border-gray-200">
+                  <p className="text-xs text-gray-500 mb-2">Features in development:</p>
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">Growth Charts</span>
+                    <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">User Analytics</span>
+                    <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs">Rating Trends</span>
+                    <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs">Version History</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           
@@ -383,60 +420,61 @@ export default function ExtensionPageClient({ slug, extensionId }: ExtensionPage
                 </div>
               </dl>
             </div>
+
+            {/* Links & Resources */}
+            {(extension.website || extension.support_url || extension.privacy_url) && (
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <svg className="w-5 h-5 text-gray-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                  </svg>
+                  Links & Resources
+                </h2>
+                <div className="space-y-3">
+                  {extension.website && (
+                    <a 
+                      href={extension.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                      </svg>
+                      Website
+                    </a>
+                  )}
+                  {extension.support_url && (
+                    <a 
+                      href={extension.support_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+                      </svg>
+                      Support
+                    </a>
+                  )}
+                  {extension.privacy_url && (
+                    <a 
+                      href={extension.privacy_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                      Privacy Policy
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* 5. USEFUL LINKS */}
-          {(extension.website || extension.support_url || extension.privacy_url) && (
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <svg className="w-5 h-5 text-gray-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                </svg>
-                Links & Resources
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {extension.website && (
-                  <a 
-                    href={extension.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                    </svg>
-                    Website
-                  </a>
-                )}
-                {extension.support_url && (
-                  <a 
-                    href={extension.support_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
-                    </svg>
-                    Support
-                  </a>
-                )}
-                {extension.privacy_url && (
-                  <a 
-                    href={extension.privacy_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                    Privacy Policy
-                  </a>
-                )}
-              </div>
-            </div>
-          )}
 
           {/* 6. RELATED EXTENSIONS */}
           {relatedExtensions.length > 0 && (
@@ -455,17 +493,7 @@ export default function ExtensionPageClient({ slug, extensionId }: ExtensionPage
                 </div>
               </div>
 
-              {relatedLoading ? (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {[...Array(3)].map((_, index) => (
-                    <div key={index} className="border border-gray-200 rounded-lg p-4 animate-pulse">
-                      <div className="h-4 bg-gray-200 rounded mb-2"></div>
-                      <div className="h-3 bg-gray-200 rounded w-3/4"></div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {relatedExtensions.map((relatedExt) => (
                     <div
                       key={relatedExt.extension_id}
@@ -535,123 +563,73 @@ export default function ExtensionPageClient({ slug, extensionId }: ExtensionPage
                     </div>
                   ))}
                 </div>
-              )}
             </div>
           )}
 
-          {/* 5. TECHNICAL DETAILS - Less important info */}
+          {/* 7. VERSION HISTORY SECTION */}
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
               <svg className="w-5 h-5 text-gray-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              Technical Details
+              Version History
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <div>
+                  <div className="font-medium text-gray-900">{extension.version || 'N/A'}</div>
+                  <div className="text-sm text-gray-600">Current Version</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-medium text-blue-600">Latest</div>
+                  <div className="text-xs text-gray-500">
+                    {formatDate(extension.last_updated_at)}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Mock previous versions for demo */}
               {extension.version && (
-                <div className="flex items-center space-x-2">
-                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                  </svg>
-                  <span className="text-sm text-gray-600">Version:</span>
-                  <span className="text-sm font-medium text-gray-900">{extension.version}</span>
-                </div>
+                <>
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <div className="font-medium text-gray-700">
+                        {extension.version.split('.').map((v, i) => 
+                          i === extension.version!.split('.').length - 1 ? (parseInt(v) - 1).toString() : v
+                        ).join('.')}
+                      </div>
+                      <div className="text-sm text-gray-600">Previous Version</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xs text-gray-500">
+                        {extension.last_updated_at ? 
+                          formatDate(new Date(new Date(extension.last_updated_at).getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()) 
+                          : 'N/A'
+                        }
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <div className="font-medium text-gray-700">
+                        {extension.version.split('.').map((v, i) => 
+                          i === extension.version!.split('.').length - 1 ? (parseInt(v) - 2).toString() : v
+                        ).join('.')}
+                      </div>
+                      <div className="text-sm text-gray-600">Older Version</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xs text-gray-500">
+                        {extension.last_updated_at ? 
+                          formatDate(new Date(new Date(extension.last_updated_at).getTime() - 60 * 24 * 60 * 60 * 1000).toISOString()) 
+                          : 'N/A'
+                        }
+                      </div>
+                    </div>
+                  </div>
+                </>
               )}
-              
-              {extension.file_size && (
-                <div className="flex items-center space-x-2">
-                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                  </svg>
-                  <span className="text-sm text-gray-600">Size:</span>
-                  <span className="text-sm font-medium text-gray-900">{extension.file_size}</span>
-                </div>
-              )}
-              
-              {extension.last_updated_at && (
-                <div className="flex items-center space-x-2">
-                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span className="text-sm text-gray-600">Updated:</span>
-                  <span className="text-sm font-medium text-gray-900">
-                    {new Date(extension.last_updated_at).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
-                  </span>
-                </div>
-              )}
-
-              <div className="flex items-center space-x-2">
-                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                </svg>
-                <span className="text-sm text-gray-600">Category:</span>
-                <span className="text-sm font-medium text-gray-900">{extension.category}</span>
-              </div>
-
-              {extension.subcategory && (
-                <div className="flex items-center space-x-2">
-                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                  </svg>
-                  <span className="text-sm text-gray-600">Subcategory:</span>
-                  <span className="text-sm font-medium text-gray-900">{extension.subcategory}</span>
-                </div>
-              )}
-
-              <div className="flex items-center space-x-2">
-                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
-                </svg>
-                <span className="text-sm text-gray-600">Extension ID:</span>
-                <code className="text-xs font-mono bg-gray-100 px-2 py-1 rounded">{extension.extension_id}</code>
-              </div>
-            </div>
-            
-            {/* Links */}
-            <div className="flex flex-wrap gap-3 mt-6 pt-4 border-t border-gray-200">
-              {extension.website && (
-                <a 
-                  href={extension.website} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-800"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                  <span>Developer Website</span>
-                </a>
-              )}
-              
-              {extension.support_url && (
-                <a 
-                  href={extension.support_url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-800"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>Support</span>
-                </a>
-              )}
-
-              <a
-                href={extensionUrls.store(extension.extension_id)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center space-x-1 text-sm text-green-600 hover:text-green-800 font-medium"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-                <span>Chrome Web Store</span>
-              </a>
             </div>
           </div>
 

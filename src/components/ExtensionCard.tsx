@@ -10,14 +10,27 @@ interface ExtensionCardProps {
 
 export default function ExtensionCard({ extension, onClick }: ExtensionCardProps) {
   const [logoError, setLogoError] = useState(false);
-  const formatUsers = (users: number) => {
-    if (!users || users === 0) return '0';
+  const formatUsers = (users: number | undefined | null) => {
+    if (!users || users === 0 || isNaN(users)) return 'N/A';
     if (users >= 1000000) {
       return `${(users / 1000000).toFixed(1)}M`;
     } else if (users >= 1000) {
       return `${(users / 1000).toFixed(1)}K`;
     }
     return users.toLocaleString();
+  };
+
+  // Consistent date formatting to avoid hydration mismatches
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return 'N/A';
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch {
+      return 'N/A';
+    }
   };
 
   const getRatingColor = (rating: number) => {
@@ -145,12 +158,7 @@ export default function ExtensionCard({ extension, onClick }: ExtensionCardProps
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span className="font-semibold text-slate-900">
-              {extension.last_updated_at ? 
-                new Date(extension.last_updated_at).toLocaleDateString('en-US', { 
-                  month: 'short', 
-                  day: 'numeric' 
-                }) : 'N/A'
-              }
+              {formatDate(extension.last_updated_at)}
             </span>
           </div>
         </div>

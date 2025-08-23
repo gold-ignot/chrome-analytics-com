@@ -1,6 +1,7 @@
 import { GetServerSideProps } from 'next'
 import { getServerSideSitemap, ISitemapField } from 'next-sitemap'
 import { apiClient } from '@/lib/api'
+import { createExtensionSlug } from '@/lib/slugs'
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const siteUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://chrome-analytics.com'
@@ -8,25 +9,28 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   
   try {
     const sitemapId = parseInt(id as string)
-    const extensionsPerSitemap = 1000
+    const extensionsPerSitemap = 10000
     const page = sitemapId + 1 // Convert to 1-based page number
     
     // Fetch extensions for this sitemap batch
     const response = await apiClient.getExtensions(page, extensionsPerSitemap, 'users', 'desc')
     
-    const fields: ISitemapField[] = response.extensions.map((extension) => ({
-      loc: `${siteUrl}/extension/${extension.extension_id}`,
+    const fields: ISitemapField[] = response.extensions.map((extension) => {
+      const slug = createExtensionSlug(extension)
+      return {
+        loc: `${siteUrl}/extension/${slug}/${extension.extension_id}`,
       lastmod: extension.last_updated_at || new Date().toISOString(),
       changefreq: 'weekly',
       priority: Math.min(0.9, Math.max(0.3, extension.users / 10000000)), // Priority based on user count
       // Add structured data context for better indexing
-      alternateRefs: [
-        {
-          href: `${siteUrl}/extension/${extension.extension_id}`,
-          hreflang: 'en',
-        },
-      ],
-    }))
+        alternateRefs: [
+          {
+            href: `${siteUrl}/extension/${slug}/${extension.extension_id}`,
+            hreflang: 'en',
+          },
+        ],
+      }
+    })
 
     return getServerSideSitemap(ctx, fields)
   } catch (error) {

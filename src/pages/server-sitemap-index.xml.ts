@@ -9,7 +9,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     // Get first page to determine total number of extensions
     const response = await apiClient.getExtensions(1, 1)
     const totalExtensions = response.total
-    const extensionsPerSitemap = 1000 // Google's recommended limit
+    const extensionsPerSitemap = 10000 // Google's recommended limit per sitemap
     const totalSitemaps = Math.ceil(totalExtensions / extensionsPerSitemap)
     
     // Generate sitemap URLs for each batch of extensions

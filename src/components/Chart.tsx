@@ -17,11 +17,12 @@ interface ChartProps {
 }
 
 export default function Chart({ data, type, title, variant = 'area' }: ChartProps) {
-  const formatValue = (value: number) => {
+  const formatValue = (value: number | undefined | null) => {
+    if (!value || value === 0 || isNaN(value)) return 'N/A';
     if (type === 'users') {
       if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
       if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
-      return value.toString();
+      return value.toLocaleString();
     }
     if (type === 'rating') return value.toFixed(1);
     return value.toLocaleString();

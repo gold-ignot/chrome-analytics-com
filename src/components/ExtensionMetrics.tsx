@@ -8,13 +8,14 @@ interface ExtensionMetricsProps {
 }
 
 export default function ExtensionMetrics({ extension, showRankings = false }: ExtensionMetricsProps) {
-  const formatUsers = (users: number) => {
+  const formatUsers = (users: number | undefined | null) => {
+    if (!users || users === 0 || isNaN(users)) return 'N/A';
     if (users >= 1000000) {
       return `${(users / 1000000).toFixed(1)}M`;
     } else if (users >= 1000) {
       return `${(users / 1000).toFixed(1)}K`;
     }
-    return users.toString();
+    return users.toLocaleString();
   };
 
   const hasRankings = (extension.popularity_rank && extension.popularity_rank <= 100) || 

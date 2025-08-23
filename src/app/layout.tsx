@@ -12,6 +12,11 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "ChromeInsights - Chrome Extension Analytics & Growth Tracking",
   description: "Track Chrome extension growth, analyze performance metrics, and discover trending extensions. Built for developers and marketers who want data-driven insights.",
+  icons: {
+    icon: '/icon.svg',
+    shortcut: '/icon.svg',
+    apple: '/icon.svg',
+  },
 };
 
 export default function RootLayout({

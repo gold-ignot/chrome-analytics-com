@@ -55,5 +55,33 @@ export default async function ExtensionPage({ params }: ExtensionPageProps) {
     notFound();
   }
   
-  return <ExtensionPageClient slug={parsedParams.slug} extensionId={parsedParams.id} />;
+  try {
+    // Fetch extension data server-side
+    const extension = await apiClient.getExtension(parsedParams.id);
+    
+    if (!extension) {
+      notFound();
+    }
+    
+    // Fetch related extensions server-side
+    let relatedExtensions = [];
+    try {
+      const relatedResponse = await apiClient.getExtensions(1, 3, 'users', 'desc', extension.category, [extension.extension_id]);
+      relatedExtensions = relatedResponse.extensions;
+    } catch (error) {
+      console.error('Error fetching related extensions:', error);
+    }
+    
+    return (
+      <ExtensionPageClient 
+        slug={parsedParams.slug} 
+        extensionId={parsedParams.id}
+        extension={extension}
+        relatedExtensions={relatedExtensions}
+      />
+    );
+  } catch (error) {
+    console.error('Error fetching extension data:', error);
+    notFound();
+  }
 }
