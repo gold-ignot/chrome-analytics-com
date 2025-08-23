@@ -92,22 +92,13 @@ export default function ExtensionPageClient({ slug, extensionId }: ExtensionPage
       }
       
       setExtension(extensionData);
+      setLoading(false); // Set loading to false after extension data is loaded
       
-      // Set keywords from extension data if available
-      if (extensionData.keywords) {
-        setKeywords(extensionData.keywords.map(keyword => ({ 
-          keyword, 
-          position: 0, 
-          searchVolume: 0 
-        })));
-      }
-      
-      // Fetch related extensions from the same category
-      await fetchRelatedExtensions(extensionData);
+      // Fetch related extensions from the same category (don't block main loading)
+      fetchRelatedExtensions(extensionData);
     } catch (err) {
       setError('Failed to load extension data');
       console.error('Error fetching extension data:', err);
-    } finally {
       setLoading(false);
     }
   };
