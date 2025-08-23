@@ -1,12 +1,52 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { notFound } from 'next/navigation';
+import { Metadata } from 'next';
 import { apiClient, Extension, ExtensionResponse } from '@/lib/api';
 import ExtensionCard from '@/components/ExtensionCard';
 import SearchBar from '@/components/SearchBar';
 import Pagination from '@/components/Pagination';
+import Breadcrumb from '@/components/Breadcrumb';
+import { generateCategorySEO, generateMetadata } from '@/lib/seo';
 
-export default function ExtensionsPage() {
+interface CategoryPageProps {
+  params: {
+    category: string;
+  };
+}
+
+const CATEGORIES = {
+  'productivity': 'Productivity',
+  'shopping': 'Shopping',
+  'developer-tools': 'Developer Tools',
+  'communication': 'Communication',
+  'entertainment': 'Entertainment',
+  'news-weather': 'News & Weather',
+  'social-communication': 'Social & Communication',
+  'accessibility': 'Accessibility',
+  'photos': 'Photos',
+  'search-tools': 'Search Tools',
+} as const;
+
+const CATEGORY_DESCRIPTIONS = {
+  'productivity': 'Boost your efficiency with the best productivity extensions for Chrome',
+  'shopping': 'Find deals, compare prices, and shop smarter with these Chrome extensions',
+  'developer-tools': 'Essential tools for developers and web professionals',
+  'communication': 'Stay connected with communication and messaging extensions',
+  'entertainment': 'Games, videos, and fun extensions to brighten your day',
+  'news-weather': 'Stay informed with news and weather extensions',
+  'social-communication': 'Social networking and communication tools',
+  'accessibility': 'Extensions that make the web more accessible for everyone',
+  'photos': 'Photo editing, sharing, and management tools',
+  'search-tools': 'Enhance your search experience with these powerful tools',
+} as const;
+
+export default function CategoryPage({ params }: CategoryPageProps) {
+  const { category } = params;
+  const categoryName = CATEGORIES[category as keyof typeof CATEGORIES];
+  const categoryDescription = CATEGORY_DESCRIPTIONS[category as keyof typeof CATEGORY_DESCRIPTIONS];
+  
   const [extensions, setExtensions] = useState<Extension[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -15,15 +55,37 @@ export default function ExtensionsPage() {
   const [total, setTotal] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState('');
   const [sortBy, setSortBy] = useState('users');
   const [sortOrder, setSortOrder] = useState('desc');
 
   const limit = 12;
 
+  if (!categoryName) {
+    notFound();
+  }
+
   useEffect(() => {
     fetchExtensions();
-  }, [currentPage, searchQuery, selectedCategory, sortBy, sortOrder]);
+  }, [currentPage, searchQuery, sortBy, sortOrder, category]);
+
+  // Add structured data to the page
+  useEffect(() => {
+    if (total > 0) {
+      const seoData = generateCategorySEO(category, categoryName, total);
+      if (seoData.structuredData) {
+        const script = document.createElement('script');
+        script.type = 'application/ld+json';
+        script.textContent = JSON.stringify(seoData.structuredData);
+        document.head.appendChild(script);
+        
+        return () => {
+          if (document.head.contains(script)) {
+            document.head.removeChild(script);
+          }
+        };
+      }
+    }
+  }, [total, category, categoryName]);
 
   const fetchExtensions = async () => {
     try {
@@ -35,9 +97,14 @@ export default function ExtensionsPage() {
       if (searchQuery.trim()) {
         setIsSearching(true);
         response = await apiClient.searchExtensions(searchQuery, currentPage, limit);
+        // Filter by category on client side if searching
+        response.extensions = response.extensions.filter(ext => 
+          ext.category === categoryName
+        );
+        response.total = response.extensions.length;
       } else {
         setIsSearching(false);
-        response = await apiClient.getExtensions(currentPage, limit, sortBy, sortOrder, selectedCategory);
+        response = await apiClient.getExtensions(currentPage, limit, sortBy, sortOrder, categoryName);
       }
 
       setExtensions(response.extensions);
@@ -65,20 +132,37 @@ export default function ExtensionsPage() {
     window.location.href = `/extension/${extension.extension_id}`;
   };
 
+  const breadcrumbItems = [
+    { label: 'Home', href: '/' },
+    { label: 'Extensions', href: '/extensions' },
+    { label: categoryName, href: `/category/${category}` },
+  ];
+
   return (
     <div className="bg-slate-50 min-h-screen">
+      {/* Breadcrumb */}
+      <div className="bg-white border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <Breadcrumb items={breadcrumbItems} />
+        </div>
+      </div>
+
       {/* Page Header */}
       <section className="bg-white border-b border-slate-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
-          <h1 className="text-3xl font-bold text-slate-900 mb-4">
-            All Extensions
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            {categoryName} Extensions
           </h1>
           <p className="text-lg text-slate-600 mb-8 max-w-2xl mx-auto">
-            Browse our complete database of Chrome Web Store extensions with real-time analytics
+            {categoryDescription}
           </p>
           
           <div className="max-w-lg mx-auto">
-            <SearchBar onSearch={handleSearch} initialValue={searchQuery} placeholder="Search extensions..." />
+            <SearchBar 
+              onSearch={handleSearch} 
+              initialValue={searchQuery} 
+              placeholder={`Search ${categoryName.toLowerCase()} extensions...`} 
+            />
           </div>
         </div>
       </section>
@@ -95,9 +179,9 @@ export default function ExtensionsPage() {
               ) : (
                 <>
                   {isSearching ? (
-                    <>Found {total} result{total !== 1 ? 's' : ''} for &quot;{searchQuery}&quot;</>
+                    <>Found {total} result{total !== 1 ? 's' : ''} for &quot;{searchQuery}&quot; in {categoryName}</>
                   ) : (
-                    <>{total} extension{total !== 1 ? 's' : ''} total</>
+                    <>{total} {categoryName.toLowerCase()} extension{total !== 1 ? 's' : ''}</>
                   )}
                   {total > 0 && totalPages > 1 && (
                     <span className="text-slate-400 ml-2">
@@ -120,32 +204,9 @@ export default function ExtensionsPage() {
             )}
           </div>
 
-          {/* Filters and Sorting */}
+          {/* Sorting */}
           {!isSearching && (
             <div className="flex flex-col sm:flex-row gap-4 mb-6 p-4 bg-white rounded-lg border border-slate-200">
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-slate-700 mb-2">Category</label>
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => {
-                    setSelectedCategory(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">All Categories</option>
-                  <option value="Productivity">Productivity</option>
-                  <option value="Shopping">Shopping</option>
-                  <option value="Developer Tools">Developer Tools</option>
-                  <option value="Communication">Communication</option>
-                  <option value="Entertainment">Entertainment</option>
-                  <option value="News & Weather">News & Weather</option>
-                  <option value="Social & Communication">Social & Communication</option>
-                  <option value="Accessibility">Accessibility</option>
-                  <option value="Photos">Photos</option>
-                  <option value="Search Tools">Search Tools</option>
-                </select>
-              </div>
               <div className="flex-1">
                 <label className="block text-sm font-medium text-slate-700 mb-2">Sort by</label>
                 <select
@@ -247,12 +308,12 @@ export default function ExtensionsPage() {
                     </svg>
                   </div>
                   <h3 className="text-xl font-medium text-slate-900 mb-2">
-                    {isSearching ? 'No extensions found' : 'No extensions yet'}
+                    {isSearching ? 'No extensions found' : `No ${categoryName.toLowerCase()} extensions yet`}
                   </h3>
                   <p className="text-slate-500 mb-6 max-w-md mx-auto">
                     {isSearching 
-                      ? `No extensions match "${searchQuery}". Try a different search term.`
-                      : 'Extensions will appear here once they are added to the database.'
+                      ? `No ${categoryName.toLowerCase()} extensions match "${searchQuery}". Try a different search term.`
+                      : `${categoryName} extensions will appear here once they are added to the database.`
                     }
                   </p>
                   {isSearching && (
@@ -260,7 +321,7 @@ export default function ExtensionsPage() {
                       onClick={() => handleSearch('')}
                       className="inline-flex items-center px-4 py-2 border border-slate-300 text-sm font-medium rounded-lg text-slate-700 bg-white hover:bg-slate-50 transition-colors"
                     >
-                      Browse All Extensions
+                      Browse All {categoryName} Extensions
                     </button>
                   )}
                 </div>
@@ -271,4 +332,25 @@ export default function ExtensionsPage() {
       </section>
     </div>
   );
+}
+
+export async function generateStaticParams() {
+  return Object.keys(CATEGORIES).map((category) => ({
+    category,
+  }));
+}
+
+export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
+  const { category } = params;
+  const categoryName = CATEGORIES[category as keyof typeof CATEGORIES];
+  
+  if (!categoryName) {
+    return {
+      title: 'Category Not Found',
+      description: 'The requested category does not exist.',
+    };
+  }
+  
+  const seoData = generateCategorySEO(category, categoryName);
+  return generateMetadata(seoData);
 }

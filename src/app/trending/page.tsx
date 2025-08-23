@@ -1,12 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Metadata } from 'next';
 import { apiClient, Extension, ExtensionResponse } from '@/lib/api';
 import ExtensionCard from '@/components/ExtensionCard';
 import SearchBar from '@/components/SearchBar';
 import Pagination from '@/components/Pagination';
+import Breadcrumb from '@/components/Breadcrumb';
+import { generateFilterSEO, generateMetadata } from '@/lib/seo';
 
-export default function ExtensionsPage() {
+export const metadata: Metadata = generateMetadata(generateFilterSEO('trending'));
+
+export default function TrendingExtensionsPage() {
   const [extensions, setExtensions] = useState<Extension[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -15,15 +20,31 @@ export default function ExtensionsPage() {
   const [total, setTotal] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [sortBy, setSortBy] = useState('users');
-  const [sortOrder, setSortOrder] = useState('desc');
 
   const limit = 12;
 
   useEffect(() => {
     fetchExtensions();
-  }, [currentPage, searchQuery, selectedCategory, sortBy, sortOrder]);
+  }, [currentPage, searchQuery]);
+
+  // Add structured data to the page
+  useEffect(() => {
+    if (total > 0) {
+      const seoData = generateFilterSEO('trending', total);
+      if (seoData.structuredData) {
+        const script = document.createElement('script');
+        script.type = 'application/ld+json';
+        script.textContent = JSON.stringify(seoData.structuredData);
+        document.head.appendChild(script);
+        
+        return () => {
+          if (document.head.contains(script)) {
+            document.head.removeChild(script);
+          }
+        };
+      }
+    }
+  }, [total]);
 
   const fetchExtensions = async () => {
     try {
@@ -37,7 +58,7 @@ export default function ExtensionsPage() {
         response = await apiClient.searchExtensions(searchQuery, currentPage, limit);
       } else {
         setIsSearching(false);
-        response = await apiClient.getExtensions(currentPage, limit, sortBy, sortOrder, selectedCategory);
+        response = await apiClient.getExtensions(currentPage, limit, 'recent', 'desc');
       }
 
       setExtensions(response.extensions);
@@ -65,20 +86,46 @@ export default function ExtensionsPage() {
     window.location.href = `/extension/${extension.extension_id}`;
   };
 
+  const breadcrumbItems = [
+    { label: 'Home', href: '/' },
+    { label: 'Extensions', href: '/extensions' },
+    { label: 'Trending', href: '/trending' },
+  ];
+
+  const isRecentlyUpdated = (dateString?: string) => {
+    if (!dateString) return false;
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays <= 30;
+  };
+
   return (
     <div className="bg-slate-50 min-h-screen">
+      {/* Breadcrumb */}
+      <div className="bg-white border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <Breadcrumb items={breadcrumbItems} />
+        </div>
+      </div>
+
       {/* Page Header */}
       <section className="bg-white border-b border-slate-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
-          <h1 className="text-3xl font-bold text-slate-900 mb-4">
-            All Extensions
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            Trending Chrome Extensions
           </h1>
           <p className="text-lg text-slate-600 mb-8 max-w-2xl mx-auto">
-            Browse our complete database of Chrome Web Store extensions with real-time analytics
+            Discover the latest and most recently updated Chrome extensions
           </p>
           
           <div className="max-w-lg mx-auto">
-            <SearchBar onSearch={handleSearch} initialValue={searchQuery} placeholder="Search extensions..." />
+            <SearchBar 
+              onSearch={handleSearch} 
+              initialValue={searchQuery} 
+              placeholder="Search trending extensions..." 
+            />
           </div>
         </div>
       </section>
@@ -97,7 +144,7 @@ export default function ExtensionsPage() {
                   {isSearching ? (
                     <>Found {total} result{total !== 1 ? 's' : ''} for &quot;{searchQuery}&quot;</>
                   ) : (
-                    <>{total} extension{total !== 1 ? 's' : ''} total</>
+                    <>{total} extension{total !== 1 ? 's' : ''} sorted by recent updates</>
                   )}
                   {total > 0 && totalPages > 1 && (
                     <span className="text-slate-400 ml-2">
@@ -119,65 +166,6 @@ export default function ExtensionsPage() {
               </button>
             )}
           </div>
-
-          {/* Filters and Sorting */}
-          {!isSearching && (
-            <div className="flex flex-col sm:flex-row gap-4 mb-6 p-4 bg-white rounded-lg border border-slate-200">
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-slate-700 mb-2">Category</label>
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => {
-                    setSelectedCategory(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">All Categories</option>
-                  <option value="Productivity">Productivity</option>
-                  <option value="Shopping">Shopping</option>
-                  <option value="Developer Tools">Developer Tools</option>
-                  <option value="Communication">Communication</option>
-                  <option value="Entertainment">Entertainment</option>
-                  <option value="News & Weather">News & Weather</option>
-                  <option value="Social & Communication">Social & Communication</option>
-                  <option value="Accessibility">Accessibility</option>
-                  <option value="Photos">Photos</option>
-                  <option value="Search Tools">Search Tools</option>
-                </select>
-              </div>
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-slate-700 mb-2">Sort by</label>
-                <select
-                  value={sortBy}
-                  onChange={(e) => {
-                    setSortBy(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="users">Most Users</option>
-                  <option value="rating">Highest Rated</option>
-                  <option value="reviews">Most Reviews</option>
-                  <option value="recent">Recently Updated</option>
-                </select>
-              </div>
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-slate-700 mb-2">Order</label>
-                <select
-                  value={sortOrder}
-                  onChange={(e) => {
-                    setSortOrder(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="desc">High to Low</option>
-                  <option value="asc">Low to High</option>
-                </select>
-              </div>
-            </div>
-          )}
 
           {/* Error State */}
           {error && (
@@ -222,11 +210,22 @@ export default function ExtensionsPage() {
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                     {extensions.map((extension) => (
-                      <ExtensionCard
-                        key={extension.extension_id}
-                        extension={extension}
-                        onClick={() => handleExtensionClick(extension)}
-                      />
+                      <div key={extension.extension_id} className="relative">
+                        {!isSearching && isRecentlyUpdated(extension.last_updated_at) && (
+                          <div className="absolute -top-2 -right-2 z-10">
+                            <div className="bg-gradient-to-r from-blue-400 to-purple-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg flex items-center">
+                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                              </svg>
+                              New
+                            </div>
+                          </div>
+                        )}
+                        <ExtensionCard
+                          extension={extension}
+                          onClick={() => handleExtensionClick(extension)}
+                        />
+                      </div>
                     ))}
                   </div>
 
@@ -260,7 +259,7 @@ export default function ExtensionsPage() {
                       onClick={() => handleSearch('')}
                       className="inline-flex items-center px-4 py-2 border border-slate-300 text-sm font-medium rounded-lg text-slate-700 bg-white hover:bg-slate-50 transition-colors"
                     >
-                      Browse All Extensions
+                      Browse All Trending Extensions
                     </button>
                   )}
                 </div>
