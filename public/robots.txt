@@ -12,7 +12,5 @@ Disallow: /
 User-agent: Google-Extended
 Disallow: /
 
-# Sitemaps
+# Sitemap
 Sitemap: https://chrome-analytics.com/sitemap.xml
-Sitemap: https://chrome-analytics.com/server-sitemap-index.xml
-Sitemap: https://chrome-analytics.com/server-sitemap-categories.xml

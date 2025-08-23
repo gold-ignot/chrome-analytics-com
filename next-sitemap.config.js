@@ -1,7 +1,7 @@
 /** @type {import('next-sitemap').IConfig} */
 module.exports = {
   siteUrl: process.env.NEXT_PUBLIC_BASE_URL || 'https://chrome-analytics.com',
-  generateRobotsText: true,
+  generateRobotsText: false, // We manage robots.txt manually
   exclude: [
     '/server-sitemap-index.xml',
     '/server-sitemap-extensions-*.xml',
@@ -45,32 +45,6 @@ module.exports = {
     });
 
     return result
-  },
-  robotsTxtOptions: {
-    policies: [
-      {
-        userAgent: '*',
-        allow: '/',
-        disallow: [
-          '/api/',
-          '/admin/',
-          '/_next/',
-          '/static/',
-        ],
-      },
-      {
-        userAgent: 'GPTBot',
-        disallow: '/',
-      },
-      {
-        userAgent: 'Google-Extended',
-        disallow: '/',
-      },
-    ],
-    additionalSitemaps: [
-      process.env.NEXT_PUBLIC_BASE_URL + '/server-sitemap-index.xml',
-      process.env.NEXT_PUBLIC_BASE_URL + '/server-sitemap-categories.xml',
-    ],
   },
   // Transform function to modify URLs or add custom fields
   transform: async (config, path) => {
