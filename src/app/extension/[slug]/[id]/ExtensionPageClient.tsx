@@ -638,17 +638,17 @@ export default function ExtensionPageClient({ extension, relatedExtensions }: Ex
                           </h3>
                           {/* Rankings */}
                           <div className="flex flex-wrap gap-1 mt-1">
-                            {relatedExt.popularity_rank && relatedExt.popularity_rank <= 100 && (
+                            {relatedExt.popularity_rank > 0 && relatedExt.popularity_rank <= 100 && (
                               <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full font-medium">
                                 #{relatedExt.popularity_rank} Popular
                               </span>
                             )}
-                            {relatedExt.trending_rank && relatedExt.trending_rank <= 100 && (
+                            {relatedExt.trending_rank > 0 && relatedExt.trending_rank <= 100 && (
                               <span className="text-xs px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full font-medium">
                                 #{relatedExt.trending_rank} Trending
                               </span>
                             )}
-                            {relatedExt.top_rated_rank && relatedExt.top_rated_rank <= 100 && (
+                            {relatedExt.top_rated_rank > 0 && relatedExt.top_rated_rank <= 100 && (
                               <span className="text-xs px-2 py-0.5 bg-pink-100 text-pink-700 rounded-full font-medium">
                                 #{relatedExt.top_rated_rank} Top Rated
                               </span>

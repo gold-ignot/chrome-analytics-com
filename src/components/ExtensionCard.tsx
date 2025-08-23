@@ -106,17 +106,17 @@ export default function ExtensionCard({ extension, onClick }: ExtensionCardProps
         <span className="text-xs px-2.5 py-1 bg-slate-100 text-slate-700 rounded-full font-medium">
           {extension.category}
         </span>
-        {extension.popularity_rank && extension.popularity_rank <= 100 && (
+        {extension.popularity_rank > 0 && extension.popularity_rank <= 100 && (
           <span className="text-xs px-2.5 py-1 bg-purple-100 text-purple-700 rounded-full font-medium">
             #{extension.popularity_rank} Popular
           </span>
         )}
-        {extension.trending_rank && extension.trending_rank <= 100 && (
+        {extension.trending_rank > 0 && extension.trending_rank <= 100 && (
           <span className="text-xs px-2.5 py-1 bg-orange-100 text-orange-700 rounded-full font-medium">
             #{extension.trending_rank} Trending
           </span>
         )}
-        {extension.top_rated_rank && extension.top_rated_rank <= 100 && (
+        {extension.top_rated_rank > 0 && extension.top_rated_rank <= 100 && (
           <span className="text-xs px-2.5 py-1 bg-pink-100 text-pink-700 rounded-full font-medium">
             #{extension.top_rated_rank} Top Rated
           </span>
