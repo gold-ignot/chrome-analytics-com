@@ -1,14 +1,16 @@
 'use client';
 
+import Link from 'next/link';
 import { Extension } from '@/lib/api';
 import { useState } from 'react';
 
 interface ExtensionCardProps {
   extension: Extension;
   onClick?: () => void;
+  href?: string;
 }
 
-export default function ExtensionCard({ extension, onClick }: ExtensionCardProps) {
+export default function ExtensionCard({ extension, onClick, href }: ExtensionCardProps) {
   const [logoError, setLogoError] = useState(false);
   const formatUsers = (users: number | undefined | null) => {
     if (!users || users === 0 || isNaN(users)) return 'N/A';
@@ -72,8 +74,8 @@ export default function ExtensionCard({ extension, onClick }: ExtensionCardProps
     );
   };
 
-  return (
-    <div className="extension-card group" onClick={onClick}>
+  const cardContent = (
+    <div className="extension-card group" onClick={href ? undefined : onClick}>
       {/* Header with logo and title */}
       <div className="flex items-start space-x-3 mb-3">
         {/* Extension Logo or Popularity Icon */}
@@ -208,4 +210,10 @@ export default function ExtensionCard({ extension, onClick }: ExtensionCardProps
       </div>
     </div>
   );
+
+  if (href) {
+    return <Link href={href}>{cardContent}</Link>;
+  }
+
+  return cardContent;
 }

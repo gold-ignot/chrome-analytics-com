@@ -15,19 +15,17 @@ interface InitialData {
   totalPages: number;
   error: string | null;
   searchQuery: string;
-  isSearching: boolean;
-  filterType: string;
-  title: string;
-  description: string;
+  selectedCategory: string;
   sortBy: string;
   sortOrder: string;
+  isSearching: boolean;
 }
 
-interface FilterPageClientProps {
+interface ExtensionsPageClientProps {
   initialData: InitialData;
 }
 
-export default function FilterPageClient({ initialData }: FilterPageClientProps) {
+export default function ExtensionsPageClient({ initialData }: ExtensionsPageClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -39,6 +37,9 @@ export default function FilterPageClient({ initialData }: FilterPageClientProps)
   const [total, setTotal] = useState(initialData.total);
   const [searchQuery, setSearchQuery] = useState(initialData.searchQuery);
   const [isSearching, setIsSearching] = useState(initialData.isSearching);
+  const [selectedCategory, setSelectedCategory] = useState(initialData.selectedCategory);
+  const [sortBy, setSortBy] = useState(initialData.sortBy);
+  const [sortOrder, setSortOrder] = useState(initialData.sortOrder);
 
   const limit = 12;
 
@@ -46,11 +47,14 @@ export default function FilterPageClient({ initialData }: FilterPageClientProps)
   const updateURL = (updates: Partial<{
     page: number;
     search: string;
+    category: string;
+    sort: string;
+    order: string;
   }>) => {
     const params = new URLSearchParams(searchParams.toString());
     
     Object.entries(updates).forEach(([key, value]) => {
-      if (value && value !== '' && value !== 1) {
+      if (value && value !== '' && value !== 1 && value !== 'users' && value !== 'desc') {
         params.set(key, value.toString());
       } else {
         params.delete(key);
@@ -58,18 +62,23 @@ export default function FilterPageClient({ initialData }: FilterPageClientProps)
     });
 
     const queryString = params.toString();
-    const currentPath = window.location.pathname;
-    const newUrl = queryString ? `${currentPath}?${queryString}` : currentPath;
+    const newUrl = queryString ? `/extensions?${queryString}` : '/extensions';
     router.push(newUrl);
   };
 
   const fetchExtensions = async (params?: {
     page?: number;
     search?: string;
+    category?: string;
+    sort?: string;
+    order?: string;
   }) => {
     const {
       page = currentPage,
       search = searchQuery,
+      category = selectedCategory,
+      sort = sortBy,
+      order = sortOrder
     } = params || {};
 
     try {
@@ -83,7 +92,7 @@ export default function FilterPageClient({ initialData }: FilterPageClientProps)
         response = await apiClient.searchExtensions(search, page, limit);
       } else {
         setIsSearching(false);
-        response = await apiClient.getExtensions(page, limit, initialData.sortBy, initialData.sortOrder);
+        response = await apiClient.getExtensions(page, limit, sort, order, category);
       }
 
       setExtensions(response.extensions);
@@ -109,6 +118,27 @@ export default function FilterPageClient({ initialData }: FilterPageClientProps)
     updateURL({ page });
     fetchExtensions({ page });
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+    setCurrentPage(1);
+    updateURL({ page: 1, category });
+    fetchExtensions({ page: 1, category });
+  };
+
+  const handleSortChange = (sort: string) => {
+    setSortBy(sort);
+    setCurrentPage(1);
+    updateURL({ page: 1, sort });
+    fetchExtensions({ page: 1, sort });
+  };
+
+  const handleOrderChange = (order: string) => {
+    setSortOrder(order);
+    setCurrentPage(1);
+    updateURL({ page: 1, order });
+    fetchExtensions({ page: 1, order });
   };
 
   const handleClearSearch = () => {
@@ -165,6 +195,56 @@ export default function FilterPageClient({ initialData }: FilterPageClientProps)
               </button>
             )}
           </div>
+
+          {/* Filters and Sorting */}
+          {!isSearching && (
+            <div className="flex flex-col sm:flex-row gap-4 mb-6 p-4 bg-white rounded-lg border border-slate-200">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-slate-700 mb-2">Category</label>
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => handleCategoryChange(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">All Categories</option>
+                  <option value="Productivity">Productivity</option>
+                  <option value="Shopping">Shopping</option>
+                  <option value="Developer Tools">Developer Tools</option>
+                  <option value="Communication">Communication</option>
+                  <option value="Entertainment">Entertainment</option>
+                  <option value="News & Weather">News & Weather</option>
+                  <option value="Social & Communication">Social & Communication</option>
+                  <option value="Accessibility">Accessibility</option>
+                  <option value="Photos">Photos</option>
+                  <option value="Search Tools">Search Tools</option>
+                </select>
+              </div>
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-slate-700 mb-2">Sort by</label>
+                <select
+                  value={sortBy}
+                  onChange={(e) => handleSortChange(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="users">Most Users</option>
+                  <option value="rating">Highest Rated</option>
+                  <option value="reviews">Most Reviews</option>
+                  <option value="recent">Recently Updated</option>
+                </select>
+              </div>
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-slate-700 mb-2">Order</label>
+                <select
+                  value={sortOrder}
+                  onChange={(e) => handleOrderChange(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="desc">High to Low</option>
+                  <option value="asc">Low to High</option>
+                </select>
+              </div>
+            </div>
+          )}
 
           {/* Error State */}
           {error && (

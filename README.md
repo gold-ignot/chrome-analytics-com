@@ -30,7 +30,12 @@ A responsive Next.js dashboard for Chrome Web Store extension analytics, display
 - ✅ **Breadcrumb Navigation**: Schema.org structured data for all navigation paths
 - ✅ **Comprehensive Internal Linking**: Strategic approach targeting primary and long-tail keywords
 - ✅ **Dynamic Meta Tags & Structured Data**: Comprehensive SEO metadata system with dynamic generation
-- ✅ **Automated Sitemap Generation**: Server-side sitemaps for dynamic extension pages
+- ✅ **Complete Sitemap System**: Comprehensive sitemaps covering 165,276+ total pages
+  - ✅ **Sitemap Index**: Main sitemap referencing all sub-sitemaps
+  - ✅ **Extension Sitemaps**: 17 sub-sitemaps with 10,000 extensions each
+  - ✅ **Dynamic Categories Sitemap**: API-driven categories discovery (16 categories)
+  - ✅ **Static Pages Sitemap**: All static pages and routes via next-sitemap
+  - ✅ **Server-Side Generation**: Using getServerSideSitemapLegacy for dynamic content
 - ✅ **Category Pages**: Dedicated pages for each extension category with SEO optimization
 - ✅ **Filter Pages**: Specialized pages for popular, top-rated, and trending extensions with pre-computed rankings
 - ✅ **Long-tail Keyword Pages**: `/best/[type]` pages for specific search terms
@@ -132,6 +137,10 @@ A responsive Next.js dashboard for Chrome Web Store extension analytics, display
 │   │   ├── best/[type]/        # Long-tail keyword pages
 │   │   ├── globals.css         # Global styles and custom CSS classes
 │   │   └── layout.tsx          # Root layout with consistent styling
+│   ├── pages/                  # Server-side sitemap generation
+│   │   ├── server-sitemap-index.xml.ts     # Main sitemap index
+│   │   ├── server-sitemap-extensions-[page].xml.ts # Extension sitemaps (0-16)
+│   │   └── server-sitemap-categories.xml.ts # Dynamic categories sitemap
 │   ├── components/             # Reusable UI components
 │   │   ├── ExtensionCard.tsx   # Enhanced extension cards with ranking badges
 │   │   ├── SearchBar.tsx       # Search functionality with URL parameters
@@ -152,6 +161,8 @@ A responsive Next.js dashboard for Chrome Web Store extension analytics, display
 │   │   ├── seo.ts              # Centralized SEO metadata generation
 │   │   └── seoHelpers.ts       # SEO metadata helpers and constants
 ├── public/                     # Static assets
+│   └── robots.txt             # SEO robots configuration with sitemap reference
+├── next-sitemap.config.js     # Sitemap configuration for static pages
 ├── IMPROVEMENTS.md            # Detailed feature implementation history
 ├── COMPONENT-REUSABILITY.md   # Code reusability improvements documentation
 ├── RANKING_SYSTEM.md          # Pre-computed ranking system documentation
@@ -185,6 +196,15 @@ A responsive Next.js dashboard for Chrome Web Store extension analytics, display
 - 📊 **Comprehensive analytics tracking** for data-driven decisions
 - 🔄 **Automated SEO maintenance** with dynamic meta generation
 - 🗺️ **Complete sitemap coverage** for better crawling
+
+### **Sitemap Architecture**
+- 📋 **Total Coverage**: 165,276+ pages across all sitemaps
+- 🏗️ **Sitemap Index**: `/server-sitemap-index.xml` - references all sub-sitemaps
+- 📦 **Extension Sitemaps**: 17 files (0-16) with 10,000 extensions each
+- 🏷️ **Dynamic Categories**: API-driven discovery of 16 categories vs 10 hardcoded (60% improvement)
+- 📄 **Static Pages**: Automated generation via next-sitemap for app routes
+- 🤖 **SEO Robots**: Optimized robots.txt with single sitemap reference
+- ⚡ **Server-Side Generation**: Uses getServerSideSitemapLegacy for compatibility
 
 ---
 
@@ -373,10 +393,12 @@ This is a frontend-only application that displays data from the Chrome Extension
 ## 📊 **Key Metrics**
 
 - **163,932+ Extensions Tracked**
+- **165,276+ Pages in Sitemaps** (extensions + categories + static pages)
 - **Sub-second Query Performance** 
 - **10x Performance Improvement** over previous system
 - **70% Code Reduction** through component reusability
 - **100% SEO Optimized** pages with structured data
+- **Complete Sitemap Coverage** with dynamic category discovery
 - **Production Ready** with comprehensive testing
 
 ---

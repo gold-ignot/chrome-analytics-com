@@ -4,10 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build && next-sitemap",
+    "build": "node scripts/generate-sitemaps.js && next build",
     "start": "next start",
     "lint": "next lint",
-    "sitemap": "next-sitemap"
+    "sitemap": "node scripts/generate-sitemaps.js",
+    "sitemap:next": "next-sitemap"
   },
   "dependencies": {
     "@types/recharts": "^1.8.29",
