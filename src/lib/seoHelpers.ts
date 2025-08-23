@@ -67,15 +67,15 @@ export const metadataGenerators = {
     seoDataToMetadata(generateExtensionsListSEO(searchQuery, category, extensionCount)),
   
   // For "best" pages
-  best: (type: string, title: string, description: string, keywords: string[]) => {
+  best: (type: string, typeInfo: { title: string; category: string; description: string; keywords: string[] }) => {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://chrome-analytics.com';
     return {
-      title: `${title} | Chrome Analytics`,
-      description,
-      keywords: keywords.join(', '),
+      title: `${typeInfo.title} | Chrome Analytics`,
+      description: typeInfo.description,
+      keywords: typeInfo.keywords.join(', '),
       openGraph: {
-        title,
-        description,
+        title: typeInfo.title,
+        description: typeInfo.description,
         type: 'website' as const,
         url: `${baseUrl}/best/${type}`,
         images: [`${baseUrl}/og-best-${type}.png`],
@@ -83,8 +83,8 @@ export const metadataGenerators = {
       },
       twitter: {
         card: 'summary_large_image' as const,
-        title,
-        description,
+        title: typeInfo.title,
+        description: typeInfo.description,
         images: [`${baseUrl}/og-best-${type}.png`],
       },
       robots: {

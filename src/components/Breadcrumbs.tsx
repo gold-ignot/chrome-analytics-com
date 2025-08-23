@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ChevronRightIcon } from '@heroicons/react/24/outline';
+// Inline chevron icon to avoid external dependencies
 import { useEffect } from 'react';
 
 interface BreadcrumbItem {
@@ -67,10 +67,15 @@ export default function Breadcrumbs({ items, className = '' }: BreadcrumbsProps)
           return (
             <li key={`${item.href}-${index}`} className="flex items-center">
               {index > 0 && (
-                <ChevronRightIcon 
+                <svg 
                   className="flex-shrink-0 w-4 h-4 text-slate-400 mx-2" 
-                  aria-hidden="true" 
-                />
+                  aria-hidden="true"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
               )}
               
               {isLast || item.current ? (
@@ -131,7 +136,17 @@ export const breadcrumbPatterns = {
       items.push({ label: categoryName, href: `/category/${category}` });
     }
 
-    items.push({ label: extensionName, href: `/extension/${extensionId}`, current: true });
+    // Generate slug from extension name for the URL
+    const slug = extensionName
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .substring(0, 60)
+      .replace(/-+$/, '') || 'extension';
+
+    items.push({ label: extensionName, href: `/extension/${slug}/${extensionId}`, current: true });
     
     return items;
   },

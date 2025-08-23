@@ -1,7 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
-import Breadcrumb from '@/components/Breadcrumb';
+import Breadcrumbs from '@/components/Breadcrumbs';
 import SearchBar from '@/components/SearchBar';
 import Pagination from '@/components/Pagination';
 import ExtensionCard from '@/components/ExtensionCard';
@@ -128,7 +128,7 @@ export default function ExtensionListLayout({
       {/* Breadcrumb */}
       <div className="bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <Breadcrumb items={breadcrumbItems} />
+          <Breadcrumbs items={breadcrumbItems} />
         </div>
       </div>
 

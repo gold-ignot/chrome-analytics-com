@@ -1,26 +1,21 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { apiClient, Extension, GrowthMetrics, KeywordMetric } from '@/lib/api';
-import Breadcrumb from '@/components/Breadcrumb';
+import { createExtensionSlug, slugToTitle, extensionUrls } from '@/lib/slugs';
+import { breadcrumbPatterns } from '@/components/Breadcrumbs';
+import { injectStructuredData } from '@/lib/seoHelpers';
+import Breadcrumbs from '@/components/Breadcrumbs';
 import Chart from '@/components/Chart';
-// import { 
-//   ArrowLeft, 
-//   Users, 
-//   Star, 
-//   MessageSquare, 
-//   TrendingUp, 
-//   BarChart3, 
-//   AlertCircle,
-//   Loader2,
-//   Tag
-// } from 'lucide-react';
 
-export default function ExtensionDetailPage() {
-  const params = useParams();
+interface ExtensionPageClientProps {
+  slug: string;
+  extensionId: string;
+}
+
+export default function ExtensionPageClient({ slug, extensionId }: ExtensionPageClientProps) {
   const router = useRouter();
-  const extensionId = params.id as string;
 
   const [extension, setExtension] = useState<Extension | null>(null);
   const [growthMetrics, setGrowthMetrics] = useState<GrowthMetrics | null>(null);
@@ -29,30 +24,76 @@ export default function ExtensionDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (extensionId) {
-      fetchExtensionData();
-    }
+    fetchExtensionData();
   }, [extensionId]);
+
+  // Inject structured data when extension is available
+  useEffect(() => {
+    if (extension) {
+      const structuredData = {
+        '@context': 'https://schema.org',
+        '@type': 'SoftwareApplication',
+        name: extension.name,
+        description: extension.description,
+        applicationCategory: 'BrowserApplication',
+        operatingSystem: 'Chrome',
+        offers: {
+          '@type': 'Offer',
+          price: '0',
+          priceCurrency: 'USD',
+        },
+        aggregateRating: extension.rating > 0 ? {
+          '@type': 'AggregateRating',
+          ratingValue: extension.rating,
+          ratingCount: extension.review_count || 1,
+          bestRating: 5,
+          worstRating: 1,
+        } : undefined,
+        author: {
+          '@type': 'Organization',
+          name: extension.developer || 'Unknown Developer',
+        },
+        datePublished: extension.published_at,
+        dateModified: extension.last_updated_at,
+        version: extension.version,
+        downloadUrl: `https://chrome.google.com/webstore/detail/${extension.extension_id}`,
+        screenshot: extension.screenshots,
+        image: extension.logo_url,
+      };
+
+      const cleanup = injectStructuredData(structuredData);
+      return cleanup;
+    }
+  }, [extension]);
 
   const fetchExtensionData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Fetch extension details only (analytics endpoints don't exist in this API)
-      const extension = await apiClient.getExtension(extensionId);
+      // Fetch extension details
+      const extensionData = await apiClient.getExtension(extensionId);
       
-      // Validate essential extension data - show 404 if missing critical fields
-      if (!extension || !extension.name || !extension.extension_id) {
+      // Validate essential extension data
+      if (!extensionData || !extensionData.name || !extensionData.extension_id) {
         setError('Extension not found');
         return;
       }
+
+      // Check if slug matches the extension name (for SEO integrity)
+      const expectedSlug = createExtensionSlug(extensionData);
+      if (expectedSlug !== slug) {
+        // Redirect to correct URL with proper slug
+        const correctUrl = extensionUrls.main(extensionData);
+        router.replace(correctUrl);
+        return;
+      }
       
-      setExtension(extension);
+      setExtension(extensionData);
       
       // Set keywords from extension data if available
-      if (extension.keywords) {
-        setKeywords(extension.keywords.map(keyword => ({ 
+      if (extensionData.keywords) {
+        setKeywords(extensionData.keywords.map(keyword => ({ 
           keyword, 
           position: 0, 
           searchVolume: 0 
@@ -99,10 +140,6 @@ export default function ExtensionDetailPage() {
   const calculateInsights = () => {
     if (!extension) return null;
 
-    // Since the API doesn't provide snapshots, we'll create basic insights from current data
-    const userGrowthRate = 0; // Cannot calculate without historical data
-    const ratingTrend = 0; // Cannot calculate without historical data
-    
     // Performance categorization
     const getPerformanceCategory = (users: number, rating: number) => {
       if (users >= 1000000 && rating >= 4.5) return { label: 'Excellent', color: 'emerald', icon: '🚀' };
@@ -114,7 +151,7 @@ export default function ExtensionDetailPage() {
 
     const performance = getPerformanceCategory(extension.users, extension.rating);
     
-    // Calculate percentiles (mock data for demonstration)
+    // Calculate percentiles
     const getUserPercentile = (users: number) => {
       if (users >= 1000000) return 99;
       if (users >= 500000) return 95;
@@ -127,19 +164,27 @@ export default function ExtensionDetailPage() {
     const userPercentile = getUserPercentile(extension.users);
     
     return {
-      userGrowthRate: Math.round(userGrowthRate),
-      ratingTrend: ratingTrend.toFixed(2),
+      userGrowthRate: 0, // No historical data available
+      ratingTrend: '0.00',
       performance,
       userPercentile,
-      totalDataPoints: 0, // No historical data available
-      timespan: 0, // No historical data available
+      totalDataPoints: 0,
+      timespan: 0,
       avgRating: extension.rating.toFixed(1),
-      peakUsers: extension.users, // Current users (no historical data)
-      hasGrowthData: false // No historical data available
+      peakUsers: extension.users,
+      hasGrowthData: false
     };
   };
 
   const insights = calculateInsights();
+
+  // Create breadcrumbs
+  const breadcrumbs = extension ? breadcrumbPatterns.extension(
+    extension.name,
+    extensionId,
+    extension.category?.toLowerCase().replace(/\s+/g, '-'),
+    extension.category
+  ) : [];
 
   if (loading) {
     return (
@@ -176,12 +221,19 @@ export default function ExtensionDetailPage() {
 
   return (
     <div className="bg-slate-50 min-h-screen">
+      {/* Breadcrumbs */}
+      <div className="bg-white border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <Breadcrumbs items={breadcrumbs} />
+        </div>
+      </div>
+
       {/* Header */}
       <section className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => router.push('/extensions')}
+              onClick={() => router.back()}
               className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors"
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -215,11 +267,26 @@ export default function ExtensionDetailPage() {
                 )}
               </div>
             </div>
+
+            {/* Chrome Web Store Link */}
+            <div className="ml-auto">
+              <a
+                href={extensionUrls.store(extension.extension_id)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+                Add to Chrome
+              </a>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Main Content */}
+      {/* Main Content - Reuse most of the existing content from the old page */}
       <section className="py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Extension Details */}
@@ -242,6 +309,57 @@ export default function ExtensionDetailPage() {
                 <p className="text-gray-700 leading-relaxed">
                   {extension.full_description || extension.description || 'No description available'}
                 </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Key Metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Users</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {extension.users > 0 ? formatUsers(extension.users) : 'N/A'}
+                  </p>
+                </div>
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Rating</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {extension.rating > 0 ? extension.rating.toFixed(1) : 'N/A'}
+                  </p>
+                </div>
+                <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600 mb-1">Reviews</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {extension.review_count > 0 ? extension.review_count.toLocaleString() : 'N/A'}
+                  </p>
+                </div>
+                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                  </svg>
+                </div>
               </div>
             </div>
           </div>
@@ -353,57 +471,6 @@ export default function ExtensionDetailPage() {
                   <span>Privacy Policy</span>
                 </a>
               )}
-            </div>
-          </div>
-
-          {/* Key Metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Users</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {extension.users > 0 ? formatUsers(extension.users) : 'N/A'}
-                  </p>
-                </div>
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Rating</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {extension.rating > 0 ? extension.rating.toFixed(1) : 'N/A'}
-                  </p>
-                </div>
-                <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Reviews</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {extension.review_count > 0 ? extension.review_count.toLocaleString() : 'N/A'}
-                  </p>
-                </div>
-                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                  </svg>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -763,7 +830,7 @@ export default function ExtensionDetailPage() {
               <div className="text-center py-8">
                 <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 015 0v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
                 </div>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No Historical Data</h3>

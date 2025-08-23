@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { apiClient, Extension, ExtensionResponse } from '@/lib/api';
+import { extensionUrls } from '@/lib/slugs';
 import ExtensionCard from '@/components/ExtensionCard';
 import SearchBar from '@/components/SearchBar';
 import Pagination from '@/components/Pagination';
@@ -62,7 +63,7 @@ export default function ExtensionsPage() {
   };
 
   const handleExtensionClick = (extension: Extension) => {
-    window.location.href = `/extension/${extension.extension_id}`;
+    window.location.href = extensionUrls.main(extension);
   };
 
   return (

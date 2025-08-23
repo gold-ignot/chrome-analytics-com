@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { apiClient, Extension, ExtensionResponse } from '@/lib/api';
+import { extensionUrls } from '@/lib/slugs';
 import ExtensionCard from '@/components/ExtensionCard';
 import SearchBar from '@/components/SearchBar';
 
@@ -49,7 +50,7 @@ function TopRatedSection() {
         <ExtensionCard
           key={extension.extension_id}
           extension={extension}
-          onClick={() => window.location.href = `/extension/${extension.extension_id}`}
+          onClick={() => window.location.href = extensionUrls.main(extension)}
         />
       ))}
     </div>
@@ -99,7 +100,7 @@ function TrendingSection() {
         <ExtensionCard
           key={extension.extension_id}
           extension={extension}
-          onClick={() => window.location.href = `/extension/${extension.extension_id}`}
+          onClick={() => window.location.href = extensionUrls.main(extension)}
         />
       ))}
     </div>
@@ -184,7 +185,7 @@ export default function Home() {
   };
 
   const handleExtensionClick = (extension: Extension) => {
-    window.location.href = `/extension/${extension.extension_id}`;
+    window.location.href = extensionUrls.main(extension);
   };
 
   const handleSearch = (query: string) => {
