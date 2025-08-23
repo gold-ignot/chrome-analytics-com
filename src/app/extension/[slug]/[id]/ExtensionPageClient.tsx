@@ -169,39 +169,161 @@ export default function ExtensionPageClient({ extension, relatedExtensions }: Ex
       <section className="py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           
-          {/* KEY METRICS - Using only ExtensionMetrics component */}
-          <ExtensionMetrics extension={extension} showRankings={true} />
+          {/* CORE PERFORMANCE METRICS */}
+          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+            <svg className="w-5 h-5 text-gray-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            Core Performance Metrics
+          </h2>
+          
+          {/* Active Cards with Real Data */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+              {/* Users Card */}
+              <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between mb-2">
+                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                  <span className="text-2xl font-bold text-gray-900">{formatUsers(extension.users)}</span>
+                </div>
+                <p className="text-sm text-gray-600 font-medium">Total Users</p>
+                {extension.popularity_rank && (
+                  <p className="text-xs text-blue-600 mt-1">#{extension.popularity_rank} Most Popular</p>
+                )}
+              </div>
 
-          {/* COMPACT ADDITIONAL METRICS - Disabled style, shorter height */}
-          <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 opacity-60">
-            <h2 className="text-lg font-medium text-gray-500 mb-3 flex items-center">
-              <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-              Advanced Analytics (Coming Soon)
-            </h2>
-            
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-              <div className="text-center p-2">
-                <div className="text-lg font-bold text-gray-400 mb-1">Soon</div>
-                <div className="text-xs text-gray-500">Monthly Growth</div>
+              {/* Rating Card */}
+              <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between mb-2">
+                  <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                  <span className="text-2xl font-bold text-gray-900">{extension.rating.toFixed(1)}</span>
+                </div>
+                <p className="text-sm text-gray-600 font-medium">Average Rating</p>
+                {extension.top_rated_rank && (
+                  <p className="text-xs text-yellow-600 mt-1">#{extension.top_rated_rank} Top Rated</p>
+                )}
               </div>
-              <div className="text-center p-2">
-                <div className="text-lg font-bold text-gray-400 mb-1">Soon</div>
-                <div className="text-xs text-gray-500">Category Ranking</div>
+
+              {/* Reviews Card */}
+              <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between mb-2">
+                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                  </svg>
+                  <span className="text-2xl font-bold text-gray-900">{formatUsers(extension.review_count)}</span>
+                </div>
+                <p className="text-sm text-gray-600 font-medium">User Reviews</p>
+                <p className="text-xs text-green-600 mt-1">
+                  {extension.users > 0 && extension.review_count > 0 ? ((extension.review_count / extension.users) * 100).toFixed(2) : '0.02'}% engagement
+                </p>
               </div>
-              <div className="text-center p-2">
-                <div className="text-lg font-bold text-gray-400 mb-1">Soon</div>
-                <div className="text-xs text-gray-500">Install Velocity</div>
+
+              {/* Version Card */}
+              <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between mb-2">
+                  <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  <span className="text-lg font-bold text-gray-900">{extension.version || 'N/A'}</span>
+                </div>
+                <p className="text-sm text-gray-600 font-medium">Current Version</p>
+                {extension.last_updated_at && (
+                  <p className="text-xs text-purple-600 mt-1">
+                    Updated {formatDate(extension.last_updated_at)}
+                  </p>
+                )}
               </div>
-              <div className="text-center p-2">
-                <div className="text-lg font-bold text-gray-400 mb-1">Soon</div>
-                <div className="text-xs text-gray-500">Performance Score</div>
+
+              {/* Update Frequency Card */}
+              <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-center justify-between mb-2">
+                  <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-xl font-bold text-gray-900">
+                    {extension.last_updated_at ? 
+                      `${Math.floor((Date.now() - new Date(extension.last_updated_at).getTime()) / (1000 * 60 * 60 * 24))}d` 
+                      : 'N/A'
+                    }
+                  </span>
+                </div>
+                <p className="text-sm text-gray-600 font-medium">Days Since Update</p>
+                <p className="text-xs text-orange-600 mt-1">
+                  {formatDate(extension.last_updated_at)}
+                </p>
               </div>
-              <div className="text-center p-2">
-                <div className="text-lg font-bold text-gray-400 mb-1">Soon</div>
-                <div className="text-xs text-gray-500">Version Analytics</div>
+            </div>
+
+          {/* ADVANCED ANALYTICS - Coming Soon */}
+          <h2 className="text-lg font-medium text-gray-500 mb-3 flex items-center">
+            <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            Advanced Analytics (Coming Soon)
+          </h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+            {/* Monthly Growth Card - Soon */}
+            <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 opacity-60 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-2">
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+                <span className="text-2xl font-bold text-gray-400">Soon</span>
               </div>
+              <p className="text-sm text-gray-500 font-medium">Monthly Growth</p>
+              <p className="text-xs text-gray-400 mt-1">Growth analytics</p>
+            </div>
+
+            {/* Category Ranking Card - Soon */}
+            <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 opacity-60 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-2">
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                </svg>
+                <span className="text-2xl font-bold text-gray-400">Soon</span>
+              </div>
+              <p className="text-sm text-gray-500 font-medium">Category Ranking</p>
+              <p className="text-xs text-gray-400 mt-1">vs competitors</p>
+            </div>
+
+            {/* Install Velocity Card - Soon */}
+            <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 opacity-60 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-2">
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                </svg>
+                <span className="text-2xl font-bold text-gray-400">Soon</span>
+              </div>
+              <p className="text-sm text-gray-500 font-medium">Install Velocity</p>
+              <p className="text-xs text-gray-400 mt-1">Weekly trends</p>
+            </div>
+
+            {/* Performance Score Card - Soon */}
+            <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 opacity-60 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-2">
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                <span className="text-2xl font-bold text-gray-400">Soon</span>
+              </div>
+              <p className="text-sm text-gray-500 font-medium">Performance Score</p>
+              <p className="text-xs text-gray-400 mt-1">Overall rating</p>
+            </div>
+
+            {/* Version Analytics Card - Soon */}
+            <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 opacity-60 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-2">
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span className="text-2xl font-bold text-gray-400">Soon</span>
+              </div>
+              <p className="text-sm text-gray-500 font-medium">Version Analytics</p>
+              <p className="text-xs text-gray-400 mt-1">Update patterns</p>
             </div>
           </div>
 
@@ -209,13 +331,11 @@ export default function ExtensionPageClient({ extension, relatedExtensions }: Ex
           {/* DESCRIPTION & SCREENSHOTS - Combined Layout with equal heights */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
             {/* Description - 2/3 width with min height matching screenshots */}
-            <div className="lg:col-span-2">
-              <div className="bg-white rounded-lg border border-gray-200 p-6 min-h-[500px] flex flex-col">
-                <ExtensionDescription 
-                  description={extension.description}
-                  fullDescription={extension.full_description}
-                />
-              </div>
+            <div className="lg:col-span-2 min-h-[500px]">
+              <ExtensionDescription 
+                description={extension.description}
+                fullDescription={extension.full_description}
+              />
             </div>
             
             {/* Screenshots - 1/3 width */}
