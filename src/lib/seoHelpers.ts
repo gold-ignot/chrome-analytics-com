@@ -135,16 +135,16 @@ export const CATEGORIES = {
 } as const;
 
 export const CATEGORY_DESCRIPTIONS = {
-  'productivity': 'Boost your efficiency with the best productivity extensions for Chrome',
-  'shopping': 'Find deals, compare prices, and shop smarter with these Chrome extensions',
+  'productivity': 'Boost efficiency with productivity extensions',
+  'shopping': 'Find deals, compare prices, and shop smarter',
   'developer-tools': 'Essential tools for developers and web professionals',
-  'communication': 'Stay connected with communication and messaging extensions',
-  'entertainment': 'Games, videos, and fun extensions to brighten your day',
-  'news-weather': 'Stay informed with news and weather extensions',
+  'communication': 'Stay connected with communication and messaging tools',
+  'entertainment': 'Games, videos, and fun extensions',
+  'news-weather': 'Stay informed with news and weather updates',
   'social-communication': 'Social networking and communication tools',
-  'accessibility': 'Extensions that make the web more accessible for everyone',
+  'accessibility': 'Make the web more accessible for everyone',
   'photos': 'Photo editing, sharing, and management tools',
-  'search-tools': 'Enhance your search experience with these powerful tools',
+  'search-tools': 'Enhance your search experience',
 } as const;
 
 // "Best" types for long-tail keyword pages
@@ -152,49 +152,49 @@ export const BEST_TYPES = {
   'productivity-extensions': {
     title: 'Best Productivity Chrome Extensions',
     category: 'Productivity',
-    description: 'Discover the best productivity Chrome extensions to boost your efficiency, manage tasks, and streamline your workflow.',
+    description: 'Boost efficiency, manage tasks, and streamline your workflow with productivity extensions.',
     keywords: ['best productivity extensions', 'productivity chrome extensions', 'task management extensions', 'time tracking extensions', 'workflow tools'],
   },
   'developer-extensions': {
     title: 'Best Developer Chrome Extensions',
     category: 'Developer Tools', 
-    description: 'Essential Chrome extensions for developers, web designers, and programmers to enhance your coding workflow.',
+    description: 'Essential tools for developers, web designers, and programmers to enhance coding workflows.',
     keywords: ['best developer extensions', 'web development tools', 'coding extensions', 'developer chrome extensions', 'programming tools'],
   },
   'shopping-extensions': {
     title: 'Best Shopping Chrome Extensions',
     category: 'Shopping',
-    description: 'Top Chrome extensions for online shopping, price comparison, coupon finding, and deal alerts.',
+    description: 'Find deals, compare prices, get coupons, and receive alerts for online shopping.',
     keywords: ['best shopping extensions', 'coupon extensions', 'price comparison tools', 'deal finder extensions', 'shopping chrome extensions'],
   },
   'ad-blockers': {
     title: 'Best Ad Blocker Chrome Extensions',
-    category: 'Productivity',
-    description: 'Most effective Chrome extensions for blocking ads, improving page loading speed, and enhancing browsing experience.',
+    category: '', // Remove category filter to show all extensions
+    description: 'Block ads, improve page loading speed, and enhance your browsing experience.',
     keywords: ['best ad blockers', 'ad blocking extensions', 'chrome ad blockers', 'popup blockers', 'ad blocker chrome'],
   },
   'password-managers': {
     title: 'Best Password Manager Chrome Extensions',
     category: 'Productivity',
-    description: 'Secure and reliable Chrome extensions for password management, form filling, and account security.',
+    description: 'Secure password management, form filling, and account security tools.',
     keywords: ['best password managers', 'password manager extensions', 'secure password tools', 'password chrome extensions'],
   },
   'social-media-tools': {
     title: 'Best Social Media Chrome Extensions',
     category: 'Social & Communication',
-    description: 'Chrome extensions to enhance your social media experience, schedule posts, and manage multiple accounts.',
+    description: 'Enhance social media experience, schedule posts, and manage multiple accounts.',
     keywords: ['social media extensions', 'social media tools', 'social media chrome extensions', 'social media management'],
   },
   'grammar-checkers': {
     title: 'Best Grammar Checker Chrome Extensions',
     category: 'Productivity',
-    description: 'Top Chrome extensions for grammar checking, spell checking, and writing improvement.',
+    description: 'Grammar checking, spell checking, and writing improvement tools.',
     keywords: ['grammar checker extensions', 'writing tools', 'spell checker chrome', 'grammar chrome extensions', 'writing assistant'],
   },
   'screenshot-tools': {
     title: 'Best Screenshot Chrome Extensions',
     category: 'Photos',
-    description: 'Powerful Chrome extensions for taking screenshots, screen recording, and image editing.',
+    description: 'Take screenshots, record screens, and edit images with powerful tools.',
     keywords: ['screenshot extensions', 'screen capture tools', 'screenshot chrome extensions', 'screen recording tools'],
   },
 } as const;

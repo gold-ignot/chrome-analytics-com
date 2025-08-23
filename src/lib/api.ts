@@ -85,6 +85,19 @@ export interface GrowthMetrics {
   message?: string;
 }
 
+export interface Category {
+  name: string;
+  slug: string;
+  count: number;
+  description: string;
+}
+
+export interface CategoriesResponse {
+  categories: Category[];
+  total_categories: number;
+  timestamp: string;
+}
+
 class ApiClient {
   private baseUrl: string;
 
@@ -241,6 +254,11 @@ class ApiClient {
     };
   }
 
+
+  // Get categories with counts
+  async getCategories(): Promise<CategoriesResponse> {
+    return this.request<CategoriesResponse>('/categories');
+  }
 
   // Health check
   async healthCheck(): Promise<{ status: string; timestamp: string; service: string }> {

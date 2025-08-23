@@ -13,42 +13,36 @@ export default function Header() {
                   <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm8 0a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1V8zm0 4a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1h-4a1 1 0 01-1-1v-2z" clipRule="evenodd" />
                 </svg>
               </div>
-              <span className="text-xl font-bold text-gray-900">ChromeInsights</span>
+              <span className="text-xl font-bold text-gray-900">Chrome Analytics</span>
             </Link>
           </div>
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
-            <Link href="/" className="text-gray-600 hover:text-gray-900 transition-colors text-sm font-medium">
+            <Link href="/extensions" className="text-gray-600 hover:text-gray-900 transition-colors text-sm font-medium">
               Extensions
             </Link>
-            <Link href="/analytics" className="text-gray-600 hover:text-gray-900 transition-colors text-sm font-medium">
-              Analytics
+            <Link href="/popular" className="text-gray-600 hover:text-gray-900 transition-colors text-sm font-medium">
+              Popular
+            </Link>
+            <Link href="/top-rated" className="text-gray-600 hover:text-gray-900 transition-colors text-sm font-medium">
+              Top Rated
             </Link>
             <Link href="/trending" className="text-gray-600 hover:text-gray-900 transition-colors text-sm font-medium">
               Trending
             </Link>
-            <Link href="/admin" className="text-gray-600 hover:text-gray-900 transition-colors text-sm font-medium">
-              Admin
-            </Link>
-            <Link href="/docs" className="text-gray-600 hover:text-gray-900 transition-colors text-sm font-medium">
-              Docs
+            <Link href="/best/productivity-extensions" className="text-gray-600 hover:text-gray-900 transition-colors text-sm font-medium">
+              Best
             </Link>
           </nav>
 
-          {/* CTA */}
-          <div className="flex items-center space-x-4">
+          {/* Search or Mobile Menu */}
+          <div className="flex items-center">
             <Link 
-              href="/api-access"
-              className="hidden sm:inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+              href="/extensions"
+              className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
             >
-              API Access
-            </Link>
-            <Link 
-              href="/get-started"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-gray-900 hover:bg-gray-800 transition-colors"
-            >
-              Get Started
+              Browse All
             </Link>
           </div>
         </div>
