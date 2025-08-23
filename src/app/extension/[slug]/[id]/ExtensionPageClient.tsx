@@ -244,17 +244,24 @@ export default function ExtensionPageClient({ slug, extensionId }: ExtensionPage
           {/* 1. KEY METRICS FIRST - Most Important */}
           <ExtensionMetrics extension={extension} showRankings={true} />
           
-          {/* 2. DESCRIPTION - What it does */}
-          <ExtensionDescription 
-            description={extension.description}
-            fullDescription={extension.full_description}
-          />
-          
-          {/* 3. SCREENSHOTS - How it looks */}
-          <ScreenshotCarousel 
-            screenshots={extension.screenshots || []} 
-            extensionName={extension.name} 
-          />
+          {/* 2. DESCRIPTION & SCREENSHOTS - Combined Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Description - 2/3 width */}
+            <div className="lg:col-span-2">
+              <ExtensionDescription 
+                description={extension.description}
+                fullDescription={extension.full_description}
+              />
+            </div>
+            
+            {/* Screenshots - 1/3 width */}
+            <div className="lg:col-span-1">
+              <ScreenshotCarousel 
+                screenshots={extension.screenshots || []} 
+                extensionName={extension.name} 
+              />
+            </div>
+          </div>
 
           {/* 4. RELATED EXTENSIONS */}
           {relatedExtensions.length > 0 && (
