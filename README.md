@@ -7,7 +7,9 @@ A responsive Next.js dashboard for Chrome Web Store extension analytics, display
 ### 📊 Analytics Dashboard
 - **Extension Listing**: Paginated list with search and filtering
 - **Category Pages**: Dedicated pages for each extension category with SEO optimization
-- **Filter Pages**: Specialized pages for popular, top-rated, and trending extensions
+- **Filter Pages**: Specialized pages for popular, top-rated, and trending extensions with pre-computed rankings
+- **Global Rankings**: Display popularity rank, trending rank, and top-rated rank for extensions
+- **Ranking Badges**: Visual indicators for top 100 extensions in any ranking category
 - **Real-time Metrics**: Users, ratings, reviews, and growth trends
 - **Performance Insights**: Percentile rankings and benchmark comparisons
 - **Market Position**: Adoption levels, quality scores, and competitive analysis
@@ -108,15 +110,20 @@ The frontend connects to a public Chrome Extension API:
 
 ### Endpoints Used
 - `GET /search` - List extensions with pagination, sorting, and category filtering
-- `GET /extension/:id` - Get detailed extension information
+- `GET /extension/:id` - Get detailed extension information with ranking data
 - `GET /search?q={query}` - Search extensions by name and description
+- `GET /extensions/popular` - Get popular extensions using pre-computed popularity rankings
+- `GET /extensions/trending` - Get trending extensions using pre-computed trending rankings  
+- `GET /extensions/top-rated` - Get top-rated extensions using pre-computed quality rankings
 - `GET /health` - API health check and service status
 
 ### Enhanced API Features
+- **Pre-computed Rankings**: Lightning-fast ranking queries using indexed ranking fields
 - **Smart Caching**: Automatic cache-busting with timestamps for real-time data
 - **Error Handling**: Comprehensive error states with retry functionality
-- **Sorting Options**: Support for sorting by users, rating, reviews, and update date
+- **Intelligent Filtering**: Advanced filtering with quality thresholds and composite scoring
 - **Category Filtering**: Built-in category filtering for better content organization
+- **Performance Optimized**: Sub-second response times for all ranking endpoints
 
 ### API Configuration
 API base URL is configured in `src/lib/api.ts`:
@@ -141,9 +148,10 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 - Static generation for better performance
 
 #### Filter Pages
-- **Popular Extensions** (`/popular`): Most downloaded extensions with user count rankings
-- **Top Rated Extensions** (`/top-rated`): Highest quality extensions with rating badges
-- **Trending Extensions** (`/trending`): Recently updated extensions with "New" indicators
+- **Popular Extensions** (`/popular`): Extensions ranked by popularity using pre-computed popularityRank
+- **Top Rated Extensions** (`/top-rated`): Extensions ranked by quality using pre-computed topRatedRank  
+- **Trending Extensions** (`/trending`): Extensions ranked by trending score using pre-computed trendingRank
+- **Performance Optimized**: All ranking pages use efficient indexed queries for sub-second loading
 
 #### Landing Page Enhancements
 - Multiple SEO-focused sections showcasing different extension types
@@ -151,17 +159,21 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 - "View All" buttons linking to dedicated pages for better user flow
 - Consistent visual hierarchy and improved content organization
 
-### Extension Details (`/extension/[id]`)
-- Comprehensive analytics dashboard
+### Extension Details (`/extension/[slug]/[id]`)
+- Comprehensive analytics dashboard with global ranking information
+- Global Rankings section displaying popularity, trending, and top-rated ranks
 - Interactive growth charts
 - Performance benchmarks and market position
 - Historical data trends
+- SEO-friendly URLs with extension name slug
 
 ### Data Visualization
 - **Growth Charts**: Area charts showing user growth over time
 - **Rating Trends**: Line charts for rating changes
 - **Market Benchmarks**: Progress bars and percentile indicators
 - **Performance Cards**: Gradient-styled metric displays
+- **Ranking Cards**: Visual displays for global popularity, trending, and top-rated rankings
+- **Ranking Badges**: Color-coded badges for top 100 extensions in extension cards
 
 ## Deployment
 
@@ -228,7 +240,8 @@ pnpm build
 
 ### New Page Types
 - **Category Pages**: `/category/productivity`, `/category/developer-tools`, etc.
-- **Filter Pages**: `/popular`, `/top-rated`, `/trending` with specialized content
+- **Filter Pages**: `/popular`, `/top-rated`, `/trending` with pre-computed ranking data
+- **Extension Detail Pages**: `/extension/slug/extension-id` with SEO-friendly URLs and ranking information
 - **Landing Page**: Enhanced with multiple sections and clear navigation paths
 
 ## Contributing

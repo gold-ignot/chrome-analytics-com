@@ -730,6 +730,85 @@ export default function ExtensionPageClient({ slug, extensionId }: ExtensionPage
               </div>
             </div>
 
+            {/* Ranking Information */}
+            {(extension.popularity_rank || extension.trending_rank || extension.top_rated_rank) && (
+              <div className="pt-6 border-t border-slate-200">
+                <h3 className="text-md font-semibold text-slate-900 mb-6">Global Rankings</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Popular Extensions Ranking */}
+                  {extension.popularity_rank && (
+                    <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-5">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
+                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                            </svg>
+                          </div>
+                          <span className="text-sm font-medium text-purple-900">Popular Rank</span>
+                        </div>
+                        <span className="text-xs px-2 py-1 bg-purple-200 text-purple-800 rounded-full font-medium">
+                          #{extension.popularity_rank.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="text-xs text-purple-700">
+                        Most popular extensions by user count
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Trending Extensions Ranking */}
+                  {extension.trending_rank && (
+                    <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-5">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
+                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                          </div>
+                          <span className="text-sm font-medium text-orange-900">Trending Rank</span>
+                        </div>
+                        <span className="text-xs px-2 py-1 bg-orange-200 text-orange-800 rounded-full font-medium">
+                          #{extension.trending_rank.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="text-xs text-orange-700">
+                        Most recently updated extensions
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Top Rated Extensions Ranking */}
+                  {extension.top_rated_rank && (
+                    <div className="bg-gradient-to-br from-pink-50 to-pink-100 rounded-xl p-5">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center space-x-2">
+                          <div className="w-8 h-8 bg-pink-500 rounded-lg flex items-center justify-center">
+                            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                          </div>
+                          <span className="text-sm font-medium text-pink-900">Top Rated Rank</span>
+                        </div>
+                        <span className="text-xs px-2 py-1 bg-pink-200 text-pink-800 rounded-full font-medium">
+                          #{extension.top_rated_rank.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="text-xs text-pink-700">
+                        Highest rated extensions by quality
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {extension.ranked_at && (
+                  <div className="mt-4 text-xs text-slate-500 text-center">
+                    Rankings last updated: {new Date(extension.ranked_at).toLocaleDateString()}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Performance Benchmarks */}
             <div className="pt-6">
               <h3 className="text-md font-semibold text-slate-900 mb-6">Performance Benchmarks</h3>

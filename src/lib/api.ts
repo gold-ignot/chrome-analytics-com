@@ -26,6 +26,11 @@ export interface Extension {
   screenshots?: string[];
   logo_url?: string;
   status?: string;
+  // Pre-computed ranking fields (lower number = higher rank)
+  popularity_rank?: number;
+  trending_rank?: number;
+  top_rated_rank?: number;
+  ranked_at?: string;
 }
 
 export interface Snapshot {
@@ -33,6 +38,15 @@ export interface Snapshot {
   users: number;
   rating: number;
   reviewCount: number;
+}
+
+export interface PaginationInfo {
+  page: number;
+  limit: number;
+  total_pages: number;
+  total: number;
+  has_next: boolean;
+  has_prev: boolean;
 }
 
 export interface ExtensionResponse {
@@ -130,7 +144,7 @@ class ApiClient {
     }
     
     // Use /search endpoint for browsing all extensions
-    const response = await this.request<{results: Extension[], pagination: any}>(`/search?${params}`);
+    const response = await this.request<{results: Extension[], pagination: PaginationInfo}>(`/search?${params}`);
     
     // Transform API response to match our interface
     return {
@@ -152,7 +166,7 @@ class ApiClient {
       limit: limit.toString(),
     });
     
-    const response = await this.request<{results: Extension[], pagination: any}>(`/search?${params}`);
+    const response = await this.request<{results: Extension[], pagination: PaginationInfo}>(`/search?${params}`);
     
     // Transform API response to match our interface
     return {

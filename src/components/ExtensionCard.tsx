@@ -87,11 +87,26 @@ export default function ExtensionCard({ extension, onClick }: ExtensionCardProps
         </div>
       </div>
       
-      {/* Category badge */}
-      <div className="mb-3">
+      {/* Category and Rankings badges */}
+      <div className="mb-3 flex items-center gap-2 flex-wrap">
         <span className="text-xs px-2.5 py-1 bg-slate-100 text-slate-700 rounded-full font-medium">
           {extension.category}
         </span>
+        {extension.popularity_rank && extension.popularity_rank <= 100 && (
+          <span className="text-xs px-2.5 py-1 bg-purple-100 text-purple-700 rounded-full font-medium">
+            #{extension.popularity_rank} Popular
+          </span>
+        )}
+        {extension.trending_rank && extension.trending_rank <= 100 && (
+          <span className="text-xs px-2.5 py-1 bg-orange-100 text-orange-700 rounded-full font-medium">
+            #{extension.trending_rank} Trending
+          </span>
+        )}
+        {extension.top_rated_rank && extension.top_rated_rank <= 100 && (
+          <span className="text-xs px-2.5 py-1 bg-pink-100 text-pink-700 rounded-full font-medium">
+            #{extension.top_rated_rank} Top Rated
+          </span>
+        )}
       </div>
       
       {/* Description */}
