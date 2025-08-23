@@ -107,9 +107,14 @@ class ApiClient {
 
 
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
-    // Add timestamp to URL to prevent caching
-    const separator = endpoint.includes('?') ? '&' : '?';
-    const url = `${this.baseUrl}${endpoint}${separator}_t=${Date.now()}`;
+    // Only add timestamp for non-static endpoints to prevent dynamic server usage during SSG
+    const isStaticEndpoint = endpoint.includes('/categories') || endpoint.includes('/health');
+    
+    let url = `${this.baseUrl}${endpoint}`;
+    if (!isStaticEndpoint) {
+      const separator = endpoint.includes('?') ? '&' : '?';
+      url = `${url}${separator}_t=${Date.now()}`;
+    }
     
     try {
       const response = await fetch(url, {
@@ -117,7 +122,7 @@ class ApiClient {
           'Content-Type': 'application/json',
           ...options?.headers,
         },
-        cache: 'no-store',
+        cache: isStaticEndpoint ? 'force-cache' : 'no-store',
         ...options,
       });
 

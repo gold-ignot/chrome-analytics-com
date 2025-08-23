@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
+import { Suspense } from 'react';
 import { 
   metadataGenerators, 
   BEST_TYPES,
@@ -36,7 +37,11 @@ export default async function BestPage({ params }: BestPageProps) {
     notFound();
   }
 
-  return <BestPageClient type={type} typeInfo={typeInfo} />;
+  return (
+    <Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading...</div>}>
+      <BestPageClient type={type} typeInfo={typeInfo} />
+    </Suspense>
+  );
 }
 
 export async function generateStaticParams() {
