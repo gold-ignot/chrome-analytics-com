@@ -1,12 +1,18 @@
 /** @type {import('next-sitemap').IConfig} */
 module.exports = {
   siteUrl: process.env.NEXT_PUBLIC_BASE_URL || 'https://chrome-analytics.com',
-  generateRobotsText: false, // We manage robots.txt manually
+  generateRobotsText: true,
   exclude: [
     '/server-sitemap-index.xml',
-    '/server-sitemap-extensions-*.xml',
+    '/server-sitemap-extensions-*.xml', 
     '/server-sitemap-categories.xml'
   ],
+  robotsTxtOptions: {
+    additionalSitemaps: [
+      'https://chrome-analytics.com/server-sitemap-index.xml',
+      'https://chrome-analytics.com/server-sitemap-categories.xml',
+    ],
+  },
   additionalPaths: async (config) => {
     const result = []
 
