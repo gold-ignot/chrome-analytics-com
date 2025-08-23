@@ -1,0 +1,25 @@
+{
+  "name": "ChromeInsights - Chrome Extension Analytics",
+  "short_name": "ChromeInsights",
+  "description": "Track Chrome extension growth, analyze performance metrics, and discover trending extensions.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/chrome-analytics-icon.svg",
+      "sizes": "32x32",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities"],
+  "lang": "en"
+}

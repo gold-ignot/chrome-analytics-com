@@ -74,8 +74,6 @@ export default async function ExtensionPage({ params }: ExtensionPageProps) {
     
     return (
       <ExtensionPageClient 
-        slug={parsedParams.slug} 
-        extensionId={parsedParams.id}
         extension={extension}
         relatedExtensions={relatedExtensions}
       />
