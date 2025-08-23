@@ -163,6 +163,55 @@ class ApiClient {
     };
   }
 
+  // New intelligent filter endpoints
+  async getPopularExtensions(page: number = 1, limit: number = 20): Promise<ExtensionResponse> {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+    
+    const response = await this.request<{results: Extension[], pagination: any}>(`/extensions/popular?${params}`);
+    
+    return {
+      extensions: response.results || [],
+      total: response.pagination?.total || 0,
+      page: response.pagination?.page || page,
+      limit: response.pagination?.limit || limit
+    };
+  }
+
+  async getTrendingExtensions(page: number = 1, limit: number = 20): Promise<ExtensionResponse> {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+    
+    const response = await this.request<{results: Extension[], pagination: any}>(`/extensions/trending?${params}`);
+    
+    return {
+      extensions: response.results || [],
+      total: response.pagination?.total || 0,
+      page: response.pagination?.page || page,
+      limit: response.pagination?.limit || limit
+    };
+  }
+
+  async getTopRatedExtensions(page: number = 1, limit: number = 20): Promise<ExtensionResponse> {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+    
+    const response = await this.request<{results: Extension[], pagination: any}>(`/extensions/top-rated?${params}`);
+    
+    return {
+      extensions: response.results || [],
+      total: response.pagination?.total || 0,
+      page: response.pagination?.page || page,
+      limit: response.pagination?.limit || limit
+    };
+  }
+
 
   // Health check
   async healthCheck(): Promise<{ status: string; timestamp: string; service: string }> {

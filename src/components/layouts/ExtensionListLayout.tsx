@@ -1,6 +1,5 @@
 'use client';
 
-import { ReactNode } from 'react';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import SearchBar from '@/components/SearchBar';
 import Pagination from '@/components/Pagination';
@@ -13,16 +12,6 @@ interface BreadcrumbItem {
   href: string;
 }
 
-interface SortOption {
-  value: string;
-  label: string;
-}
-
-interface FilterOption {
-  value: string;
-  label: string;
-}
-
 interface ExtensionListLayoutProps {
   // Page metadata
   title: string;
@@ -33,18 +22,6 @@ interface ExtensionListLayoutProps {
   searchQuery: string;
   onSearch: (query: string) => void;
   searchPlaceholder?: string;
-  
-  // Filter/Sort options
-  sortBy: string;
-  setSortBy: (sortBy: string) => void;
-  sortOrder: string;
-  setSortOrder: (sortOrder: string) => void;
-  sortOptions?: SortOption[];
-  
-  // Optional category filter
-  selectedCategory?: string;
-  setSelectedCategory?: (category: string) => void;
-  categoryOptions?: FilterOption[];
   
   // Data & pagination
   extensions: Extension[];
@@ -62,33 +39,11 @@ interface ExtensionListLayoutProps {
   onRetry: () => void;
   
   // Customization
-  showFilters?: boolean;
-  showCategoryFilter?: boolean;
-  additionalFilters?: ReactNode;
   emptyStateMessage?: string;
   emptySearchMessage?: string;
 }
 
-const DEFAULT_SORT_OPTIONS: SortOption[] = [
-  { value: 'users', label: 'Most Users' },
-  { value: 'rating', label: 'Highest Rated' },
-  { value: 'reviews', label: 'Most Reviews' },
-  { value: 'recent', label: 'Recently Updated' },
-];
 
-const DEFAULT_CATEGORY_OPTIONS: FilterOption[] = [
-  { value: '', label: 'All Categories' },
-  { value: 'Productivity', label: 'Productivity' },
-  { value: 'Shopping', label: 'Shopping' },
-  { value: 'Developer Tools', label: 'Developer Tools' },
-  { value: 'Communication', label: 'Communication' },
-  { value: 'Entertainment', label: 'Entertainment' },
-  { value: 'News & Weather', label: 'News & Weather' },
-  { value: 'Social & Communication', label: 'Social & Communication' },
-  { value: 'Accessibility', label: 'Accessibility' },
-  { value: 'Photos', label: 'Photos' },
-  { value: 'Search Tools', label: 'Search Tools' },
-];
 
 export default function ExtensionListLayout({
   title,
@@ -97,14 +52,6 @@ export default function ExtensionListLayout({
   searchQuery,
   onSearch,
   searchPlaceholder = "Search extensions...",
-  sortBy,
-  setSortBy,
-  sortOrder,
-  setSortOrder,
-  sortOptions = DEFAULT_SORT_OPTIONS,
-  selectedCategory,
-  setSelectedCategory,
-  categoryOptions = DEFAULT_CATEGORY_OPTIONS,
   extensions,
   loading,
   error,
@@ -116,9 +63,6 @@ export default function ExtensionListLayout({
   isSearching,
   onClearSearch,
   onRetry,
-  showFilters = true,
-  showCategoryFilter = false,
-  additionalFilters,
   emptyStateMessage,
   emptySearchMessage,
 }: ExtensionListLayoutProps) {
@@ -189,60 +133,6 @@ export default function ExtensionListLayout({
             )}
           </div>
 
-          {/* Filters */}
-          {showFilters && !isSearching && (
-            <div className="flex flex-col sm:flex-row gap-4 mb-6 p-4 bg-white rounded-lg border border-slate-200">
-              {/* Category Filter */}
-              {showCategoryFilter && setSelectedCategory && (
-                <div className="flex-1">
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Category</label>
-                  <select
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    {categoryOptions.map(option => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-              
-              {/* Sort By */}
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-slate-700 mb-2">Sort by</label>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  {sortOptions.map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              
-              {/* Sort Order */}
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-slate-700 mb-2">Order</label>
-                <select
-                  value={sortOrder}
-                  onChange={(e) => setSortOrder(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="desc">High to Low</option>
-                  <option value="asc">Low to High</option>
-                </select>
-              </div>
-              
-              {/* Additional Filters */}
-              {additionalFilters}
-            </div>
-          )}
 
           {/* Error State */}
           {error && (

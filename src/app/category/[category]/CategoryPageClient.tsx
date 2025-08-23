@@ -7,7 +7,7 @@ import {
   CategoryKey 
 } from '@/lib/seoHelpers';
 import { extensionUrls } from '@/lib/slugs';
-import { useExtensions, useExtensionSearch, useExtensionFilters } from '@/hooks/useExtensions';
+import { useExtensions, useExtensionSearch } from '@/hooks/useExtensions';
 import ExtensionListLayout from '@/components/layouts/ExtensionListLayout';
 
 interface CategoryPageClientProps {
@@ -19,14 +19,13 @@ export default function CategoryPageClient({ category, categoryName }: CategoryP
   const categoryDescription = CATEGORY_DESCRIPTIONS[category as CategoryKey];
 
   // Use hooks for data fetching and state management
+  const searchData = useExtensionSearch();
   const extensionsData = useExtensions({
     category: categoryName,
     sortBy: 'users',
     sortOrder: 'desc',
+    searchQuery: searchData.searchQuery,
   });
-  
-  const { searchQuery, isSearching, handleSearch, clearSearch } = useExtensionSearch();
-  const { sortBy, setSortBy, sortOrder, setSortOrder } = useExtensionFilters();
 
   // Inject structured data when data is available
   useEffect(() => {
@@ -68,15 +67,9 @@ export default function CategoryPageClient({ category, categoryName }: CategoryP
       breadcrumbItems={breadcrumbItems}
       
       // Search
-      searchQuery={searchQuery}
-      onSearch={handleSearch}
+      searchQuery={searchData.searchQuery}
+      onSearch={searchData.handleSearch}
       searchPlaceholder={`Search ${categoryName.toLowerCase()} extensions...`}
-      
-      // Sorting
-      sortBy={sortBy}
-      setSortBy={setSortBy}
-      sortOrder={sortOrder}
-      setSortOrder={setSortOrder}
       
       // Data
       extensions={extensionsData.extensions}
@@ -91,15 +84,14 @@ export default function CategoryPageClient({ category, categoryName }: CategoryP
       }}
       
       // State
-      isSearching={isSearching}
-      onClearSearch={clearSearch}
+      isSearching={searchData.isSearching}
+      onClearSearch={searchData.clearSearch}
       onRetry={extensionsData.refetch}
       
       // Customization
-      showFilters={true}
       showCategoryFilter={false}
       emptyStateMessage={`No ${categoryName.toLowerCase()} extensions available yet.`}
-      emptySearchMessage={`No ${categoryName.toLowerCase()} extensions match "${searchQuery}".`}
+      emptySearchMessage={`No ${categoryName.toLowerCase()} extensions match "${searchData.searchQuery}".`}
     />
   );
 }

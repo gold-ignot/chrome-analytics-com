@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { apiClient, Extension, ExtensionResponse } from '@/lib/api';
 
 interface UseExtensionsProps {
@@ -148,26 +149,96 @@ export function useCategoryExtensions(category: string, sortBy = 'users', sortOr
   });
 }
 
-// Specialized hook for filter pages (popular, top-rated, trending)
+// Specialized hook for filter pages (popular, top-rated, trending) - using new intelligent endpoints
 export function useFilteredExtensions(filterType: 'popular' | 'top-rated' | 'trending') {
-  const sortMap = {
-    'popular': { sortBy: 'users', sortOrder: 'desc' as const },
-    'top-rated': { sortBy: 'rating', sortOrder: 'desc' as const },
-    'trending': { sortBy: 'recent', sortOrder: 'desc' as const },
+  const [extensions, setExtensions] = useState<Extension[]>([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const limit = 12;
+
+  const fetchExtensions = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      let response: ExtensionResponse;
+      
+      // Use the new intelligent filter endpoints
+      switch (filterType) {
+        case 'popular':
+          response = await apiClient.getPopularExtensions(currentPage, limit);
+          break;
+        case 'top-rated':
+          response = await apiClient.getTopRatedExtensions(currentPage, limit);
+          break;
+        case 'trending':
+          response = await apiClient.getTrendingExtensions(currentPage, limit);
+          break;
+        default:
+          throw new Error(`Unknown filter type: ${filterType}`);
+      }
+
+      setExtensions(response.extensions);
+      setTotal(response.total);
+      setTotalPages(Math.ceil(response.total / limit));
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch extensions';
+      setError(errorMessage);
+      setExtensions([]);
+      console.error('Error fetching filtered extensions:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, filterType, limit]);
+
+  // Auto-fetch when dependencies change
+  useEffect(() => {
+    fetchExtensions();
+  }, [fetchExtensions]);
+
+  const refetch = useCallback(() => {
+    return fetchExtensions();
+  }, [fetchExtensions]);
+
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  return {
+    // Data
+    extensions,
+    total,
+    totalPages,
+    
+    // State
+    loading,
+    error,
+    currentPage,
+    
+    // Actions
+    fetchExtensions,
+    setCurrentPage: handlePageChange,
+    refetch,
+    
+    // Computed values
+    hasNextPage: currentPage < totalPages,
+    hasPreviousPage: currentPage > 1,
+    isEmpty: !loading && extensions.length === 0,
   };
-  
-  const { sortBy, sortOrder } = sortMap[filterType];
-  
-  return useExtensions({
-    sortBy,
-    sortOrder,
-  });
 }
 
-// Hook for search functionality
+// Hook for search functionality with Next.js URL handling
 export function useExtensionSearch() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isSearching, setIsSearching] = useState(false);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  
+  const searchQuery = searchParams.get('q') || '';
+  const isSearching = !!searchQuery.trim();
   
   const extensionsData = useExtensions({
     searchQuery,
@@ -175,14 +246,23 @@ export function useExtensionSearch() {
   });
 
   const handleSearch = useCallback((query: string) => {
-    setSearchQuery(query);
-    setIsSearching(!!query.trim());
-  }, []);
+    const trimmedQuery = query.trim();
+    const params = new URLSearchParams(searchParams.toString());
+    
+    if (trimmedQuery) {
+      params.set('q', trimmedQuery);
+    } else {
+      params.delete('q');
+    }
+    
+    router.replace(`${pathname}?${params.toString()}`);
+  }, [searchParams, router, pathname]);
 
   const clearSearch = useCallback(() => {
-    setSearchQuery('');
-    setIsSearching(false);
-  }, []);
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('q');
+    router.replace(`${pathname}?${params.toString()}`);
+  }, [searchParams, router, pathname]);
 
   // Fetch when search query changes
   useEffect(() => {

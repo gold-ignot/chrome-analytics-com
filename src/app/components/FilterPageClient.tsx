@@ -3,34 +3,26 @@
 import { useEffect } from 'react';
 import { injectStructuredData } from '@/lib/seoHelpers';
 import { extensionUrls } from '@/lib/slugs';
-import { useFilteredExtensions, useExtensionSearch, useExtensionFilters } from '@/hooks/useExtensions';
+import { useExtensionSearch, useFilteredExtensions } from '@/hooks/useExtensions';
 import ExtensionListLayout from '@/components/layouts/ExtensionListLayout';
 
 interface FilterPageClientProps {
   filterType: string;
   title: string;
   description: string;
-  sortBy: string;
-  sortOrder: string;
 }
 
 export default function FilterPageClient({ 
   filterType, 
   title, 
-  description, 
-  sortBy: defaultSortBy, 
-  sortOrder: defaultSortOrder 
+  description
 }: FilterPageClientProps) {
   // Use hooks for data fetching and state management
-  const extensionsData = useFilteredExtensions(filterType);
-  const { searchQuery, isSearching, handleSearch, clearSearch } = useExtensionSearch();
-  const { sortBy, setSortBy, sortOrder, setSortOrder } = useExtensionFilters();
-
-  // Set initial sort values
-  useEffect(() => {
-    setSortBy(defaultSortBy);
-    setSortOrder(defaultSortOrder);
-  }, [defaultSortBy, defaultSortOrder, setSortBy, setSortOrder]);
+  const searchData = useExtensionSearch();
+  const filteredData = useFilteredExtensions(filterType as 'popular' | 'top-rated' | 'trending');
+  
+  // Use filtered data when not searching, search data when searching
+  const extensionsData = searchData.isSearching ? searchData : filteredData;
 
   // Inject structured data when data is available
   useEffect(() => {
@@ -67,15 +59,9 @@ export default function FilterPageClient({
       breadcrumbItems={breadcrumbItems}
       
       // Search
-      searchQuery={searchQuery}
-      onSearch={handleSearch}
+      searchQuery={searchData.searchQuery}
+      onSearch={searchData.handleSearch}
       searchPlaceholder={`Search ${filterType} extensions...`}
-      
-      // Sorting
-      sortBy={sortBy}
-      setSortBy={setSortBy}
-      sortOrder={sortOrder}
-      setSortOrder={setSortOrder}
       
       // Data
       extensions={extensionsData.extensions}
@@ -90,16 +76,14 @@ export default function FilterPageClient({
       }}
       
       // State
-      isSearching={isSearching}
-      onClearSearch={clearSearch}
+      isSearching={searchData.isSearching}
+      onClearSearch={searchData.clearSearch}
       onRetry={extensionsData.refetch}
       
       // Customization
-      showFilters={true}
       showCategoryFilter={true}
-      showRankingBadges={!isSearching}
       emptyStateMessage={`No ${filterType} extensions available yet.`}
-      emptySearchMessage={`No ${filterType} extensions match "${searchQuery}".`}
+      emptySearchMessage={`No ${filterType} extensions match "${searchData.searchQuery}".`}
     />
   );
 }
