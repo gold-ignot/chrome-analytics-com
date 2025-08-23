@@ -64,6 +64,8 @@ A responsive Next.js dashboard for Chrome Web Store extension analytics, display
 - **Filter Pages**: Specialized pages for popular, top-rated, and trending extensions with pre-computed rankings
 - **Global Rankings**: Display popularity rank, trending rank, and top-rated rank for extensions
 - **Ranking Badges**: Visual indicators for top 100 extensions in any ranking category
+- **Related Extensions**: Smart category-based extension recommendations on detail pages
+- **Content Discovery**: Enhanced navigation between similar and alternative extensions
 - **Real-time Metrics**: Users, ratings, reviews, and growth trends
 - **Performance Insights**: Percentile rankings and benchmark comparisons
 - **Market Position**: Adoption levels, quality scores, and competitive analysis

@@ -22,7 +22,6 @@ export default function ExtensionPageClient({ slug, extensionId }: ExtensionPage
   const [keywords, setKeywords] = useState<KeywordMetric[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showFullDescription, setShowFullDescription] = useState(false);
   const [relatedExtensions, setRelatedExtensions] = useState<Extension[]>([]);
   const [relatedLoading, setRelatedLoading] = useState(false);
 
@@ -117,15 +116,10 @@ export default function ExtensionPageClient({ slug, extensionId }: ExtensionPage
     try {
       setRelatedLoading(true);
       
-      // Get extensions from the same category, excluding the current extension
-      const response = await apiClient.getExtensions(1, 4, 'users', 'desc', currentExtension.category);
-      
-      // Filter out the current extension and get top 3
-      const filtered = response.extensions
-        .filter(ext => ext.extension_id !== currentExtension.extension_id)
-        .slice(0, 3);
+      // Get extensions from the same category, excluding current extension
+      const response = await apiClient.getExtensions(1, 3, 'users', 'desc', currentExtension.category, [currentExtension.extension_id]);
         
-      setRelatedExtensions(filtered);
+      setRelatedExtensions(response.extensions);
     } catch (err) {
       console.error('Error fetching related extensions:', err);
       setRelatedExtensions([]);
@@ -334,41 +328,10 @@ export default function ExtensionPageClient({ slug, extensionId }: ExtensionPage
                   </span>
                 </div>
                 
-                {/* Brief Description with Read More */}
+                {/* Brief Description - Always show the short description */}
                 <div className="mb-4">
                   <p className="text-gray-700 leading-relaxed text-sm">
-                    {(() => {
-                      const description = extension.full_description || extension.description || 'No description available';
-                      const isLong = description.length > 200;
-                      
-                      if (!showFullDescription && isLong) {
-                        return (
-                          <>
-                            {description.substring(0, 200).trim()}...
-                            <button 
-                              onClick={() => setShowFullDescription(true)}
-                              className="ml-2 text-blue-600 hover:text-blue-800 font-medium text-sm underline"
-                            >
-                              Read more
-                            </button>
-                          </>
-                        );
-                      }
-                      
-                      return (
-                        <>
-                          {description}
-                          {showFullDescription && isLong && (
-                            <button 
-                              onClick={() => setShowFullDescription(false)}
-                              className="ml-2 text-blue-600 hover:text-blue-800 font-medium text-sm underline"
-                            >
-                              Show less
-                            </button>
-                          )}
-                        </>
-                      );
-                    })()} 
+                    {extension.description || 'No description available'}
                   </p>
                 </div>
               </div>
@@ -484,8 +447,8 @@ export default function ExtensionPageClient({ slug, extensionId }: ExtensionPage
             </div>
           </div>
 
-          {/* Detailed Description Section */}
-          {(extension.full_description || extension.description) && (
+          {/* Detailed Description Section - Show full description if available */}
+          {extension.full_description && (
             <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
               <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                 <svg className="w-5 h-5 text-gray-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -495,7 +458,7 @@ export default function ExtensionPageClient({ slug, extensionId }: ExtensionPage
               </h2>
               <div className="prose max-w-none">
                 <div className="text-gray-700 leading-relaxed whitespace-pre-line">
-                  {extension.full_description || extension.description}
+                  {extension.full_description}
                 </div>
               </div>
             </div>

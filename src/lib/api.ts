@@ -120,7 +120,7 @@ class ApiClient {
   }
 
   // Extensions - Updated to match actual API
-  async getExtensions(page: number = 1, limit: number = 20, sort?: string, order?: string, category?: string): Promise<ExtensionResponse> {
+  async getExtensions(page: number = 1, limit: number = 20, sort?: string, order?: string, category?: string, excludeIds?: string[]): Promise<ExtensionResponse> {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
@@ -141,6 +141,9 @@ class ApiClient {
     }
     if (category) {
       params.append('category', category);
+    }
+    if (excludeIds && excludeIds.length > 0) {
+      params.append('exclude_ids', excludeIds.join(','));
     }
     
     // Use /search endpoint for browsing all extensions
@@ -178,11 +181,15 @@ class ApiClient {
   }
 
   // New intelligent filter endpoints
-  async getPopularExtensions(page: number = 1, limit: number = 20): Promise<ExtensionResponse> {
+  async getPopularExtensions(page: number = 1, limit: number = 20, excludeIds?: string[]): Promise<ExtensionResponse> {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
     });
+    
+    if (excludeIds && excludeIds.length > 0) {
+      params.append('exclude_ids', excludeIds.join(','));
+    }
     
     const response = await this.request<{results: Extension[], pagination: any}>(`/extensions/popular?${params}`);
     
@@ -194,11 +201,15 @@ class ApiClient {
     };
   }
 
-  async getTrendingExtensions(page: number = 1, limit: number = 20): Promise<ExtensionResponse> {
+  async getTrendingExtensions(page: number = 1, limit: number = 20, excludeIds?: string[]): Promise<ExtensionResponse> {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
     });
+    
+    if (excludeIds && excludeIds.length > 0) {
+      params.append('exclude_ids', excludeIds.join(','));
+    }
     
     const response = await this.request<{results: Extension[], pagination: any}>(`/extensions/trending?${params}`);
     
@@ -210,11 +221,15 @@ class ApiClient {
     };
   }
 
-  async getTopRatedExtensions(page: number = 1, limit: number = 20): Promise<ExtensionResponse> {
+  async getTopRatedExtensions(page: number = 1, limit: number = 20, excludeIds?: string[]): Promise<ExtensionResponse> {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
     });
+    
+    if (excludeIds && excludeIds.length > 0) {
+      params.append('exclude_ids', excludeIds.join(','));
+    }
     
     const response = await this.request<{results: Extension[], pagination: any}>(`/extensions/top-rated?${params}`);
     
