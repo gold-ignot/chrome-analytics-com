@@ -4,7 +4,7 @@ export default function ContactPage() {
       <h1 className="text-3xl font-bold text-slate-900 mb-8">Contact Us</h1>
       <div className="prose max-w-none">
         <p className="text-lg text-slate-600 mb-6">
-          Have questions about Chrome Analytics or need support? We'd love to hear from you.
+          Have questions about Chrome Analytics or need support? We&apos;d love to hear from you.
         </p>
         <div className="bg-slate-50 rounded-lg p-6">
           <h3 className="text-lg font-semibold text-slate-900 mb-4">Get in Touch</h3>

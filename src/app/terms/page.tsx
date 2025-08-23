@@ -15,7 +15,7 @@ export default function TermsPage() {
           <h2 className="text-xl font-semibold text-slate-900 mb-4">2. Use of Service</h2>
           <p>
             Chrome Analytics provides analytics and insights for Chrome Web Store extensions. 
-            Our service is provided "as is" for informational purposes.
+            Our service is provided &quot;as is&quot; for informational purposes.
           </p>
         </section>
 

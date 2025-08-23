@@ -251,8 +251,69 @@ export default function ExtensionPageClient({ slug, extensionId }: ExtensionPage
           
           {/* 1. KEY METRICS FIRST - Most Important */}
           <ExtensionMetrics extension={extension} showRankings={true} />
+
+          {/* 2. STATS CARDS - Key Performance Indicators */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Users Card */}
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <div className="flex items-center justify-between mb-2">
+                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <span className="text-2xl font-bold text-gray-900">{formatUsers(extension.users)}</span>
+              </div>
+              <p className="text-sm text-gray-600 font-medium">Total Users</p>
+              {extension.popularity_rank && (
+                <p className="text-xs text-blue-600 mt-1">#{extension.popularity_rank} Most Popular</p>
+              )}
+            </div>
+
+            {/* Rating Card */}
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <div className="flex items-center justify-between mb-2">
+                <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+                <span className="text-2xl font-bold text-gray-900">{extension.rating.toFixed(1)}</span>
+              </div>
+              <p className="text-sm text-gray-600 font-medium">Average Rating</p>
+              {extension.top_rated_rank && (
+                <p className="text-xs text-yellow-600 mt-1">#{extension.top_rated_rank} Top Rated</p>
+              )}
+            </div>
+
+            {/* Reviews Card */}
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <div className="flex items-center justify-between mb-2">
+                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                </svg>
+                <span className="text-2xl font-bold text-gray-900">{formatUsers(extension.review_count)}</span>
+              </div>
+              <p className="text-sm text-gray-600 font-medium">User Reviews</p>
+              <p className="text-xs text-green-600 mt-1">
+                {((extension.review_count / extension.users) * 100).toFixed(2)}% engagement
+              </p>
+            </div>
+
+            {/* Version Card */}
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <div className="flex items-center justify-between mb-2">
+                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span className="text-lg font-bold text-gray-900">{extension.version || 'N/A'}</span>
+              </div>
+              <p className="text-sm text-gray-600 font-medium">Current Version</p>
+              {extension.last_updated_at && (
+                <p className="text-xs text-purple-600 mt-1">
+                  Updated {new Date(extension.last_updated_at).toLocaleDateString()}
+                </p>
+              )}
+            </div>
+          </div>
           
-          {/* 2. DESCRIPTION & SCREENSHOTS - Combined Layout */}
+          {/* 3. DESCRIPTION & SCREENSHOTS - Combined Layout */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Description - 2/3 width */}
             <div className="lg:col-span-2">
@@ -271,7 +332,113 @@ export default function ExtensionPageClient({ slug, extensionId }: ExtensionPage
             </div>
           </div>
 
-          {/* 4. RELATED EXTENSIONS */}
+          {/* 4. TECHNICAL DETAILS & PERMISSIONS */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Permissions */}
+            {extension.permissions && extension.permissions.length > 0 && (
+              <div className="bg-white rounded-lg border border-gray-200 p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <svg className="w-5 h-5 text-gray-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                  Permissions Required
+                </h2>
+                <div className="flex flex-wrap gap-2">
+                  {extension.permissions.map((permission, index) => (
+                    <span 
+                      key={index}
+                      className="text-xs px-2.5 py-1 bg-orange-50 text-orange-700 rounded-full border border-orange-200"
+                    >
+                      {permission}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Technical Info */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <svg className="w-5 h-5 text-gray-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                </svg>
+                Technical Information
+              </h2>
+              <dl className="space-y-3">
+                {extension.file_size && (
+                  <div className="flex justify-between">
+                    <dt className="text-sm text-gray-600">Size</dt>
+                    <dd className="text-sm font-medium text-gray-900">{extension.file_size}</dd>
+                  </div>
+                )}
+                {extension.languages && extension.languages.length > 0 && (
+                  <div className="flex justify-between">
+                    <dt className="text-sm text-gray-600">Languages</dt>
+                    <dd className="text-sm font-medium text-gray-900">{extension.languages.length} supported</dd>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <dt className="text-sm text-gray-600">Extension ID</dt>
+                  <dd className="text-xs font-mono text-gray-900">{extension.extension_id.slice(0, 12)}...</dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+
+          {/* 5. USEFUL LINKS */}
+          {(extension.website || extension.support_url || extension.privacy_url) && (
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <svg className="w-5 h-5 text-gray-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+                Links & Resources
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {extension.website && (
+                  <a 
+                    href={extension.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                    </svg>
+                    Website
+                  </a>
+                )}
+                {extension.support_url && (
+                  <a 
+                    href={extension.support_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    Support
+                  </a>
+                )}
+                {extension.privacy_url && (
+                  <a 
+                    href={extension.privacy_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    Privacy Policy
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 6. RELATED EXTENSIONS */}
           {relatedExtensions.length > 0 && (
             <div className="bg-white rounded-lg border border-gray-200 p-6">
               <div className="flex items-center justify-between mb-6">
