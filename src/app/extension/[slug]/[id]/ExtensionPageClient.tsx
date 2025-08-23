@@ -131,15 +131,19 @@ export default function ExtensionPageClient({ extension, relatedExtensions }: Ex
                     href={extension.developer_url} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800 text-sm"
+                    className="text-blue-600 hover:text-blue-800 text-sm flex items-center gap-1"
                   >
-                    Developer Website →
+                    Developer Website
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
                   </a>
                 )}
+                <span>•</span>
                 {extension.category && (
                   <a 
                     href={`/category/${createSlug(extension.category)}`}
-                    className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors cursor-pointer"
+                    className="text-blue-600 hover:text-blue-800 text-sm"
                   >
                     {extension.category}
                   </a>
@@ -155,10 +159,10 @@ export default function ExtensionPageClient({ extension, relatedExtensions }: Ex
                 rel="noopener noreferrer"
                 className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
               >
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                Add to Chrome
+                <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
-                Add to Chrome
               </a>
             </div>
           </div>
@@ -328,25 +332,21 @@ export default function ExtensionPageClient({ extension, relatedExtensions }: Ex
           </div>
 
           {/* DESCRIPTION & SCREENSHOTS - Combined Layout with equal heights */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Description - 2/3 width with height matching screenshots */}
-            <div className="lg:col-span-2">
-              <div className="h-[500px] flex flex-col">
-                <ExtensionDescription 
-                  description={extension.description}
-                  fullDescription={extension.full_description}
-                />
-              </div>
+            <div className="lg:col-span-2 h-[500px]">
+              <ExtensionDescription 
+                description={extension.description}
+                fullDescription={extension.full_description}
+              />
             </div>
             
             {/* Screenshots - 1/3 width */}
-            <div className="lg:col-span-1">
-              <div className="h-[500px]">
-                <ScreenshotCarousel 
-                  screenshots={extension.screenshots || []} 
-                  extensionName={extension.name} 
-                />
-              </div>
+            <div className="lg:col-span-1 h-[500px]">
+              <ScreenshotCarousel 
+                screenshots={extension.screenshots || []} 
+                extensionName={extension.name} 
+              />
             </div>
           </div>
 
@@ -459,6 +459,9 @@ export default function ExtensionPageClient({ extension, relatedExtensions }: Ex
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
                       </svg>
                       Website
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
                     </a>
                   )}
                   {extension.support_url && (
@@ -472,6 +475,9 @@ export default function ExtensionPageClient({ extension, relatedExtensions }: Ex
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
                       </svg>
                       Support
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
                     </a>
                   )}
                   {extension.privacy_url && (
@@ -485,6 +491,9 @@ export default function ExtensionPageClient({ extension, relatedExtensions }: Ex
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                       </svg>
                       Privacy Policy
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
                     </a>
                   )}
                 </div>
