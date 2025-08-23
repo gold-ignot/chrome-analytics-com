@@ -22,6 +22,9 @@ export default function ExtensionPageClient({ slug, extensionId }: ExtensionPage
   const [keywords, setKeywords] = useState<KeywordMetric[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showFullDescription, setShowFullDescription] = useState(false);
+  const [relatedExtensions, setRelatedExtensions] = useState<Extension[]>([]);
+  const [relatedLoading, setRelatedLoading] = useState(false);
 
   useEffect(() => {
     fetchExtensionData();
@@ -99,11 +102,35 @@ export default function ExtensionPageClient({ slug, extensionId }: ExtensionPage
           searchVolume: 0 
         })));
       }
+      
+      // Fetch related extensions from the same category
+      await fetchRelatedExtensions(extensionData);
     } catch (err) {
       setError('Failed to load extension data');
       console.error('Error fetching extension data:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchRelatedExtensions = async (currentExtension: Extension) => {
+    try {
+      setRelatedLoading(true);
+      
+      // Get extensions from the same category, excluding the current extension
+      const response = await apiClient.getExtensions(1, 4, 'users', 'desc', currentExtension.category);
+      
+      // Filter out the current extension and get top 3
+      const filtered = response.extensions
+        .filter(ext => ext.extension_id !== currentExtension.extension_id)
+        .slice(0, 3);
+        
+      setRelatedExtensions(filtered);
+    } catch (err) {
+      console.error('Error fetching related extensions:', err);
+      setRelatedExtensions([]);
+    } finally {
+      setRelatedLoading(false);
     }
   };
 
@@ -289,74 +316,167 @@ export default function ExtensionPageClient({ slug, extensionId }: ExtensionPage
       {/* Main Content - Reuse most of the existing content from the old page */}
       <section className="py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Extension Details */}
+          {/* Overview Section - Prioritize Visual Elements */}
           <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
-            <div className="flex items-start justify-between mb-4">
+            <div className="flex items-start justify-between mb-6">
               <div className="flex-1">
-                <div className="flex items-center gap-3 mb-3 flex-wrap">
-                  <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded font-medium">
+                <div className="flex items-center gap-3 mb-4 flex-wrap">
+                  <span className="text-xs px-3 py-1.5 bg-gray-100 text-gray-700 rounded-full font-semibold">
                     {extension.category}
                   </span>
                   {extension.subcategory && (
-                    <span className="text-xs px-2 py-1 bg-blue-50 text-blue-600 rounded font-medium">
+                    <span className="text-xs px-3 py-1.5 bg-blue-50 text-blue-600 rounded-full font-semibold border border-blue-200">
                       {extension.subcategory}
                     </span>
                   )}
-                  <span className="text-xs text-gray-500 font-mono">
-                    ID: {extension.extension_id}
+                  <span className="text-xs text-gray-500 font-mono bg-gray-50 px-2 py-1 rounded">
+                    {extension.extension_id}
                   </span>
                 </div>
-                <p className="text-gray-700 leading-relaxed">
-                  {extension.full_description || extension.description || 'No description available'}
-                </p>
+                
+                {/* Brief Description with Read More */}
+                <div className="mb-4">
+                  <p className="text-gray-700 leading-relaxed text-sm">
+                    {(() => {
+                      const description = extension.full_description || extension.description || 'No description available';
+                      const isLong = description.length > 200;
+                      
+                      if (!showFullDescription && isLong) {
+                        return (
+                          <>
+                            {description.substring(0, 200).trim()}...
+                            <button 
+                              onClick={() => setShowFullDescription(true)}
+                              className="ml-2 text-blue-600 hover:text-blue-800 font-medium text-sm underline"
+                            >
+                              Read more
+                            </button>
+                          </>
+                        );
+                      }
+                      
+                      return (
+                        <>
+                          {description}
+                          {showFullDescription && isLong && (
+                            <button 
+                              onClick={() => setShowFullDescription(false)}
+                              className="ml-2 text-blue-600 hover:text-blue-800 font-medium text-sm underline"
+                            >
+                              Show less
+                            </button>
+                          )}
+                        </>
+                      );
+                    })()} 
+                  </p>
+                </div>
               </div>
             </div>
           </div>
 
+          {/* Screenshots Gallery - Prioritized Visual Content */}
+          {extension.screenshots && extension.screenshots.length > 0 && (
+            <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <svg className="w-5 h-5 text-gray-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Screenshots & Preview
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {extension.screenshots.slice(0, 6).map((screenshot, index) => (
+                  <div key={index} className="relative group cursor-pointer">
+                    <img
+                      src={screenshot}
+                      alt={`${extension.name} screenshot ${index + 1}`}
+                      className="w-full h-48 object-cover rounded-lg border border-gray-200 group-hover:shadow-lg transition-all duration-300 transform group-hover:scale-105"
+                      onClick={() => window.open(screenshot, '_blank')}
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all rounded-lg flex items-center justify-center">
+                      <div className="bg-white bg-opacity-90 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {extension.screenshots.length > 6 && (
+                <p className="text-sm text-gray-500 mt-3 text-center">
+                  Showing 6 of {extension.screenshots.length} screenshots • Click any image to view full size
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Key Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Users</p>
+                  <p className="text-sm text-gray-600 mb-1 font-medium">Active Users</p>
                   <p className="text-2xl font-bold text-gray-900">
                     {extension.users > 0 ? formatUsers(extension.users) : 'N/A'}
                   </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {extension.users >= 1000000 ? 'Viral reach' :
+                     extension.users >= 100000 ? 'Popular extension' :
+                     extension.users >= 10000 ? 'Growing user base' : 'New extension'}
+                  </p>
                 </div>
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
                   </svg>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Rating</p>
+                  <p className="text-sm text-gray-600 mb-1 font-medium">User Rating</p>
                   <p className="text-2xl font-bold text-gray-900">
                     {extension.rating > 0 ? extension.rating.toFixed(1) : 'N/A'}
                   </p>
+                  <div className="flex items-center mt-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <svg 
+                        key={star}
+                        className={`w-3 h-3 ${star <= Math.round(extension.rating) ? 'text-yellow-500' : 'text-gray-300'}`}
+                        fill="currentColor" 
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    ))}
+                  </div>
                 </div>
-                <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
+                  <svg className="w-6 h-6 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                   </svg>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-shadow">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Reviews</p>
+                  <p className="text-sm text-gray-600 mb-1 font-medium">User Reviews</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {extension.review_count > 0 ? extension.review_count.toLocaleString() : 'N/A'}
+                    {extension.review_count > 0 ? formatUsers(extension.review_count) : 'N/A'}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {extension.review_count >= 10000 ? 'Highly reviewed' :
+                     extension.review_count >= 1000 ? 'Well reviewed' :
+                     extension.review_count >= 100 ? 'Some feedback' : 'New reviews'}
                   </p>
                 </div>
-                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
                   </svg>
                 </div>
@@ -364,38 +484,31 @@ export default function ExtensionPageClient({ slug, extensionId }: ExtensionPage
             </div>
           </div>
 
-          {/* Screenshots Gallery */}
-          {extension.screenshots && extension.screenshots.length > 0 && (
+          {/* Detailed Description Section */}
+          {(extension.full_description || extension.description) && (
             <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Screenshots</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {extension.screenshots.slice(0, 6).map((screenshot, index) => (
-                  <div key={index} className="relative group cursor-pointer">
-                    <img
-                      src={screenshot}
-                      alt={`${extension.name} screenshot ${index + 1}`}
-                      className="w-full h-48 object-cover rounded-lg border border-gray-200 group-hover:shadow-lg transition-shadow"
-                      onClick={() => window.open(screenshot, '_blank')}
-                    />
-                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all rounded-lg flex items-center justify-center">
-                      <svg className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-                      </svg>
-                    </div>
-                  </div>
-                ))}
+              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <svg className="w-5 h-5 text-gray-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                About This Extension
+              </h2>
+              <div className="prose max-w-none">
+                <div className="text-gray-700 leading-relaxed whitespace-pre-line">
+                  {extension.full_description || extension.description}
+                </div>
               </div>
-              {extension.screenshots.length > 6 && (
-                <p className="text-sm text-gray-500 mt-3">
-                  Showing 6 of {extension.screenshots.length} screenshots
-                </p>
-              )}
             </div>
           )}
 
           {/* Extension Metadata */}
           <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Extension Details</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+              <svg className="w-5 h-5 text-gray-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Technical Details
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {extension.version && (
                 <div className="flex items-center space-x-2">
@@ -994,6 +1107,115 @@ export default function ExtensionPageClient({ slug, extensionId }: ExtensionPage
               </div>
             </div>
           </div>
+
+          {/* Related Extensions */}
+          {relatedExtensions.length > 0 && (
+            <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+                    <svg className="w-5 h-5 text-gray-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                    Related Extensions
+                  </h2>
+                  <p className="text-gray-600 text-sm mt-1">
+                    Similar extensions in {extension.category}
+                  </p>
+                </div>
+                <a 
+                  href={`/category/${extension.category.toLowerCase().replace(/\s+/g, '-')}`}
+                  className="text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center"
+                >
+                  View all in category
+                  <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </a>
+              </div>
+              
+              {relatedLoading ? (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="bg-gray-50 rounded-lg p-4 animate-pulse">
+                      <div className="flex items-start space-x-3 mb-3">
+                        <div className="w-8 h-8 bg-gray-300 rounded-lg"></div>
+                        <div className="flex-1">
+                          <div className="h-4 bg-gray-300 rounded mb-2"></div>
+                          <div className="h-3 bg-gray-300 rounded w-3/4"></div>
+                        </div>
+                      </div>
+                      <div className="h-16 bg-gray-300 rounded mb-3"></div>
+                      <div className="flex justify-between">
+                        <div className="h-3 bg-gray-300 rounded w-1/4"></div>
+                        <div className="h-3 bg-gray-300 rounded w-1/4"></div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {relatedExtensions.map((relatedExt) => {
+                    const relatedUrl = `/extension/${createExtensionSlug(relatedExt)}/${relatedExt.extension_id}`;
+                    return (
+                      <div 
+                        key={relatedExt.extension_id} 
+                        className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors cursor-pointer group"
+                        onClick={() => window.location.href = relatedUrl}
+                      >
+                        <div className="flex items-start space-x-3 mb-3">
+                          {relatedExt.logo_url ? (
+                            <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0">
+                              <img 
+                                src={relatedExt.logo_url} 
+                                alt={`${relatedExt.name} logo`}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                              <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                              </svg>
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                              {relatedExt.name}
+                            </h3>
+                            {relatedExt.developer && (
+                              <p className="text-xs text-gray-500 truncate mt-1">
+                                by {relatedExt.developer}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <p className="text-xs text-gray-600 line-clamp-2 mb-3 leading-relaxed">
+                          {relatedExt.description || 'No description available'}
+                        </p>
+                        
+                        <div className="flex items-center justify-between text-xs text-gray-500">
+                          <div className="flex items-center space-x-1">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                            </svg>
+                            <span>{formatUsers(relatedExt.users)}</span>
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            <svg className="w-3 h-3 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <span>{relatedExt.rating > 0 ? relatedExt.rating.toFixed(1) : 'N/A'}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Historical Data Charts */}
           {false && (

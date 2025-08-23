@@ -41,3 +41,5 @@ tmp/
 # Next.js specific
 .next/
 next-env.d.ts
+
+.*-mcp/
