@@ -7,14 +7,12 @@
     "build": "node scripts/generate-sitemaps.js && next build",
     "start": "next start",
     "lint": "next lint",
-    "sitemap": "node scripts/generate-sitemaps.js",
-    "sitemap:next": "next-sitemap"
+    "sitemap": "node scripts/generate-sitemaps.js"
   },
   "dependencies": {
     "@types/recharts": "^1.8.29",
     "lucide-react": "^0.539.0",
     "next": "15.4.6",
-    "next-sitemap": "^4.2.3",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-hot-toast": "^2.6.0",

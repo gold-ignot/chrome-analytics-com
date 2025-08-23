@@ -109,7 +109,7 @@ async function generateCategoriesSitemap() {
   const lastmod = new Date().toISOString();
   
   const urls = categories.map(category => 
-    `<url><loc>${SITE_URL}/category/${category.slug}</loc><lastmod>${lastmod}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>`
+    `<url><loc>${SITE_URL}/category/${category.slug}</loc><lastmod>${lastmod}</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>`
   ).join('\n');
   
   const xml = generateXML('urlset', urls);
@@ -207,7 +207,7 @@ async function generateExtensionSitemaps() {
       const lastmod = new Date().toISOString();
       // Create SEO-friendly slug from extension name
       const slug = createSlug(extension.name || 'chrome-extension');
-      currentSitemapUrls.push(`<url><loc>${SITE_URL}/extension/${slug}/${extension.extension_id}</loc><lastmod>${lastmod}</lastmod><changefreq>weekly</changefreq><priority>0.6</priority></url>`);
+      currentSitemapUrls.push(`<url><loc>${SITE_URL}/extension/${slug}/${extension.extension_id}</loc><lastmod>${lastmod}</lastmod><changefreq>daily</changefreq><priority>0.6</priority></url>`);
       currentExtensionCount++;
       
       // Check if we've reached the limit for current sitemap
