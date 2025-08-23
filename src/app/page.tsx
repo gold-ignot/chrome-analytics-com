@@ -15,7 +15,7 @@ function TopRatedSection() {
   useEffect(() => {
     const fetchTopRated = async () => {
       try {
-        const response = await apiClient.getExtensions(1, 3, 'rating', 'desc');
+        const response = await apiClient.getExtensions(1, 6, 'rating', 'desc');
         setExtensions(response.extensions || []);
       } catch (err) {
         console.error('Error fetching top-rated extensions:', err);
@@ -29,7 +29,7 @@ function TopRatedSection() {
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {Array.from({ length: 3 }).map((_, i) => (
+        {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="bg-white rounded-lg border border-slate-200 p-6 animate-pulse">
             <div className="h-4 bg-slate-200 rounded mb-3"></div>
             <div className="h-3 bg-slate-200 rounded mb-4 w-3/4"></div>
@@ -65,7 +65,7 @@ function TrendingSection() {
   useEffect(() => {
     const fetchTrending = async () => {
       try {
-        const response = await apiClient.getExtensions(1, 3, 'recent', 'desc');
+        const response = await apiClient.getExtensions(1, 6, 'recent', 'desc');
         setExtensions(response.extensions || []);
       } catch (err) {
         console.error('Error fetching trending extensions:', err);
@@ -79,7 +79,7 @@ function TrendingSection() {
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {Array.from({ length: 3 }).map((_, i) => (
+        {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="bg-white rounded-lg border border-slate-200 p-6 animate-pulse">
             <div className="h-4 bg-slate-200 rounded mb-3"></div>
             <div className="h-3 bg-slate-200 rounded mb-4 w-3/4"></div>
@@ -208,97 +208,33 @@ export default function Home() {
             <SearchBar onSearch={handleSearch} placeholder="Search for extensions..." />
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link
-              href="/extensions"
-              className="inline-flex items-center justify-center px-6 py-3 text-base font-medium text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors"
-            >
-              Browse Extensions
-            </Link>
-            <Link
-              href="/api"
-              className="inline-flex items-center justify-center px-6 py-3 text-base font-medium text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg transition-colors"
-            >
-              API Documentation
-            </Link>
-          </div>
         </div>
       </section>
 
-      {/* Popular Extensions */}
+      {/* Trending Extensions */}
       <section className="py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="text-2xl font-bold text-slate-900">
-                Most Popular Extensions
+                Trending Extensions
               </h2>
               <p className="text-slate-600 mt-1">
-                Extensions with the highest number of users
+                Recently updated and gaining popularity
               </p>
             </div>
             <Link
-              href="/popular"
+              href="/trending"
               className="text-sm font-medium text-slate-700 hover:text-slate-900 flex items-center"
             >
-              View all popular
+              View all trending
               <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </Link>
           </div>
 
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="bg-white rounded-lg border border-slate-200 p-6 animate-pulse">
-                  <div className="h-4 bg-slate-200 rounded mb-3"></div>
-                  <div className="h-3 bg-slate-200 rounded mb-4 w-3/4"></div>
-                  <div className="h-16 bg-slate-200 rounded mb-4"></div>
-                  <div className="flex justify-between">
-                    <div className="h-3 bg-slate-200 rounded w-1/4"></div>
-                    <div className="h-3 bg-slate-200 rounded w-1/4"></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : error ? (
-            <div className="text-center py-12 bg-white rounded-lg border border-slate-200">
-              <div className="text-red-500 mb-4">
-                <svg className="mx-auto h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-medium text-slate-900 mb-2">Failed to load extensions</h3>
-              <p className="text-slate-500 mb-4">{error}</p>
-              <button
-                onClick={fetchFeaturedExtensions}
-                className="inline-flex items-center px-4 py-2 border border-slate-300 text-sm font-medium rounded-lg text-slate-700 bg-white hover:bg-slate-50 transition-colors"
-              >
-                Try Again
-              </button>
-            </div>
-          ) : extensions && extensions.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {extensions.map((extension) => (
-                <ExtensionCard
-                  key={extension.extension_id}
-                  extension={extension}
-                  onClick={() => handleExtensionClick(extension)}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12 bg-white rounded-lg border border-slate-200">
-              <div className="text-slate-400 mb-4">
-                <svg className="mx-auto h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-medium text-slate-900 mb-2">No popular extensions yet</h3>
-              <p className="text-slate-500">Popular extensions will appear here once they are added to the database.</p>
-            </div>
-          )}
+          <TrendingSection />
         </div>
       </section>
 
@@ -391,30 +327,80 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Trending Extensions */}
+      {/* Popular Extensions */}
       <section className="py-12 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="text-2xl font-bold text-slate-900">
-                Trending Extensions
+                Most Popular Extensions
               </h2>
               <p className="text-slate-600 mt-1">
-                Recently updated and gaining popularity
+                Extensions with the highest number of users
               </p>
             </div>
             <Link
-              href="/trending"
+              href="/popular"
               className="text-sm font-medium text-slate-700 hover:text-slate-900 flex items-center"
             >
-              View all trending
+              View all popular
               <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </Link>
           </div>
 
-          <TrendingSection />
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="bg-white rounded-lg border border-slate-200 p-6 animate-pulse">
+                  <div className="h-4 bg-slate-200 rounded mb-3"></div>
+                  <div className="h-3 bg-slate-200 rounded mb-4 w-3/4"></div>
+                  <div className="h-16 bg-slate-200 rounded mb-4"></div>
+                  <div className="flex justify-between">
+                    <div className="h-3 bg-slate-200 rounded w-1/4"></div>
+                    <div className="h-3 bg-slate-200 rounded w-1/4"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : error ? (
+            <div className="text-center py-12 bg-white rounded-lg border border-slate-200">
+              <div className="text-red-500 mb-4">
+                <svg className="mx-auto h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-slate-900 mb-2">Failed to load extensions</h3>
+              <p className="text-slate-500 mb-4">{error}</p>
+              <button
+                onClick={fetchFeaturedExtensions}
+                className="inline-flex items-center px-4 py-2 border border-slate-300 text-sm font-medium rounded-lg text-slate-700 bg-white hover:bg-slate-50 transition-colors"
+              >
+                Try Again
+              </button>
+            </div>
+          ) : extensions && extensions.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {extensions.map((extension) => (
+                <ExtensionCard
+                  key={extension.extension_id}
+                  extension={extension}
+                  onClick={() => handleExtensionClick(extension)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-white rounded-lg border border-slate-200">
+              <div className="text-slate-400 mb-4">
+                <svg className="mx-auto h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-slate-900 mb-2">No popular extensions yet</h3>
+              <p className="text-slate-500">Popular extensions will appear here once they are added to the database.</p>
+            </div>
+          )}
         </div>
       </section>
 

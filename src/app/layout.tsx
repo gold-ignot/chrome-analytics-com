@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://chromeinsights.com',
+    url: 'https://chrome-analytics.com',
     title: 'ChromeInsights - Chrome Extension Analytics & Growth Tracking',
     description: 'Track Chrome extension growth, analyze performance metrics, and discover trending extensions. Built for developers and marketers who want data-driven insights.',
     siteName: 'ChromeInsights',

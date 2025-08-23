@@ -185,6 +185,9 @@ export default function ExtensionCard({ extension, onClick }: ExtensionCardProps
         </div>
       )}
       
+      {/* Flexible spacer to push footer to bottom */}
+      <div className="flex-grow"></div>
+      
       {/* Footer CTA */}
       <div className="pt-4 border-t border-slate-200">
         <div className="flex items-center justify-between">
