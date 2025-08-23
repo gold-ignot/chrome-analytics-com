@@ -26,7 +26,10 @@ export default function ExtensionPageClient({ slug, extensionId }: ExtensionPage
   const [relatedLoading, setRelatedLoading] = useState(false);
 
   useEffect(() => {
-    fetchExtensionData();
+    if (extensionId) {
+      console.log('Fetching extension data for:', extensionId);
+      fetchExtensionData();
+    }
   }, [extensionId]);
 
   // Inject structured data when extension is available
@@ -70,6 +73,7 @@ export default function ExtensionPageClient({ slug, extensionId }: ExtensionPage
 
   const fetchExtensionData = async () => {
     try {
+      console.log('Setting loading to true');
       setLoading(true);
       setError(null);
 
@@ -79,6 +83,7 @@ export default function ExtensionPageClient({ slug, extensionId }: ExtensionPage
       // Validate essential extension data
       if (!extensionData || !extensionData.name || !extensionData.extension_id) {
         setError('Extension not found');
+        setLoading(false); // Stop loading on error
         return;
       }
 
@@ -88,10 +93,12 @@ export default function ExtensionPageClient({ slug, extensionId }: ExtensionPage
         // Redirect to correct URL with proper slug
         const correctUrl = extensionUrls.main(extensionData);
         router.replace(correctUrl);
+        setLoading(false); // Stop loading before redirect
         return;
       }
       
       setExtension(extensionData);
+      console.log('Setting loading to false - extension loaded');
       setLoading(false); // Set loading to false after extension data is loaded
       
       // Fetch related extensions from the same category (don't block main loading)
@@ -99,6 +106,7 @@ export default function ExtensionPageClient({ slug, extensionId }: ExtensionPage
     } catch (err) {
       setError('Failed to load extension data');
       console.error('Error fetching extension data:', err);
+      console.log('Setting loading to false - error occurred');
       setLoading(false);
     }
   };
@@ -363,6 +371,122 @@ export default function ExtensionPageClient({ slug, extensionId }: ExtensionPage
               )}
             </div>
           )}
+
+          {/* 5. TECHNICAL DETAILS - Less important info */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+              <svg className="w-5 h-5 text-gray-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Technical Details
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {extension.version && (
+                <div className="flex items-center space-x-2">
+                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                  </svg>
+                  <span className="text-sm text-gray-600">Version:</span>
+                  <span className="text-sm font-medium text-gray-900">{extension.version}</span>
+                </div>
+              )}
+              
+              {extension.file_size && (
+                <div className="flex items-center space-x-2">
+                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                  <span className="text-sm text-gray-600">Size:</span>
+                  <span className="text-sm font-medium text-gray-900">{extension.file_size}</span>
+                </div>
+              )}
+              
+              {extension.last_updated_at && (
+                <div className="flex items-center space-x-2">
+                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-sm text-gray-600">Updated:</span>
+                  <span className="text-sm font-medium text-gray-900">
+                    {new Date(extension.last_updated_at).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </span>
+                </div>
+              )}
+
+              <div className="flex items-center space-x-2">
+                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                </svg>
+                <span className="text-sm text-gray-600">Category:</span>
+                <span className="text-sm font-medium text-gray-900">{extension.category}</span>
+              </div>
+
+              {extension.subcategory && (
+                <div className="flex items-center space-x-2">
+                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                  </svg>
+                  <span className="text-sm text-gray-600">Subcategory:</span>
+                  <span className="text-sm font-medium text-gray-900">{extension.subcategory}</span>
+                </div>
+              )}
+
+              <div className="flex items-center space-x-2">
+                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+                </svg>
+                <span className="text-sm text-gray-600">Extension ID:</span>
+                <code className="text-xs font-mono bg-gray-100 px-2 py-1 rounded">{extension.extension_id}</code>
+              </div>
+            </div>
+            
+            {/* Links */}
+            <div className="flex flex-wrap gap-3 mt-6 pt-4 border-t border-gray-200">
+              {extension.website && (
+                <a 
+                  href={extension.website} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-800"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                  <span>Developer Website</span>
+                </a>
+              )}
+              
+              {extension.support_url && (
+                <a 
+                  href={extension.support_url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-800"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Support</span>
+                </a>
+              )}
+
+              <a
+                href={extensionUrls.store(extension.extension_id)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center space-x-1 text-sm text-green-600 hover:text-green-800 font-medium"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+                <span>Chrome Web Store</span>
+              </a>
+            </div>
+          </div>
 
         </div>
       </section>
