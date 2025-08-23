@@ -1,27 +1,21 @@
 const fs = require('fs');
 const path = require('path');
+const slugify = require('slugify');
 
 // Configuration
 const SITE_URL = 'https://chrome-analytics.com';
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 const EXTENSIONS_PER_SITEMAP = 10000;
 
-// Create SEO-friendly slug from text (matching your slugs.ts logic)
+// Create SEO-friendly slug using slugify package
 function createSlug(text) {
   if (!text) return 'chrome-extension';
   
-  return text
-    .toLowerCase()
-    .trim()
-    // Replace spaces and special characters with hyphens
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    // Remove leading/trailing hyphens
-    .replace(/^-+|-+$/g, '')
-    // Limit length for better URLs
-    .substring(0, 60)
-    // Remove trailing hyphen if truncated
-    .replace(/-+$/, '');
+  return slugify(text, {
+    lower: true,
+    strict: true,
+    remove: /[*+~.()'"!:@]/g
+  }).substring(0, 60).replace(/-+$/, '') || 'chrome-extension';
 }
 
 // Fallback categories (in case API is unavailable)
