@@ -8,14 +8,14 @@ import {
 import BestPageClient from './BestPageClient';
 
 interface BestPageProps {
-  params: {
+  params: Promise<{
     type: string;
-  };
+  }>;
 }
 
 // Generate static metadata
 export async function generateMetadata({ params }: BestPageProps): Promise<Metadata> {
-  const { type } = params;
+  const { type } = await params;
   const typeInfo = BEST_TYPES[type as BestTypeKey];
   
   if (!typeInfo) {
@@ -28,8 +28,8 @@ export async function generateMetadata({ params }: BestPageProps): Promise<Metad
   return metadataGenerators.best(type, typeInfo);
 }
 
-export default function BestPage({ params }: BestPageProps) {
-  const { type } = params;
+export default async function BestPage({ params }: BestPageProps) {
+  const { type } = await params;
   const typeInfo = BEST_TYPES[type as BestTypeKey];
   
   if (!typeInfo) {

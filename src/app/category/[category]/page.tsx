@@ -9,14 +9,14 @@ import {
 import CategoryPageClient from './CategoryPageClient';
 
 interface CategoryPageProps {
-  params: {
+  params: Promise<{
     category: string;
-  };
+  }>;
 }
 
 // Generate static metadata
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
-  const { category } = params;
+  const { category } = await params;
   const categoryName = CATEGORIES[category as CategoryKey];
   
   if (!categoryName) {
@@ -29,8 +29,8 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   return metadataGenerators.category(category, categoryName);
 }
 
-export default function CategoryPage({ params }: CategoryPageProps) {
-  const { category } = params;
+export default async function CategoryPage({ params }: CategoryPageProps) {
+  const { category } = await params;
   const categoryName = CATEGORIES[category as CategoryKey];
   
   if (!categoryName) {
