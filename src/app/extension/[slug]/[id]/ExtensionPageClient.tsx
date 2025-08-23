@@ -334,7 +334,7 @@ export default function ExtensionPageClient({ extension, relatedExtensions }: Ex
           {/* DESCRIPTION & SCREENSHOTS - Combined Layout with equal heights */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Description - 2/3 width with height matching screenshots */}
-            <div className="lg:col-span-2 h-[500px]">
+            <div className="lg:col-span-2 h-[350px]">
               <ExtensionDescription 
                 description={extension.description}
                 fullDescription={extension.full_description}
@@ -342,7 +342,7 @@ export default function ExtensionPageClient({ extension, relatedExtensions }: Ex
             </div>
             
             {/* Screenshots - 1/3 width */}
-            <div className="lg:col-span-1 h-[500px]">
+            <div className="lg:col-span-1 h-[350px]">
               <ScreenshotCarousel 
                 screenshots={extension.screenshots || []} 
                 extensionName={extension.name} 
