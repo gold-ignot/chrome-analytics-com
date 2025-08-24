@@ -193,9 +193,9 @@ export default function ExtensionPageClient({ extension, relatedExtensions }: Ex
                   <span className="text-2xl font-bold text-gray-900">{formatUsers(extension.users)}</span>
                 </div>
                 <p className="text-sm text-gray-600 font-medium">Total Users</p>
-                {extension.popularity_rank > 0 && (
-                  <p className="text-xs text-blue-600 mt-1">#{extension.popularity_rank} Most Popular</p>
-                )}
+                <p className="text-xs text-blue-600 mt-1">
+                  {extension.popularity_rank > 0 ? `#${extension.popularity_rank} Most Popular` : 'Active installs'}
+                </p>
               </div>
 
               {/* Rating Card */}
@@ -207,9 +207,9 @@ export default function ExtensionPageClient({ extension, relatedExtensions }: Ex
                   <span className="text-2xl font-bold text-gray-900">{extension.rating.toFixed(1)}</span>
                 </div>
                 <p className="text-sm text-gray-600 font-medium">Average Rating</p>
-                {extension.top_rated_rank > 0 && (
-                  <p className="text-xs text-yellow-600 mt-1">#{extension.top_rated_rank} Top Rated</p>
-                )}
+                <p className="text-xs text-yellow-600 mt-1">
+                  {extension.top_rated_rank > 0 ? `#${extension.top_rated_rank} Top Rated` : `Based on ${formatUsers(extension.review_count)} reviews`}
+                </p>
               </div>
 
               {/* Reviews Card */}
