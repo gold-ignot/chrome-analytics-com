@@ -126,9 +126,11 @@ export default function ExtensionCard({ extension, onClick, href }: ExtensionCar
       </div>
       
       {/* Description */}
-      <p className="text-slate-600 text-sm mb-4 line-clamp-2 leading-relaxed min-h-[3.5rem]">
-        {extension.description || 'No description available'}
-      </p>
+      <div className="text-slate-600 text-sm mb-4 min-h-[3.5rem] overflow-hidden">
+        <div className="line-clamp-2">
+          {extension.description || 'No description available'}
+        </div>
+      </div>
       
       {/* Compact Metrics Row */}
       <div className="bg-slate-50 rounded-lg p-3 mb-4">

@@ -6,6 +6,7 @@ import { apiClient, Extension } from '@/lib/api';
 import ExtensionMetrics from '@/components/ExtensionMetrics';
 import ScreenshotCarousel from '@/components/ScreenshotCarousel';
 import ExtensionDescription from '@/components/ExtensionDescription';
+import ExtensionCard from '@/components/ExtensionCard';
 import { createExtensionSlug, extensionUrls, createSlug } from '@/lib/slugs';
 import { breadcrumbPatterns } from '@/components/Breadcrumbs';
 import { injectStructuredData } from '@/lib/seoHelpers';
@@ -174,7 +175,7 @@ export default function ExtensionPageClient({ extension, relatedExtensions }: Ex
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           
           {/* CORE PERFORMANCE METRICS */}
-          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
             <svg className="w-5 h-5 text-gray-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
@@ -262,7 +263,7 @@ export default function ExtensionPageClient({ extension, relatedExtensions }: Ex
             </div>
 
           {/* ADVANCED ANALYTICS - Coming Soon */}
-          <h2 className="text-lg font-medium text-gray-500 mb-3 flex items-center">
+          <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
             <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
@@ -351,7 +352,7 @@ export default function ExtensionPageClient({ extension, relatedExtensions }: Ex
           </div>
 
           {/* GROWTH ANALYTICS & CHARTS - Coming Soon */}
-          <h2 className="text-lg font-medium text-gray-500 mb-3 flex items-center">
+          <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
             <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
@@ -593,91 +594,27 @@ export default function ExtensionPageClient({ extension, relatedExtensions }: Ex
 
           {/* 6. RELATED EXTENSIONS */}
           {relatedExtensions.length > 0 && (
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900 flex items-center">
-                    <svg className="w-5 h-5 text-gray-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                    </svg>
-                    Related Extensions
-                  </h2>
-                  <p className="text-gray-600 text-sm mt-1">
-                    Similar extensions in {extension.category}
-                  </p>
-                </div>
+            <div className="mb-8">
+              <div className="mb-6">
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+                  <svg className="w-5 h-5 text-gray-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  </svg>
+                  Related Extensions
+                </h2>
+                <p className="text-slate-600 mt-1">
+                  Similar extensions in {extension.category}
+                </p>
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {relatedExtensions.map((relatedExt) => (
-                    <div
-                      key={relatedExt.extension_id}
-                      onClick={() => router.push(`/extension/${createExtensionSlug(relatedExt.name)}/${relatedExt.extension_id}`)}
-                      className="border border-gray-200 rounded-lg p-4 hover:shadow-md cursor-pointer transition-all"
-                    >
-                      <div className="flex items-start space-x-3 mb-3">
-                        {relatedExt.logo_url ? (
-                          <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 border border-gray-200">
-                            <img 
-                              src={relatedExt.logo_url} 
-                              alt={`${relatedExt.name} logo`}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        ) : (
-                          <div className="w-10 h-10 bg-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center">
-                            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
-                            </svg>
-                          </div>
-                        )}
-                        
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 leading-tight">
-                            {relatedExt.name}
-                          </h3>
-                          {/* Rankings */}
-                          <div className="flex flex-wrap gap-1 mt-1">
-                            {relatedExt.popularity_rank > 0 && relatedExt.popularity_rank <= 100 && (
-                              <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full font-medium">
-                                #{relatedExt.popularity_rank} Popular
-                              </span>
-                            )}
-                            {relatedExt.trending_rank > 0 && relatedExt.trending_rank <= 100 && (
-                              <span className="text-xs px-2 py-0.5 bg-orange-100 text-orange-700 rounded-full font-medium">
-                                #{relatedExt.trending_rank} Trending
-                              </span>
-                            )}
-                            {relatedExt.top_rated_rank > 0 && relatedExt.top_rated_rank <= 100 && (
-                              <span className="text-xs px-2 py-0.5 bg-pink-100 text-pink-700 rounded-full font-medium">
-                                #{relatedExt.top_rated_rank} Top Rated
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <p className="text-xs text-gray-600 line-clamp-2 mb-3 leading-relaxed">
-                        {relatedExt.description || 'No description available'}
-                      </p>
-                      
-                      <div className="flex items-center justify-between text-xs text-gray-500">
-                        <div className="flex items-center space-x-1">
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                          </svg>
-                          <span>{formatUsers(relatedExt.users)}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <svg className="w-3 h-3 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                          <span>{relatedExt.rating > 0 ? relatedExt.rating.toFixed(1) : 'N/A'}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {relatedExtensions.map((relatedExt) => (
+                  <ExtensionCard
+                    key={relatedExt.extension_id}
+                    extension={relatedExt}
+                    href={extensionUrls.main(relatedExt)}
+                  />
+                ))}
+              </div>
             </div>
           )}
 
