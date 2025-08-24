@@ -179,17 +179,6 @@ export default function SEOOptimizedHeader() {
             >
               Trending
             </Link>
-
-            <Link
-              href="/best/ad-blockers"
-              className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                isActivePath('/best/ad-blockers') 
-                  ? 'text-blue-600 bg-blue-50' 
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-              }`}
-            >
-              Ad Blockers
-            </Link>
           </nav>
 
           {/* CTA Buttons */}

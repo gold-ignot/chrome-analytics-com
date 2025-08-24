@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Header from "@/components/Header";
+import SEOOptimizedHeader from "@/components/SEOOptimizedHeader";
 import FooterWrapper from "@/components/FooterWrapper";
 import { GCScript } from 'next-goatcounter';
 
@@ -65,7 +65,7 @@ export default function RootLayout({
       <body className={`${inter.variable} font-sans antialiased bg-slate-50`}>
         <GCScript siteUrl="https://chromeanalytics.goatcounter.com/count" />
         <div className="min-h-screen flex flex-col">
-          <Header />
+          <SEOOptimizedHeader />
           <main className="flex-1">
             {children}
           </main>
