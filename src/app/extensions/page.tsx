@@ -77,20 +77,7 @@ export default async function ExtensionsPage({ searchParams }: ExtensionsPagePro
           </svg>
         }
         searchable={true}
-        onSearch={(query) => {
-          // This will be handled by ExtensionsPageClient
-          const params = new URLSearchParams(window.location.search);
-          if (query) {
-            params.set('search', query);
-            params.delete('page');
-          } else {
-            params.delete('search');
-            params.delete('page');
-          }
-          const queryString = params.toString();
-          const newUrl = queryString ? `${window.location.pathname}?${queryString}` : window.location.pathname;
-          window.location.href = newUrl;
-        }}
+        searchPath="/extensions"
         searchInitialValue={searchQuery}
         searchPlaceholder="Search all extensions..."
       />

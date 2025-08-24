@@ -38,41 +38,51 @@ export default function Pagination({ currentPage, totalPages, onPageChange }: Pa
   const visiblePages = getVisiblePages();
 
   return (
-    <div className="flex items-center justify-center space-x-2">
-      <button
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-      >
-        Previous
-      </button>
+    <div className="flex items-center justify-center">
+      <nav className="flex items-center bg-white rounded-2xl shadow-lg border border-slate-200 p-1">
+        <button
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="flex items-center px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-600 cursor-pointer"
+        >
+          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Previous
+        </button>
 
-      {visiblePages.map((page, index) => (
-        <span key={index}>
-          {page === '...' ? (
-            <span className="px-3 py-2 text-sm font-medium text-gray-500">...</span>
-          ) : (
-            <button
-              onClick={() => onPageChange(page as number)}
-              className={`px-3 py-2 text-sm font-medium rounded-md cursor-pointer ${
-                currentPage === page
-                  ? 'text-white bg-blue-600 border border-blue-600'
-                  : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
-              }`}
-            >
-              {page}
-            </button>
-          )}
-        </span>
-      ))}
+        <div className="flex items-center mx-2">
+          {visiblePages.map((page, index) => (
+            <span key={index}>
+              {page === '...' ? (
+                <span className="px-3 py-2 text-sm font-medium text-slate-400">...</span>
+              ) : (
+                <button
+                  onClick={() => onPageChange(page as number)}
+                  className={`min-w-[40px] h-10 text-sm font-medium rounded-xl cursor-pointer transition-all duration-200 mx-1 ${
+                    currentPage === page
+                      ? 'text-white bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg hover:shadow-xl transform hover:scale-105'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  {page}
+                </button>
+              )}
+            </span>
+          ))}
+        </div>
 
-      <button
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-      >
-        Next
-      </button>
+        <button
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="flex items-center px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-slate-600 cursor-pointer"
+        >
+          Next
+          <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </nav>
     </div>
   );
 }

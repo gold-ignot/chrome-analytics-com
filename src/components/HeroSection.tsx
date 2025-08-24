@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import SearchBar from './SearchBar';
+import HeroSearchWrapper from './HeroSearchWrapper';
 
 interface HeroSectionProps {
   title: string;
@@ -8,7 +8,7 @@ interface HeroSectionProps {
   children?: ReactNode;
   icon?: ReactNode;
   searchable?: boolean;
-  onSearch?: (query: string) => void;
+  searchPath?: string;
   searchPlaceholder?: string;
   searchInitialValue?: string;
 }
@@ -20,7 +20,7 @@ export default function HeroSection({
   children,
   icon,
   searchable,
-  onSearch,
+  searchPath,
   searchPlaceholder,
   searchInitialValue
 }: HeroSectionProps) {
@@ -57,15 +57,12 @@ export default function HeroSection({
           {description}
         </p>
         
-        {searchable && onSearch && (
-          <div className="max-w-lg mx-auto">
-            <SearchBar 
-              onSearch={onSearch}
-              initialValue={searchInitialValue || ''}
-              placeholder={searchPlaceholder || 'Search extensions...'}
-              variant="hero"
-            />
-          </div>
+        {searchable && searchPath && (
+          <HeroSearchWrapper
+            initialValue={searchInitialValue || ''}
+            placeholder={searchPlaceholder || 'Search extensions...'}
+            searchPath={searchPath}
+          />
         )}
         
         {children && (
