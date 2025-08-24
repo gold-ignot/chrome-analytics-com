@@ -14,6 +14,11 @@ export default function SEOOptimizedHeader() {
     return pathname === path || pathname.startsWith(path);
   };
 
+  const handleLinkClick = () => {
+    setIsCategoryMenuOpen(false);
+    setIsMobileMenuOpen(false);
+  };
+
   return (
     <header className="border-b border-slate-200 bg-white/95 backdrop-blur-sm sticky top-0 z-50">
       {/* Structured Data for Site Navigation */}
@@ -73,24 +78,28 @@ export default function SEOOptimizedHeader() {
                         <div className="grid grid-cols-2 gap-2">
                           <Link
                             href="/extensions"
+                            onClick={handleLinkClick}
                             className="block px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-slate-50 rounded-md transition-colors"
                           >
                             All Extensions
                           </Link>
                           <Link
                             href="/popular"
+                            onClick={handleLinkClick}
                             className="block px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-slate-50 rounded-md transition-colors"
                           >
                             Most Popular
                           </Link>
                           <Link
                             href="/top-rated"
+                            onClick={handleLinkClick}
                             className="block px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-slate-50 rounded-md transition-colors"
                           >
                             Top Rated
                           </Link>
                           <Link
                             href="/trending"
+                            onClick={handleLinkClick}
                             className="block px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-slate-50 rounded-md transition-colors"
                           >
                             Trending
@@ -105,6 +114,7 @@ export default function SEOOptimizedHeader() {
                           <Link
                             key={slug}
                             href={`/category/${slug}`}
+                            onClick={handleLinkClick}
                             className="block px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-slate-50 rounded-md transition-colors"
                           >
                             {name}
@@ -117,24 +127,28 @@ export default function SEOOptimizedHeader() {
                         <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Popular</h3>
                         <Link
                           href="/best/ad-blockers"
+                          onClick={handleLinkClick}
                           className="block px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-slate-50 rounded-md transition-colors"
                         >
                           Ad Blockers
                         </Link>
                         <Link
                           href="/best/password-managers"
+                          onClick={handleLinkClick}
                           className="block px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-slate-50 rounded-md transition-colors"
                         >
                           Password Managers
                         </Link>
                         <Link
                           href="/best/developer-extensions"
+                          onClick={handleLinkClick}
                           className="block px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-slate-50 rounded-md transition-colors"
                         >
                           Developer Tools
                         </Link>
                         <Link
                           href="/best/productivity-extensions"
+                          onClick={handleLinkClick}
                           className="block px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-slate-50 rounded-md transition-colors"
                         >
                           Productivity
@@ -218,24 +232,28 @@ export default function SEOOptimizedHeader() {
             <nav className="space-y-2" role="navigation" aria-label="Mobile navigation">
               <Link
                 href="/extensions"
+                onClick={handleLinkClick}
                 className="block px-3 py-2 text-base font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50 rounded-md transition-colors"
               >
                 All Extensions
               </Link>
               <Link
                 href="/popular"
+                onClick={handleLinkClick}
                 className="block px-3 py-2 text-base font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50 rounded-md transition-colors"
               >
                 Most Popular
               </Link>
               <Link
                 href="/top-rated"
+                onClick={handleLinkClick}
                 className="block px-3 py-2 text-base font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50 rounded-md transition-colors"
               >
                 Top Rated
               </Link>
               <Link
                 href="/trending"
+                onClick={handleLinkClick}
                 className="block px-3 py-2 text-base font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-50 rounded-md transition-colors"
               >
                 Trending
@@ -248,6 +266,7 @@ export default function SEOOptimizedHeader() {
                   <Link
                     key={slug}
                     href={`/category/${slug}`}
+                    onClick={handleLinkClick}
                     className="block px-3 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-md transition-colors"
                   >
                     {name}
