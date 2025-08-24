@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import ImagePreviewModal from './ImagePreviewModal';
 
 interface ScreenshotCarouselProps {
   screenshots: string[];
@@ -9,6 +10,7 @@ interface ScreenshotCarouselProps {
 
 export default function ScreenshotCarousel({ screenshots, extensionName }: ScreenshotCarouselProps) {
   const [currentScreenshot, setCurrentScreenshot] = useState(0);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   if (!screenshots || screenshots.length === 0) {
     return null;
@@ -35,7 +37,7 @@ export default function ScreenshotCarousel({ screenshots, extensionName }: Scree
             src={screenshots[currentScreenshot]}
             alt={`${extensionName} screenshot ${currentScreenshot + 1}`}
             className="w-full h-full object-contain cursor-pointer"
-            onClick={() => window.open(screenshots[currentScreenshot], '_blank')}
+            onClick={() => setIsPreviewOpen(true)}
           />
           
           {/* Navigation Arrows */}
@@ -83,6 +85,14 @@ export default function ScreenshotCarousel({ screenshots, extensionName }: Scree
           </div>
         )}
       </div>
+
+      {/* Image Preview Modal */}
+      <ImagePreviewModal
+        isOpen={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        imageSrc={screenshots[currentScreenshot]}
+        imageAlt={`${extensionName} screenshot ${currentScreenshot + 1}`}
+      />
     </div>
   );
 }
