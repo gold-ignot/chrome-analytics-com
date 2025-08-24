@@ -204,7 +204,9 @@ export default function SEOOptimizedHeader() {
               Browse Extensions
             </Link>
             <Link 
-              href="/api"
+              href="https://vaidas7.typeform.com/to/H13YYQ6O"
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-slate-900 hover:bg-slate-800 transition-colors"
             >
               API Access
