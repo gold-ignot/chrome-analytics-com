@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { Metadata } from 'next';
 import { apiClient } from '@/lib/api';
 import ExtensionsPageClient from './ExtensionsPageClient';
+import HeroSection from '@/components/HeroSection';
 
 export const metadata: Metadata = {
   title: 'All Chrome Extensions - Analytics & Insights',
@@ -67,16 +68,32 @@ export default async function ExtensionsPage({ searchParams }: ExtensionsPagePro
   return (
     <div className="bg-slate-50 min-h-screen">
       {/* Page Header */}
-      <section className="bg-white border-b border-slate-200">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
-          <h1 className="text-3xl font-bold text-slate-900 mb-4">
-            All Extensions
-          </h1>
-          <p className="text-lg text-slate-600 mb-8 max-w-2xl mx-auto">
-            Browse our complete database of Chrome Web Store extensions with real-time analytics
-          </p>
-        </div>
-      </section>
+      <HeroSection
+        title="All Extensions"
+        description="Browse our complete database of Chrome Web Store extensions with real-time analytics"
+        icon={
+          <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          </svg>
+        }
+        searchable={true}
+        onSearch={(query) => {
+          // This will be handled by ExtensionsPageClient
+          const params = new URLSearchParams(window.location.search);
+          if (query) {
+            params.set('search', query);
+            params.delete('page');
+          } else {
+            params.delete('search');
+            params.delete('page');
+          }
+          const queryString = params.toString();
+          const newUrl = queryString ? `${window.location.pathname}?${queryString}` : window.location.pathname;
+          window.location.href = newUrl;
+        }}
+        searchInitialValue={searchQuery}
+        searchPlaceholder="Search all extensions..."
+      />
 
       {/* Client-side interactive content */}
       <Suspense fallback={

@@ -10,7 +10,8 @@ export default function HomePageClient() {
   return (
     <SearchBar 
       onSearch={handleSearch} 
-      placeholder="Search for extensions..." 
+      placeholder="Search Chrome extensions..." 
+      variant="hero"
     />
   );
 }

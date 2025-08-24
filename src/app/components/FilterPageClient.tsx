@@ -120,15 +120,6 @@ export default function FilterPageClient({ initialData }: FilterPageClientProps)
 
   return (
     <>
-      {/* Search Bar */}
-      <section className="bg-white border-b border-slate-200">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
-          <div className="max-w-lg mx-auto">
-            <SearchBar onSearch={handleSearch} initialValue={searchQuery} placeholder="Search extensions..." />
-          </div>
-        </div>
-      </section>
-
       {/* Main Content */}
       <section className="py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

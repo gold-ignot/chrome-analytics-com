@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { apiClient, Extension, ExtensionResponse } from '@/lib/api';
 import { extensionUrls } from '@/lib/slugs';
 import ExtensionCard from '@/components/ExtensionCard';
+import HeroSection from '@/components/HeroSection';
 import Pagination from '@/components/Pagination';
 
 interface InitialData {
@@ -14,17 +15,19 @@ interface InitialData {
   totalPages: number;
   error: string | null;
   searchQuery: string;
-  selectedCategory: string;
+  isSearching: boolean;
+  filterType: string;
+  title: string;
+  description: string;
   sortBy: string;
   sortOrder: string;
-  isSearching: boolean;
 }
 
-interface ExtensionsPageClientProps {
+interface TopRatedPageClientProps {
   initialData: InitialData;
 }
 
-export default function ExtensionsPageClient({ initialData }: ExtensionsPageClientProps) {
+export default function TopRatedPageClient({ initialData }: TopRatedPageClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -36,9 +39,6 @@ export default function ExtensionsPageClient({ initialData }: ExtensionsPageClie
   const [total, setTotal] = useState(initialData.total);
   const [searchQuery, setSearchQuery] = useState(initialData.searchQuery);
   const [isSearching, setIsSearching] = useState(initialData.isSearching);
-  const [selectedCategory, setSelectedCategory] = useState(initialData.selectedCategory);
-  const [sortBy, setSortBy] = useState(initialData.sortBy);
-  const [sortOrder, setSortOrder] = useState(initialData.sortOrder);
 
   const limit = 12;
 
@@ -46,14 +46,11 @@ export default function ExtensionsPageClient({ initialData }: ExtensionsPageClie
   const updateURL = (updates: Partial<{
     page: number;
     search: string;
-    category: string;
-    sort: string;
-    order: string;
   }>) => {
     const params = new URLSearchParams(searchParams.toString());
     
     Object.entries(updates).forEach(([key, value]) => {
-      if (value && value !== '' && value !== 1 && value !== 'users' && value !== 'desc') {
+      if (value && value !== '' && value !== 1) {
         params.set(key, value.toString());
       } else {
         params.delete(key);
@@ -61,23 +58,18 @@ export default function ExtensionsPageClient({ initialData }: ExtensionsPageClie
     });
 
     const queryString = params.toString();
-    const newUrl = queryString ? `/extensions?${queryString}` : '/extensions';
+    const currentPath = window.location.pathname;
+    const newUrl = queryString ? `${currentPath}?${queryString}` : currentPath;
     router.push(newUrl);
   };
 
   const fetchExtensions = async (params?: {
     page?: number;
     search?: string;
-    category?: string;
-    sort?: string;
-    order?: string;
   }) => {
     const {
       page = currentPage,
       search = searchQuery,
-      category = selectedCategory,
-      sort = sortBy,
-      order = sortOrder
     } = params || {};
 
     try {
@@ -91,7 +83,7 @@ export default function ExtensionsPageClient({ initialData }: ExtensionsPageClie
         response = await apiClient.searchExtensions(search, page, limit);
       } else {
         setIsSearching(false);
-        response = await apiClient.getExtensions(page, limit, sort, order, category);
+        response = await apiClient.getExtensions(page, limit, initialData.sortBy, initialData.sortOrder);
       }
 
       setExtensions(response.extensions);
@@ -119,27 +111,6 @@ export default function ExtensionsPageClient({ initialData }: ExtensionsPageClie
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleCategoryChange = (category: string) => {
-    setSelectedCategory(category);
-    setCurrentPage(1);
-    updateURL({ page: 1, category });
-    fetchExtensions({ page: 1, category });
-  };
-
-  const handleSortChange = (sort: string) => {
-    setSortBy(sort);
-    setCurrentPage(1);
-    updateURL({ page: 1, sort });
-    fetchExtensions({ page: 1, sort });
-  };
-
-  const handleOrderChange = (order: string) => {
-    setSortOrder(order);
-    setCurrentPage(1);
-    updateURL({ page: 1, order });
-    fetchExtensions({ page: 1, order });
-  };
-
   const handleClearSearch = () => {
     setSearchQuery('');
     setCurrentPage(1);
@@ -148,7 +119,22 @@ export default function ExtensionsPageClient({ initialData }: ExtensionsPageClie
   };
 
   return (
-    <>
+    <div className="bg-slate-50 min-h-screen">
+      {/* Hero Section with Search */}
+      <HeroSection
+        title={initialData.title}
+        description={initialData.description}
+        icon={
+          <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+          </svg>
+        }
+        searchable={true}
+        onSearch={handleSearch}
+        searchInitialValue={searchQuery}
+        searchPlaceholder="Search top-rated extensions..."
+      />
+
       {/* Main Content */}
       <section className="py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -185,56 +171,6 @@ export default function ExtensionsPageClient({ initialData }: ExtensionsPageClie
               </button>
             )}
           </div>
-
-          {/* Filters and Sorting */}
-          {!isSearching && (
-            <div className="flex flex-col sm:flex-row gap-4 mb-6 p-4 bg-white rounded-lg border border-slate-200">
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-slate-700 mb-2">Category</label>
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => handleCategoryChange(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">All Categories</option>
-                  <option value="Productivity">Productivity</option>
-                  <option value="Shopping">Shopping</option>
-                  <option value="Developer Tools">Developer Tools</option>
-                  <option value="Communication">Communication</option>
-                  <option value="Entertainment">Entertainment</option>
-                  <option value="News & Weather">News & Weather</option>
-                  <option value="Social & Communication">Social & Communication</option>
-                  <option value="Accessibility">Accessibility</option>
-                  <option value="Photos">Photos</option>
-                  <option value="Search Tools">Search Tools</option>
-                </select>
-              </div>
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-slate-700 mb-2">Sort by</label>
-                <select
-                  value={sortBy}
-                  onChange={(e) => handleSortChange(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="users">Most Users</option>
-                  <option value="rating">Highest Rated</option>
-                  <option value="reviews">Most Reviews</option>
-                  <option value="recent">Recently Updated</option>
-                </select>
-              </div>
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-slate-700 mb-2">Order</label>
-                <select
-                  value={sortOrder}
-                  onChange={(e) => handleOrderChange(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="desc">High to Low</option>
-                  <option value="asc">Low to High</option>
-                </select>
-              </div>
-            </div>
-          )}
 
           {/* Error State */}
           {error && (
@@ -326,6 +262,6 @@ export default function ExtensionsPageClient({ initialData }: ExtensionsPageClie
           )}
         </div>
       </section>
-    </>
+    </div>
   );
 }

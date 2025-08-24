@@ -12,14 +12,14 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "ChromeInsights - Chrome Extension Analytics & Growth Tracking",
-    template: "%s | ChromeInsights"
+    default: "Chrome Analytics - Chrome Extension Analytics & Growth Tracking",
+    template: "%s | Chrome Analytics"
   },
   description: "Track Chrome extension growth, analyze performance metrics, and discover trending extensions. Built for developers and marketers who want data-driven insights.",
   keywords: ["chrome extensions", "analytics", "growth tracking", "extension metrics", "chrome web store", "developer tools"],
-  authors: [{ name: "ChromeInsights" }],
-  creator: "ChromeInsights",
-  publisher: "ChromeInsights",
+  authors: [{ name: "Chrome Analytics" }],
+  creator: "Chrome Analytics",
+  publisher: "Chrome Analytics",
   robots: {
     index: true,
     follow: true,
@@ -35,22 +35,22 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     url: 'https://chrome-analytics.com',
-    title: 'ChromeInsights - Chrome Extension Analytics & Growth Tracking',
+    title: 'Chrome Analytics - Chrome Extension Analytics & Growth Tracking',
     description: 'Track Chrome extension growth, analyze performance metrics, and discover trending extensions. Built for developers and marketers who want data-driven insights.',
-    siteName: 'ChromeInsights',
+    siteName: 'Chrome Analytics',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'ChromeInsights - Chrome Extension Analytics & Growth Tracking',
+    title: 'Chrome Analytics - Chrome Extension Analytics & Growth Tracking',
     description: 'Track Chrome extension growth, analyze performance metrics, and discover trending extensions. Built for developers and marketers who want data-driven insights.',
   },
   icons: {
     icon: [
-      { url: '/favicon.svg', type: 'image/svg+xml' },
-      { url: '/chrome-analytics-icon.svg', type: 'image/svg+xml', sizes: '32x32' }
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/icon.svg', type: 'image/svg+xml', sizes: '32x32' }
     ],
-    shortcut: '/favicon.svg',
-    apple: '/chrome-analytics-icon.svg',
+    shortcut: '/icon.svg',
+    apple: '/icon.svg',
   },
   manifest: '/manifest.json',
 };
