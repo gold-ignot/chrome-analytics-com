@@ -81,7 +81,8 @@ body {
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
   transition: all 0.3s;
   cursor: pointer;
-  min-height: 280px;
+  min-height: 320px;
+  height: 100%;
   display: flex;
   flex-direction: column;
 }
@@ -90,6 +91,14 @@ body {
   transform: translateY(-2px);
   box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
   border-color: #cbd5e1;
+}
+
+/* Ensure grid containers stretch extension cards to equal heights */
+.extension-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  align-items: stretch;
 }
 
 .gradient-text {

@@ -126,7 +126,7 @@ export default function ExtensionCard({ extension, onClick, href }: ExtensionCar
       </div>
       
       {/* Description */}
-      <p className="text-slate-600 text-sm mb-4 line-clamp-2 leading-relaxed">
+      <p className="text-slate-600 text-sm mb-4 line-clamp-2 leading-relaxed min-h-[3.5rem]">
         {extension.description || 'No description available'}
       </p>
       
