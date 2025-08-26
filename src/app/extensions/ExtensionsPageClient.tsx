@@ -200,53 +200,89 @@ export default function ExtensionsPageClient({ initialData }: ExtensionsPageClie
             )}
           </div>
 
-          {/* Filters and Sorting */}
+          {/* One-line Compact Filters */}
           {!isSearching && (
-            <div className="flex flex-col sm:flex-row gap-4 mb-6 p-4 bg-white rounded-lg border border-slate-200">
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-slate-700 mb-2">Category</label>
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => handleCategoryChange(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">All Categories</option>
-                  <option value="Productivity">Productivity</option>
-                  <option value="Shopping">Shopping</option>
-                  <option value="Developer Tools">Developer Tools</option>
-                  <option value="Communication">Communication</option>
-                  <option value="Entertainment">Entertainment</option>
-                  <option value="News & Weather">News & Weather</option>
-                  <option value="Social & Communication">Social & Communication</option>
-                  <option value="Accessibility">Accessibility</option>
-                  <option value="Photos">Photos</option>
-                  <option value="Search Tools">Search Tools</option>
-                </select>
+            <div className="flex items-center gap-3 mb-4 p-3 bg-white rounded-lg border border-slate-200">
+              <div className="flex items-center text-sm font-medium text-slate-700">
+                <svg className="w-4 h-4 mr-1.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
+                </svg>
+                Filters:
               </div>
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-slate-700 mb-2">Sort by</label>
-                <select
-                  value={sortBy}
-                  onChange={(e) => handleSortChange(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              
+              <select
+                value={selectedCategory}
+                onChange={(e) => handleCategoryChange(e.target.value)}
+                className="px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-slate-400 text-sm cursor-pointer hover:border-slate-400 transition-colors"
+              >
+                <option value="">All Categories</option>
+                <option value="Productivity">📋 Productivity</option>
+                <option value="Shopping">🛒 Shopping</option>
+                <option value="Developer Tools">⚡ Developer Tools</option>
+                <option value="Communication">💬 Communication</option>
+                <option value="Entertainment">🎮 Entertainment</option>
+                <option value="News & Weather">📰 News & Weather</option>
+                <option value="Social & Communication">👥 Social & Communication</option>
+                <option value="Accessibility">♿ Accessibility</option>
+                <option value="Photos">📸 Photos</option>
+                <option value="Search Tools">🔍 Search Tools</option>
+              </select>
+
+              <select
+                value={sortBy}
+                onChange={(e) => handleSortChange(e.target.value)}
+                className="px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-slate-400 text-sm cursor-pointer hover:border-slate-400 transition-colors"
+              >
+                <option value="users">👥 Most Users</option>
+                <option value="rating">⭐ Highest Rated</option>
+                <option value="reviews">💬 Most Reviews</option>
+                <option value="recent">🆕 Recently Updated</option>
+              </select>
+
+              <div className="flex rounded-md border border-slate-300 overflow-hidden">
+                <button
+                  onClick={() => handleOrderChange('desc')}
+                  className={`px-3 py-2 text-sm font-medium transition-all cursor-pointer ${
+                    sortOrder === 'desc'
+                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
+                      : 'bg-white text-slate-700 hover:bg-slate-50'
+                  }`}
                 >
-                  <option value="users">Most Users</option>
-                  <option value="rating">Highest Rated</option>
-                  <option value="reviews">Most Reviews</option>
-                  <option value="recent">Recently Updated</option>
-                </select>
-              </div>
-              <div className="flex-1">
-                <label className="block text-sm font-medium text-slate-700 mb-2">Order</label>
-                <select
-                  value={sortOrder}
-                  onChange={(e) => handleOrderChange(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  📈 High to Low
+                </button>
+                <button
+                  onClick={() => handleOrderChange('asc')}
+                  className={`px-3 py-2 text-sm font-medium transition-all cursor-pointer ${
+                    sortOrder === 'asc'
+                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
+                      : 'bg-white text-slate-700 hover:bg-slate-50'
+                  }`}
                 >
-                  <option value="desc">High to Low</option>
-                  <option value="asc">Low to High</option>
-                </select>
+                  📉 Low to High
+                </button>
               </div>
+
+              {(selectedCategory || sortBy !== 'users' || sortOrder !== 'desc') && (
+                <>
+                  <div className="flex-1" />
+                  <button
+                    onClick={() => {
+                      setSelectedCategory('');
+                      setSortBy('users');
+                      setSortOrder('desc');
+                      setCurrentPage(1);
+                      updateURL({ page: 1, category: '', sort: 'users', order: 'desc' });
+                      fetchExtensions({ page: 1, category: '', sort: 'users', order: 'desc' });
+                    }}
+                    className="text-xs text-slate-500 hover:text-slate-700 cursor-pointer transition-colors"
+                  >
+                    <svg className="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Clear
+                  </button>
+                </>
+              )}
             </div>
           )}
 
