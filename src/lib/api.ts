@@ -25,6 +25,7 @@ export interface Extension {
   version?: string;
   file_size?: string;
   last_updated_at?: string;
+  scraped_at?: string;
   permissions?: string[];
   users: number;
   rating: number;

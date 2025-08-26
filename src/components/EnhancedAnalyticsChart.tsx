@@ -49,7 +49,17 @@ export default function EnhancedAnalyticsChart({
 
         // Use whichever endpoint returns valid chart data
         if (multiMetricResult.status === 'fulfilled' && multiMetricResult.value.chartData) {
-          setData(multiMetricResult.value);
+          // Filter out Extension Updates if it exists
+          const filteredData = {
+            ...multiMetricResult.value,
+            chartData: {
+              ...multiMetricResult.value.chartData,
+              datasets: multiMetricResult.value.chartData.datasets.filter((dataset: any) => 
+                !dataset.label.includes('Extension Updates') && !dataset.label.includes('Extension')
+              )
+            }
+          };
+          setData(filteredData);
         } else if (growthResult.status === 'fulfilled' && growthResult.value.data && growthResult.value.data.length > 0) {
           // Transform growth data to chart format
           const transformedData = {
@@ -70,60 +80,25 @@ export default function EnhancedAnalyticsChart({
                   borderColor: '#10B981',
                   backgroundColor: 'rgba(16, 185, 129, 0.1)',
                   yAxisID: 'y1',
-                },
-                {
-                  label: 'Extension Updates',
-                  data: growthResult.value.data.map((item: any) => item.extensionCount || 0),
-                  borderColor: '#F59E0B',
-                  backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                  yAxisID: 'y',
                 }
               ]
             }
           };
           setData(transformedData);
         } else if (marketResult.status === 'fulfilled' && marketResult.value.chartData) {
-          setData(marketResult.value);
-        } else {
-          // Create fallback chart data from extension info
-          console.warn('No analytics data available, creating fallback chart');
-          const fallbackData = {
-            type: 'multi_metric_trends',
-            period: { days },
+          // Filter out Extension Updates from market data too
+          const filteredMarketData = {
+            ...marketResult.value,
             chartData: {
-              labels: Array.from({length: 7}, (_, i) => {
-                const date = new Date();
-                date.setDate(date.getDate() - (6 - i));
-                return date.toISOString().split('T')[0];
-              }),
-              datasets: [
-                {
-                  label: 'Users (K)',
-                  data: [
-                    (extensionCategory ? 100 : 50),
-                    (extensionCategory ? 110 : 55),
-                    (extensionCategory ? 120 : 58),
-                    (extensionCategory ? 115 : 60),
-                    (extensionCategory ? 130 : 62),
-                    (extensionCategory ? 125 : 65),
-                    (extensionCategory ? 140 : 67)
-                  ],
-                  borderColor: '#3B82F6',
-                  backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                  yAxisID: 'y',
-                },
-                {
-                  label: 'Rating',
-                  data: [4.2, 4.1, 4.3, 4.2, 4.4, 4.3, 4.5],
-                  borderColor: '#10B981',
-                  backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                  yAxisID: 'y1',
-                }
-              ]
-            },
-            timestamp: new Date().toISOString(),
+              ...marketResult.value.chartData,
+              datasets: marketResult.value.chartData.datasets.filter((dataset: any) => 
+                !dataset.label.includes('Extension Updates') && !dataset.label.includes('Extension')
+              )
+            }
           };
-          setData(fallbackData);
+          setData(filteredMarketData);
+        } else {
+          setError('No analytics data available');
         }
       } catch (err) {
         console.error('Failed to fetch analytics data:', err);
@@ -266,10 +241,6 @@ export default function EnhancedAnalyticsChart({
                 <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
                 <stop offset="95%" stopColor="#10B981" stopOpacity={0.05}/>
               </linearGradient>
-              <linearGradient id="colorUpdates" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.3}/>
-                <stop offset="95%" stopColor="#F59E0B" stopOpacity={0.05}/>
-              </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="2 2" stroke="#f1f5f9" opacity={0.3} />
             <XAxis 
@@ -310,8 +281,7 @@ export default function EnhancedAnalyticsChart({
 
             {data.chartData.datasets.map((dataset, index) => {
               const yAxisId = dataset.label.includes('Rating') ? 'right' : 'left';
-              const fillId = dataset.label.includes('Users') ? 'colorUsers' : 
-                           dataset.label.includes('Rating') ? 'colorRating' : 'colorUpdates';
+              const fillId = dataset.label.includes('Users') ? 'colorUsers' : 'colorRating';
               
               return (
                 <Area
