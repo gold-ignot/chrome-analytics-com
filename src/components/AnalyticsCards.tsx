@@ -24,6 +24,20 @@ interface MetricCardProps {
 }
 
 function MetricCard({ title, value, subtitle, icon, trend, color, loading }: MetricCardProps) {
+  const getTooltip = (title: string) => {
+    switch (title) {
+      case 'Total Users':
+        return 'Total number of active users who have installed this extension';
+      case 'Average Rating':
+        return 'Average user rating based on all reviews from Chrome Web Store';
+      case 'Current Version':
+        return 'Latest version number and when it was last updated by developers';
+      case 'Growth Score':
+        return 'Market penetration score based on user adoption rate';
+      default:
+        return 'Analytics metric for this extension';
+    }
+  };
   const colorClasses = {
     blue: {
       bg: 'bg-blue-50',
@@ -93,7 +107,7 @@ function MetricCard({ title, value, subtitle, icon, trend, color, loading }: Met
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow group">
+    <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow group relative cursor-help">
       <div className="flex items-center justify-between mb-3">
         <div className={`w-10 h-10 ${classes.bg} rounded-lg flex items-center justify-center`}>
           <div className={classes.icon}>
@@ -107,20 +121,6 @@ function MetricCard({ title, value, subtitle, icon, trend, color, loading }: Met
       
       <div className="flex items-center mb-1">
         <h3 className="text-sm font-medium text-gray-600 mr-2">{title}</h3>
-        <div className="relative">
-          <svg 
-            className="w-4 h-4 text-gray-400 hover:text-gray-600 cursor-help" 
-            fill="none" 
-            stroke="currentColor" 
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none w-48 text-center z-10">
-            {getTooltip(title)}
-            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-          </div>
-        </div>
       </div>
       
       <div className="flex items-center justify-between">

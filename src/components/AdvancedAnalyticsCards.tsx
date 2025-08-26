@@ -243,22 +243,6 @@ export default function AdvancedAnalyticsCards({ extension, timeframe }: Advance
     fetchAdvancedAnalytics();
   }, [extension, timeframe]);
 
-  const getTooltip = (title: string) => {
-    switch (title) {
-      case 'Monthly Growth':
-        return 'Percentage change in user base over the last 30 days';
-      case 'Category Ranking':
-        return 'Position ranking compared to other extensions in the same category';
-      case 'Install Velocity':
-        return 'Average number of new installations per week';
-      case 'Performance Score':
-        return 'Overall performance index based on ratings, reviews, and adoption';
-      case 'Version Analytics':
-        return 'How frequently the extension receives updates from developers';
-      default:
-        return 'Advanced analytics metric for this extension';
-    }
-  };
 
   const renderCard = (
     title: string,
@@ -300,20 +284,6 @@ export default function AdvancedAnalyticsCards({ extension, timeframe }: Advance
         </div>
         <div className="flex items-center mb-1">
           <h3 className={`text-sm font-semibold ${colorClasses.text} mr-2`}>{title}</h3>
-          <div className="relative">
-            <svg 
-              className="w-3 h-3 text-gray-400 hover:text-gray-600 cursor-help" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none w-40 text-center z-20">
-              {getTooltip(title)}
-              <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-            </div>
-          </div>
         </div>
         {metric.loading ? (
           <div className="animate-pulse h-3 w-20 bg-gray-200 rounded"></div>
