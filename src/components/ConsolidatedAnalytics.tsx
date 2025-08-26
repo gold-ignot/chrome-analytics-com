@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { analyticsService } from '@/lib/analytics';
-import { Extension } from '@/lib/api';
+import { Extension, apiClient } from '@/lib/api';
 import EnhancedAnalyticsChart from './EnhancedAnalyticsChart';
 
 interface ConsolidatedAnalyticsProps {
@@ -43,30 +42,43 @@ export default function ConsolidatedAnalytics({ extension }: ConsolidatedAnalyti
           userAnalyticsResult,
           ratingTrendsResult
         ] = await Promise.allSettled([
-          analyticsService.getGrowthAnalytics(30, extension.category),
-          analyticsService.getCategoryComparison(30, [extension.category]),
-          analyticsService.getInstallVelocity(),
-          analyticsService.getPerformanceScore(),
-          analyticsService.getVersionAnalytics(),
-          analyticsService.getMarketOverview(30),
-          analyticsService.getUserAnalytics(),
-          analyticsService.getRatingTrends()
+          apiClient.getGrowthAnalytics(30, extension.category),
+          apiClient.getCategoryComparison(30, [extension.category]),
+          apiClient.getInstallVelocity(),
+          apiClient.getPerformanceScore(),
+          apiClient.getVersionAnalytics(),
+          apiClient.getMarketOverview(30),
+          apiClient.getUserAnalytics(),
+          apiClient.getRatingTrends()
         ]);
 
         const newMetrics = { ...metrics };
 
-        // Monthly Growth
+        // Monthly Growth - now uses period field and userGrowthRate
         if (growthResult.status === 'fulfilled' && growthResult.value.data && growthResult.value.data.length > 1) {
           const latest = growthResult.value.data[growthResult.value.data.length - 1];
-          const previous = growthResult.value.data[growthResult.value.data.length - 2];
-          if (latest.totalUsers && previous.totalUsers) {
-            const growth = ((latest.totalUsers - previous.totalUsers) / previous.totalUsers) * 100;
+          
+          // Check if we have actual growth rate calculation from API
+          if (latest.userGrowthRate !== undefined) {
+            const growth = latest.userGrowthRate;
             newMetrics.monthlyGrowth = {
               value: `${growth > 0 ? '+' : ''}${growth.toFixed(1)}%`,
-              subtitle: '30-day user growth',
+              subtitle: 'weekly user growth',
               trend: { value: Math.abs(growth), isPositive: growth > 0 },
               loading: false
             };
+          } else if (latest.totalUsers) {
+            // Fallback: calculate from current vs previous period
+            const previous = growthResult.value.data[growthResult.value.data.length - 2];
+            if (previous && previous.totalUsers) {
+              const growth = ((latest.totalUsers - previous.totalUsers) / previous.totalUsers) * 100;
+              newMetrics.monthlyGrowth = {
+                value: `${growth > 0 ? '+' : ''}${growth.toFixed(1)}%`,
+                subtitle: 'period-over-period growth',
+                trend: { value: Math.abs(growth), isPositive: growth > 0 },
+                loading: false
+              };
+            }
           }
         } else {
           // Calculate estimated growth from extension data
@@ -182,14 +194,24 @@ export default function ConsolidatedAnalytics({ extension }: ConsolidatedAnalyti
           };
         }
 
-        // Market Share/Penetration
+        // Market Share/Penetration - updated for new market overview structure
         if (marketResult.status === 'fulfilled' && marketResult.value.rawData && marketResult.value.rawData.length > 0) {
-          // Use market overview data
+          // Use market overview data with new period-based structure
           const latestMarketData = marketResult.value.rawData[marketResult.value.rawData.length - 1];
-          if (latestMarketData.marketDiversity) {
+          if (latestMarketData.marketDiversity !== undefined) {
             newMetrics.marketShare = {
               value: `${latestMarketData.marketDiversity}%`,
-              subtitle: 'market diversity',
+              subtitle: 'market diversity score',
+              loading: false
+            };
+          } else if (latestMarketData.totalUsers) {
+            // Calculate relative market position
+            const extensionUsers = extension.users || 0;
+            const marketTotalUsers = latestMarketData.totalUsers * 1000; // Convert from K to actual
+            const marketShare = (extensionUsers / marketTotalUsers) * 100;
+            newMetrics.marketShare = {
+              value: `${marketShare.toFixed(2)}%`,
+              subtitle: 'of weekly market activity',
               loading: false
             };
           }
@@ -198,7 +220,7 @@ export default function ConsolidatedAnalytics({ extension }: ConsolidatedAnalyti
           const marketPenetration = ((extension.users || 0) / 10000000) * 100; // Assume 10M total market
           newMetrics.marketShare = {
             value: `${marketPenetration.toFixed(3)}%`,
-            subtitle: 'market penetration',
+            subtitle: 'market penetration (est)',
             loading: false
           };
         }

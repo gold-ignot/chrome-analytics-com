@@ -61,15 +61,15 @@ export default function EnhancedAnalyticsChart({
           };
           setData(filteredData);
         } else if (growthResult.status === 'fulfilled' && growthResult.value.data && growthResult.value.data.length > 0) {
-          // Transform growth data to chart format
+          // Transform growth data to chart format (now uses period field)
           const transformedData = {
             ...growthResult.value,
             chartData: {
-              labels: growthResult.value.data.map((item: any) => item.date),
+              labels: growthResult.value.data.map((item: any) => item.period),
               datasets: [
                 {
                   label: 'Total Users (K)',
-                  data: growthResult.value.data.map((item: any) => (item.totalUsers || 0) / 1000),
+                  data: growthResult.value.data.map((item: any) => item.totalUsers || 0),
                   borderColor: '#3B82F6',
                   backgroundColor: 'rgba(59, 130, 246, 0.1)',
                   yAxisID: 'y',
@@ -80,6 +80,13 @@ export default function EnhancedAnalyticsChart({
                   borderColor: '#10B981',
                   backgroundColor: 'rgba(16, 185, 129, 0.1)',
                   yAxisID: 'y1',
+                },
+                {
+                  label: 'User Growth Rate (%)',
+                  data: growthResult.value.data.map((item: any) => item.userGrowthRate || 0),
+                  borderColor: '#F59E0B',
+                  backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                  yAxisID: 'y2',
                 }
               ]
             }
@@ -165,9 +172,16 @@ export default function EnhancedAnalyticsChart({
 
   // Transform chart data for Recharts with enhanced styling
   const chartData = data.chartData.labels.map((label, index) => {
+    // Handle weekly period format like "2024-W03"
+    let periodFormatted = label;
+    if (typeof label === 'string' && label.includes('-W')) {
+      const [year, week] = label.split('-W');
+      periodFormatted = `Week ${parseInt(week)}`;
+    }
+    
     const point: any = { 
-      date: label,
-      dateFormatted: new Date(label).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      period: label,
+      periodFormatted: periodFormatted
     };
     data.chartData!.datasets.forEach((dataset) => {
       point[dataset.label] = dataset.data[index];
@@ -192,10 +206,13 @@ export default function EnhancedAnalyticsChart({
       return (
         <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
           <p className="font-medium text-gray-900 mb-2 text-sm">
-            {new Date(label).toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-            })}
+            {typeof label === 'string' && label.includes('-W') 
+              ? (() => {
+                  const [year, week] = label.split('-W');
+                  return `Week ${parseInt(week)}, ${year}`;
+                })()
+              : label
+            }
           </p>
           {payload.map((entry: any, index: number) => (
             <div key={index} className="flex items-center justify-between min-w-[140px]">
@@ -244,7 +261,7 @@ export default function EnhancedAnalyticsChart({
             </defs>
             <CartesianGrid strokeDasharray="2 2" stroke="#f1f5f9" opacity={0.3} />
             <XAxis 
-              dataKey="dateFormatted"
+              dataKey="periodFormatted"
               stroke="#9ca3af"
               fontSize={11}
               tickLine={false}
@@ -304,7 +321,7 @@ export default function EnhancedAnalyticsChart({
         return (
           <ComposedChart {...commonProps}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-            <XAxis dataKey="dateFormatted" stroke="#64748b" fontSize={12} />
+            <XAxis dataKey="periodFormatted" stroke="#64748b" fontSize={12} />
             <YAxis yAxisId="left" stroke="#64748b" fontSize={12} />
             <YAxis yAxisId="right" orientation="right" stroke="#64748b" fontSize={12} />
             <Tooltip content={<CustomTooltip />} />
@@ -343,7 +360,7 @@ export default function EnhancedAnalyticsChart({
         return (
           <LineChart {...commonProps}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-            <XAxis dataKey="dateFormatted" stroke="#64748b" fontSize={12} />
+            <XAxis dataKey="periodFormatted" stroke="#64748b" fontSize={12} />
             <YAxis yAxisId="left" stroke="#64748b" fontSize={12} />
             <YAxis yAxisId="right" orientation="right" stroke="#64748b" fontSize={12} />
             <Tooltip content={<CustomTooltip />} />

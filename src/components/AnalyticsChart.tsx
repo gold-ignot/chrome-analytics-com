@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { analyticsService, generateMockAnalyticsData, AnalyticsData } from '@/lib/analytics';
+import { apiClient } from '@/lib/api';
 
 interface AnalyticsChartProps {
   extensionId?: string;
@@ -17,7 +17,7 @@ export default function AnalyticsChart({
   days = 30, 
   height = 400 
 }: AnalyticsChartProps) {
-  const [data, setData] = useState<AnalyticsData | null>(null);
+  const [data, setData] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,24 +29,24 @@ export default function AnalyticsChart({
       try {
         // Try multiple analytics endpoints for chart data
         const [multiMetricResult, growthResult, marketResult] = await Promise.allSettled([
-          analyticsService.getMultiMetricTrends(days),
-          analyticsService.getGrowthAnalytics(days, extensionCategory),
-          analyticsService.getMarketOverview(days)
+          apiClient.getMultiMetricTrends(days),
+          apiClient.getGrowthAnalytics(days, extensionCategory),
+          apiClient.getMarketOverview(days)
         ]);
 
         // Use whichever endpoint returns valid chart data
         if (multiMetricResult.status === 'fulfilled' && multiMetricResult.value.chartData) {
           setData(multiMetricResult.value);
         } else if (growthResult.status === 'fulfilled' && growthResult.value.data && growthResult.value.data.length > 0) {
-          // Transform growth data to chart format
+          // Transform growth data to chart format (now uses period field)
           const transformedData = {
             ...growthResult.value,
             chartData: {
-              labels: growthResult.value.data.map((item: any) => item.date),
+              labels: growthResult.value.data.map((item: any) => item.period),
               datasets: [
                 {
                   label: 'Total Users (K)',
-                  data: growthResult.value.data.map((item: any) => (item.totalUsers || 0) / 1000),
+                  data: growthResult.value.data.map((item: any) => item.totalUsers || 0),
                   borderColor: '#3B82F6',
                   backgroundColor: '#3B82F640',
                   yAxisID: 'y',
@@ -57,6 +57,13 @@ export default function AnalyticsChart({
                   borderColor: '#10B981',
                   backgroundColor: '#10B98140',
                   yAxisID: 'y1',
+                },
+                {
+                  label: 'User Growth Rate (%)',
+                  data: growthResult.value.data.map((item: any) => item.userGrowthRate || 0),
+                  borderColor: '#F59E0B',
+                  backgroundColor: '#F59E0B40',
+                  yAxisID: 'y2',
                 }
               ]
             }
@@ -122,7 +129,7 @@ export default function AnalyticsChart({
 
   // Transform chart data for Recharts
   const chartData = data.chartData.labels.map((label, index) => {
-    const point: any = { date: label };
+    const point: any = { period: label };
     data.chartData!.datasets.forEach((dataset) => {
       point[dataset.label] = dataset.data[index];
     });
@@ -152,7 +159,7 @@ export default function AnalyticsChart({
             Analytics Trends
           </h3>
           <p className="text-sm text-gray-600 mt-1">
-            Multi-metric trends over the last {days} days
+            Weekly trends over the last {days} days ({data.granularity || 'weekly'} granularity)
           </p>
         </div>
         <div className="text-right">
@@ -178,12 +185,16 @@ export default function AnalyticsChart({
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
             <XAxis 
-              dataKey="date"
+              dataKey="period"
               stroke="#64748b"
               fontSize={12}
               tickFormatter={(value) => {
-                const date = new Date(value);
-                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                // Handle weekly period format like "2024-W03"
+                if (value.includes('-W')) {
+                  const [year, week] = value.split('-W');
+                  return `W${parseInt(week)}`;
+                }
+                return value;
               }}
               angle={-45}
               textAnchor="end"
@@ -211,11 +222,12 @@ export default function AnalyticsChart({
             <Tooltip
               formatter={formatTooltipValue}
               labelFormatter={(value) => {
-                return new Date(value).toLocaleDateString('en-US', {
-                  weekday: 'short',
-                  month: 'short',
-                  day: 'numeric',
-                });
+                // Format weekly period for tooltip
+                if (typeof value === 'string' && value.includes('-W')) {
+                  const [year, week] = value.split('-W');
+                  return `Week ${parseInt(week)}, ${year}`;
+                }
+                return value;
               }}
               contentStyle={{
                 backgroundColor: '#fff',
