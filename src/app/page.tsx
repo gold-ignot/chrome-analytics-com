@@ -110,9 +110,9 @@ export default async function Home() {
 
   try {
     const [trendingResponse, topRatedResponse, popularResponse] = await Promise.all([
-      apiClient.getExtensions(1, 6, 'recent', 'desc').catch(() => ({ extensions: [], total: 0 })),
-      apiClient.getExtensions(1, 6, 'rating', 'desc').catch(() => ({ extensions: [], total: 0 })),
-      apiClient.getExtensions(1, 6, 'users', 'desc').catch(() => ({ extensions: [], total: 0 }))
+      apiClient.getTrendingExtensions(1, 6).catch(() => ({ extensions: [], total: 0 })),
+      apiClient.getTopRatedExtensions(1, 6).catch(() => ({ extensions: [], total: 0 })),
+      apiClient.getPopularExtensions(1, 6).catch(() => ({ extensions: [], total: 0 }))
     ]);
 
     trendingExtensions = trendingResponse.extensions || [];
