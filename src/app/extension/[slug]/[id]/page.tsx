@@ -1,7 +1,7 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { Metadata } from 'next';
 import { apiClient } from '@/lib/api';
-import { parseExtensionUrl, isValidExtensionSlug } from '@/lib/slugs';
+import { parseExtensionUrl, isValidExtensionSlug, createExtensionSlug, createExtensionUrl } from '@/lib/slugs';
 import { metadataGenerators } from '@/lib/seoHelpers';
 import ExtensionPageClient from './ExtensionPageClient';
 
@@ -35,8 +35,21 @@ export async function generateMetadata({ params }: ExtensionPageProps): Promise<
         description: 'The requested extension could not be found.',
       };
     }
+
+    // Generate canonical URL with correct slug
+    const correctSlug = createExtensionSlug(extension);
+    const canonicalUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://chrome-analytics.com'}/extension/${correctSlug}/${extension.extension_id}`;
     
-    return metadataGenerators.extension(extension);
+    const metadata = metadataGenerators.extension(extension);
+    
+    // Add canonical URL to metadata
+    return {
+      ...metadata,
+      alternates: {
+        ...metadata.alternates,
+        canonical: canonicalUrl,
+      },
+    };
   } catch (error) {
     console.error('Error generating metadata for extension:', error);
     return {
@@ -61,6 +74,14 @@ export default async function ExtensionPage({ params }: ExtensionPageProps) {
     
     if (!extension) {
       notFound();
+    }
+
+    // Check if current slug matches the correct slug
+    const correctSlug = createExtensionSlug(extension);
+    if (parsedParams.slug !== correctSlug) {
+      // Redirect to the correct URL with proper slug
+      const correctUrl = createExtensionUrl(extension);
+      redirect(correctUrl);
     }
     
     // Fetch related extensions server-side
