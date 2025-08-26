@@ -244,6 +244,23 @@ export default function AdvancedAnalyticsCards({ extension, timeframe }: Advance
   }, [extension, timeframe]);
 
 
+  const getAdvancedTooltip = (title: string) => {
+    switch (title) {
+      case 'Monthly Growth':
+        return 'Percentage change in user base over the last 30 days compared to previous period';
+      case 'Category Ranking':
+        return 'Current position ranking within the extension category compared to competitors';
+      case 'Install Velocity':
+        return 'Average number of new installations per week based on recent growth trends';
+      case 'Performance Score':
+        return 'Composite score based on rating, review engagement, and user adoption metrics';
+      case 'Version Analytics':
+        return 'Update frequency pattern and time since last version release';
+      default:
+        return 'Advanced analytics metric for this extension';
+    }
+  };
+
   const renderCard = (
     title: string,
     metric: AdvancedMetric,
@@ -258,7 +275,17 @@ export default function AdvancedAnalyticsCards({ extension, timeframe }: Advance
       badgeText: string;
     }
   ) => (
-    <div className={`${colorClasses.bg} rounded-lg ${colorClasses.border} p-5 relative overflow-hidden group hover:shadow-lg transition-all duration-300`}>
+    <div className={`${colorClasses.bg} rounded-lg ${colorClasses.border} p-5 relative group hover:shadow-lg transition-all duration-300 cursor-help`}>
+      {/* Talk Bubble Tooltip Above */}
+      <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-white border border-gray-200 text-gray-800 text-sm rounded-lg px-3 py-2 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-[9999] shadow-lg max-w-xs whitespace-normal">
+        <div className="relative">
+          {getAdvancedTooltip(title)}
+          {/* Talk bubble arrow pointing down */}
+          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[8px] border-r-[8px] border-t-[8px] border-transparent border-t-white"></div>
+          <div className="absolute top-full left-1/2 transform -translate-x-1/2 translate-y-[1px] w-0 h-0 border-l-[9px] border-r-[9px] border-t-[9px] border-transparent border-t-gray-200"></div>
+        </div>
+      </div>
+
       <div className="absolute inset-0 bg-gradient-to-r from-black/5 to-transparent"></div>
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-3">
@@ -297,7 +324,7 @@ export default function AdvancedAnalyticsCards({ extension, timeframe }: Advance
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 overflow-visible">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold text-gray-900 flex items-center">
           <svg className="w-5 h-5 text-purple-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -308,7 +335,7 @@ export default function AdvancedAnalyticsCards({ extension, timeframe }: Advance
         </h2>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 overflow-visible">
         {/* Monthly Growth */}
         {renderCard(
           'Monthly Growth',

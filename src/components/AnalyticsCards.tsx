@@ -73,22 +73,6 @@ function MetricCard({ title, value, subtitle, icon, trend, color, loading }: Met
 
   const classes = colorClasses[color];
 
-  // Tooltip content based on title
-  const getTooltip = (title: string) => {
-    switch (title) {
-      case 'Total Users':
-        return 'Number of active Chrome users who have installed this extension';
-      case 'Average Rating':
-        return 'Average user rating out of 5 stars based on all reviews';
-      case 'Current Version':
-        return 'Latest version number and when it was last updated';
-      case 'Growth Score':
-        return 'Market penetration score calculated from total user base';
-      default:
-        return 'Analytics metric for this extension';
-    }
-  };
-
   if (loading) {
     return (
       <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow">
@@ -108,6 +92,16 @@ function MetricCard({ title, value, subtitle, icon, trend, color, loading }: Met
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow group relative cursor-help">
+      {/* Talk Bubble Tooltip Above */}
+      <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 bg-white border border-gray-200 text-gray-800 text-sm rounded-lg px-3 py-2 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-[9999] whitespace-nowrap shadow-lg max-w-xs">
+        <div className="relative">
+          {getTooltip(title)}
+          {/* Talk bubble arrow pointing down */}
+          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[8px] border-r-[8px] border-t-[8px] border-transparent border-t-white"></div>
+          <div className="absolute top-full left-1/2 transform -translate-x-1/2 translate-y-[1px] w-0 h-0 border-l-[9px] border-r-[9px] border-t-[9px] border-transparent border-t-gray-200"></div>
+        </div>
+      </div>
+
       <div className="flex items-center justify-between mb-3">
         <div className={`w-10 h-10 ${classes.bg} rounded-lg flex items-center justify-center`}>
           <div className={classes.icon}>
@@ -274,7 +268,7 @@ export default function AnalyticsCards({ extension, timeframe, setTimeframe }: A
       </div>
 
       {/* Analytics Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 overflow-visible">
         {/* Total Users */}
         <MetricCard
           title="Total Users"
