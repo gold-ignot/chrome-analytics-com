@@ -64,7 +64,7 @@ export default async function TopRatedExtensionsPage({ searchParams }: TopRatedP
       <HeroSection
         title={initialData.title}
         description={initialData.description}
-        searchable={!initialData.isSearching}
+        searchable={true}
         searchPath="/top-rated"
         searchInitialValue={initialData.searchQuery}
         searchPlaceholder="Search top-rated extensions..."

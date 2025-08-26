@@ -20,7 +20,6 @@ interface ExtensionListLayoutProps {
   
   // Search functionality
   searchQuery: string;
-  onSearch: (query: string) => void;
   searchPlaceholder?: string;
   
   // Data & pagination
@@ -51,7 +50,6 @@ export default function ExtensionListLayout({
   description,
   breadcrumbItems,
   searchQuery,
-  onSearch,
   searchPlaceholder = "Search extensions...",
   extensions,
   loading,
@@ -88,7 +86,7 @@ export default function ExtensionListLayout({
           </svg>
         }
         searchable={true}
-        onSearch={onSearch}
+        searchPath={typeof window !== 'undefined' ? window.location.pathname : '/extensions'}
         searchInitialValue={searchQuery}
         searchPlaceholder={searchPlaceholder}
       />

@@ -64,7 +64,7 @@ export default async function TrendingExtensionsPage({ searchParams }: TrendingP
       <HeroSection
         title={initialData.title}
         description={initialData.description}
-        searchable={!initialData.isSearching}
+        searchable={true}
         searchPath="/trending"
         searchInitialValue={initialData.searchQuery}
         searchPlaceholder="Search trending extensions..."

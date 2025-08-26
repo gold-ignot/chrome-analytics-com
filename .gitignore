@@ -43,3 +43,4 @@ tmp/
 next-env.d.ts
 
 .*-mcp/
+tsconfig.tsbuildinfo

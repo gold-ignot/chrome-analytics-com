@@ -96,7 +96,7 @@ export default async function BestPage({ params, searchParams }: BestPageProps) 
       <HeroSection
         title={initialData.title}
         description={initialData.description}
-        searchable={!initialData.isSearching}
+        searchable={true}
         searchPath={`/best/${type}`}
         searchInitialValue={initialData.searchQuery}
         searchPlaceholder={`Search ${typeInfo.title.toLowerCase()}...`}

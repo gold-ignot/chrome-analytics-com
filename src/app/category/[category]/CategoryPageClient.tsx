@@ -68,7 +68,6 @@ export default function CategoryPageClient({ category, categoryName }: CategoryP
       
       // Search
       searchQuery={searchData.searchQuery}
-      onSearch={searchData.handleSearch}
       searchPlaceholder={`Search ${categoryName.toLowerCase()} extensions...`}
       
       // Data

@@ -64,7 +64,7 @@ export default async function PopularExtensionsPage({ searchParams }: PopularPag
       <HeroSection
         title={initialData.title}
         description={initialData.description}
-        searchable={!initialData.isSearching}
+        searchable={true}
         searchPath="/popular"
         searchInitialValue={initialData.searchQuery}
         searchPlaceholder="Search popular extensions..."

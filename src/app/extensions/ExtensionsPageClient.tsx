@@ -147,6 +147,20 @@ export default function ExtensionsPageClient({ initialData }: ExtensionsPageClie
     fetchExtensions({ page: 1, search: '' });
   };
 
+  // Listen for URL changes and sync state
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    const urlSearchQuery = params.get('search') || '';
+    const urlPage = parseInt(params.get('page') || '1', 10);
+    
+    // If URL parameters differ from current state, sync them
+    if (urlSearchQuery !== searchQuery || urlPage !== currentPage) {
+      setSearchQuery(urlSearchQuery);
+      setCurrentPage(urlPage);
+      fetchExtensions({ page: urlPage, search: urlSearchQuery });
+    }
+  }, [searchParams]);
+
   return (
     <>
       {/* Main Content */}

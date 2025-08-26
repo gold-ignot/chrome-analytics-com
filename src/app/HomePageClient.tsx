@@ -12,6 +12,7 @@ export default function HomePageClient() {
       onSearch={handleSearch} 
       placeholder="Search Chrome extensions..." 
       variant="hero"
+      showTypingAnimation={true}
     />
   );
 }

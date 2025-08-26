@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import TypingAnimation from './TypingAnimation';
 
 interface SearchBarProps {
@@ -8,16 +8,23 @@ interface SearchBarProps {
   placeholder?: string;
   initialValue?: string;
   variant?: 'default' | 'hero';
+  showTypingAnimation?: boolean;
 }
 
 export default function SearchBar({ 
   onSearch, 
   placeholder = "Search extensions...", 
   initialValue = "",
-  variant = 'default'
+  variant = 'default',
+  showTypingAnimation = false
 }: SearchBarProps) {
   const [query, setQuery] = useState(initialValue);
   const [isFocused, setIsFocused] = useState(false);
+
+  // Sync query state with initialValue prop
+  useEffect(() => {
+    setQuery(initialValue);
+  }, [initialValue]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,7 +104,7 @@ export default function SearchBar({
           </div>
           
           {/* Floating suggestions hint with typing animation */}
-          {!query && !isFocused && (
+          {!query && !isFocused && showTypingAnimation && (
             <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-sm text-slate-500">
               <TypingAnimation 
                 suggestions={['ad blocker', 'password manager', 'developer tools', 'vpn', 'productivity', 'youtube downloader']}
