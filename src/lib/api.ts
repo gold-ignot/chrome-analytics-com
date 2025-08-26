@@ -1,14 +1,13 @@
-// Check if we're on server-side or client-side
+// Dynamic API URL selection
 const getApiBaseUrl = () => {
   if (typeof window === 'undefined') {
-    // Server-side: use backend API directly
-    return process.env.API_URL || 'https://chrome-extension-api.namedry.com';
+    // Server-side: use Next.js API routes with full URL
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    return `${baseUrl}/api`;
   }
   // Client-side: use Next.js API routes
   return '/api';
 };
-
-const API_BASE_URL = getApiBaseUrl();
 
 export interface Extension {
   extension_id: string;
@@ -110,10 +109,8 @@ export interface CategoriesResponse {
 }
 
 class ApiClient {
-  private baseUrl: string;
-
-  constructor(baseUrl: string = API_BASE_URL) {
-    this.baseUrl = baseUrl;
+  private getBaseUrl(): string {
+    return getApiBaseUrl();
   }
 
   private isServerSide(): boolean {
@@ -121,7 +118,7 @@ class ApiClient {
   }
 
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
-    const url = `${this.baseUrl}${endpoint}`;
+    const url = `${this.getBaseUrl()}${endpoint}`;
     
     try {
       const response = await fetch(url, {
@@ -276,6 +273,49 @@ class ApiClient {
   // Health check
   async healthCheck(): Promise<{ status: string; timestamp: string; service: string }> {
     return this.request<{ status: string; timestamp: string; service: string }>('/health');
+  }
+
+  // Analytics methods
+  async getGrowthAnalytics(days: number, category?: string): Promise<any> {
+    const params = new URLSearchParams({ days: days.toString() });
+    if (category) params.append('category', category);
+    return this.request<any>(`/analytics/growth?${params}`);
+  }
+
+  async getMultiMetricTrends(days: number): Promise<any> {
+    const params = new URLSearchParams({ days: days.toString() });
+    return this.request<any>(`/analytics/multi-metric-trends?${params}`);
+  }
+
+  async getMarketOverview(days: number): Promise<any> {
+    const params = new URLSearchParams({ days: days.toString() });
+    return this.request<any>(`/analytics/market-overview?${params}`);
+  }
+
+  async getCategoryComparison(days: number, categories: string[]): Promise<any> {
+    const params = new URLSearchParams({ days: days.toString() });
+    if (categories.length) params.append('categories', categories.join(','));
+    return this.request<any>(`/analytics/category-comparison?${params}`);
+  }
+
+  async getInstallVelocity(): Promise<any> {
+    return this.request<any>(`/analytics/install-velocity`);
+  }
+
+  async getPerformanceScore(): Promise<any> {
+    return this.request<any>(`/analytics/performance-score`);
+  }
+
+  async getVersionAnalytics(): Promise<any> {
+    return this.request<any>(`/analytics/version-analytics`);
+  }
+
+  async getUserAnalytics(): Promise<any> {
+    return this.request<any>(`/analytics/user-analytics`);
+  }
+
+  async getRatingTrends(): Promise<any> {
+    return this.request<any>(`/analytics/rating-trends`);
   }
 
 }

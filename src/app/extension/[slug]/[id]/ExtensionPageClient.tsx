@@ -7,6 +7,9 @@ import ExtensionMetrics from '@/components/ExtensionMetrics';
 import ScreenshotCarousel from '@/components/ScreenshotCarousel';
 import ExtensionDescription from '@/components/ExtensionDescription';
 import ExtensionCard from '@/components/ExtensionCard';
+import AnalyticsCards from '@/components/AnalyticsCards';
+import EnhancedAnalyticsChart from '@/components/EnhancedAnalyticsChart';
+import AdvancedAnalyticsCards from '@/components/AdvancedAnalyticsCards';
 import { createExtensionSlug, extensionUrls, createSlug } from '@/lib/slugs';
 import { breadcrumbPatterns } from '@/components/Breadcrumbs';
 import { injectStructuredData } from '@/lib/seoHelpers';
@@ -19,6 +22,12 @@ interface ExtensionPageClientProps {
 
 export default function ExtensionPageClient({ extension, relatedExtensions }: ExtensionPageClientProps) {
   const router = useRouter();
+  const [timeframe, setTimeframe] = useState(7);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Consistent date formatting function to avoid hydration mismatches
   const formatDate = (dateString: string | undefined) => {
@@ -32,6 +41,14 @@ export default function ExtensionPageClient({ extension, relatedExtensions }: Ex
     } catch {
       return 'Unknown';
     }
+  };
+
+  const getDaysAgo = (dateString?: string) => {
+    if (!dateString) return 'Unknown';
+    const days = Math.floor((Date.now() - new Date(dateString).getTime()) / (1000 * 60 * 60 * 24));
+    if (days === 0) return 'Today';
+    if (days === 1) return '1 day ago';
+    return `${days} days ago`;
   };
 
   // Inject structured data when component mounts
@@ -104,14 +121,16 @@ export default function ExtensionPageClient({ extension, relatedExtensions }: Ex
       <section className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => router.back()}
-              className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors"
-            >
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
+            {mounted && (
+              <button
+                onClick={() => router.back()}
+                className="p-2 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+            )}
             
             {extension.logo_url && (
               <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 border border-gray-200">
@@ -124,7 +143,73 @@ export default function ExtensionPageClient({ extension, relatedExtensions }: Ex
             )}
             
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">{extension.name}</h1>
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">{extension.name}</h1>
+              
+              {/* Ranking Mini Cards - Below title */}
+              <div className="flex items-center gap-2 mb-3 flex-wrap">
+                {extension.popularity_rank && extension.popularity_rank <= 100 && (
+                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg px-2 py-1 border border-purple-200 group relative">
+                    <div className="flex items-center gap-1">
+                      <svg className="w-3 h-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                      <span className="text-xs font-bold text-purple-900">#{extension.popularity_rank}</span>
+                      <span className="text-xs text-purple-600 font-medium">Most Popular</span>
+                    </div>
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none w-40 text-center z-10">
+                      Ranked by total active users across all Chrome extensions
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                    </div>
+                  </div>
+                )}
+
+                {extension.top_rated_rank && extension.top_rated_rank <= 100 && (
+                  <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg px-2 py-1 border border-yellow-200 group relative">
+                    <div className="flex items-center gap-1">
+                      <svg className="w-3 h-3 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                      <span className="text-xs font-bold text-yellow-900">#{extension.top_rated_rank}</span>
+                      <span className="text-xs text-yellow-600 font-medium">Top Rated</span>
+                    </div>
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none w-40 text-center z-10">
+                      Ranked by average user rating and review quality
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                    </div>
+                  </div>
+                )}
+
+                {extension.trending_rank && extension.trending_rank <= 100 && (
+                  <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg px-2 py-1 border border-green-200 group relative">
+                    <div className="flex items-center gap-1">
+                      <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                      </svg>
+                      <span className="text-xs font-bold text-green-900">#{extension.trending_rank}</span>
+                      <span className="text-xs text-green-600 font-medium">Trending</span>
+                    </div>
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none w-40 text-center z-10">
+                      Ranked by recent growth in users and engagement
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Last Updated Badge */}
+                {extension.last_updated_at && (
+                  <div className="bg-gray-100 rounded-lg px-2 py-1 border border-gray-200">
+                    <div className="flex items-center gap-1">
+                      <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span className="text-xs text-gray-600 font-medium">
+                        {getDaysAgo(extension.last_updated_at)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
               <div className="flex items-center gap-4 text-gray-600">
                 <span>by {extension.developer || 'Unknown Developer'}</span>
                 {extension.developer_url && (
@@ -174,162 +259,38 @@ export default function ExtensionPageClient({ extension, relatedExtensions }: Ex
       <section className="py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           
-          {/* CORE PERFORMANCE METRICS */}
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <svg className="w-5 h-5 text-gray-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            Core Performance Metrics
-          </h2>
-          
-          {/* Active Cards with Real Data */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-              {/* Users Card */}
-              <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-2">
-                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
-                  <span className="text-2xl font-bold text-gray-900">{formatUsers(extension.users)}</span>
-                </div>
-                <p className="text-sm text-gray-600 font-medium">Total Users</p>
-                <p className="text-xs text-blue-600 mt-1">
-                  {extension.popularity_rank > 0 ? `#${extension.popularity_rank} Most Popular` : 'Active installs'}
-                </p>
-              </div>
+          {/* ENHANCED ANALYTICS CARDS */}
+          <AnalyticsCards 
+            extension={extension} 
+            timeframe={timeframe}
+            setTimeframe={setTimeframe}
+          />
 
-              {/* Rating Card */}
-              <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-2">
-                  <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                  <span className="text-2xl font-bold text-gray-900">{extension.rating.toFixed(1)}</span>
-                </div>
-                <p className="text-sm text-gray-600 font-medium">Average Rating</p>
-                <p className="text-xs text-yellow-600 mt-1">
-                  {extension.top_rated_rank > 0 ? `#${extension.top_rated_rank} Top Rated` : `Based on ${formatUsers(extension.review_count)} reviews`}
-                </p>
-              </div>
+          {/* ADVANCED ANALYTICS - Live Data */}
+          <AdvancedAnalyticsCards 
+            extension={extension} 
+            timeframe={timeframe}
+          />
 
-              {/* Reviews Card */}
-              <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-2">
-                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                  </svg>
-                  <span className="text-2xl font-bold text-gray-900">{formatUsers(extension.review_count)}</span>
-                </div>
-                <p className="text-sm text-gray-600 font-medium">User Reviews</p>
-                <p className="text-xs text-green-600 mt-1">
-                  {extension.users > 0 && extension.review_count > 0 ? ((extension.review_count / extension.users) * 100).toFixed(2) : '0.02'}% engagement
-                </p>
-              </div>
-
-              {/* Version Card */}
-              <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-2">
-                  <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                  <span className="text-lg font-bold text-gray-900">{extension.version || 'N/A'}</span>
-                </div>
-                <p className="text-sm text-gray-600 font-medium">Current Version</p>
-                {extension.last_updated_at && (
-                  <p className="text-xs text-purple-600 mt-1">
-                    Updated {formatDate(extension.last_updated_at)}
-                  </p>
-                )}
-              </div>
-
-              {/* Update Frequency Card */}
-              <div className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between mb-2">
-                  <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span className="text-xl font-bold text-gray-900">
-                    {extension.last_updated_at ? 
-                      `${Math.floor((Date.now() - new Date(extension.last_updated_at).getTime()) / (1000 * 60 * 60 * 24))}d` 
-                      : 'N/A'
-                    }
-                  </span>
-                </div>
-                <p className="text-sm text-gray-600 font-medium">Days Since Update</p>
-                <p className="text-xs text-orange-600 mt-1">
-                  {formatDate(extension.last_updated_at)}
-                </p>
-              </div>
-            </div>
-
-          {/* ADVANCED ANALYTICS - Coming Soon */}
-          <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
-            <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            Advanced Analytics (Coming Soon)
-          </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-            {/* Monthly Growth Card - Soon */}
-            <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 opacity-60 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-2">
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+          {/* ENHANCED ANALYTICS CHART */}
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+                <svg className="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
                 </svg>
-                <span className="text-2xl font-bold text-gray-400">Soon</span>
-              </div>
-              <p className="text-sm text-gray-500 font-medium">Monthly Growth</p>
-              <p className="text-xs text-gray-400 mt-1">Growth analytics</p>
+                Performance Trends
+              </h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Analytics data over time for {extension.name}
+              </p>
             </div>
-
-            {/* Category Ranking Card - Soon */}
-            <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 opacity-60 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-2">
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                </svg>
-                <span className="text-2xl font-bold text-gray-400">Soon</span>
-              </div>
-              <p className="text-sm text-gray-500 font-medium">Category Ranking</p>
-              <p className="text-xs text-gray-400 mt-1">vs competitors</p>
-            </div>
-
-            {/* Install Velocity Card - Soon */}
-            <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 opacity-60 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-2">
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                </svg>
-                <span className="text-2xl font-bold text-gray-400">Soon</span>
-              </div>
-              <p className="text-sm text-gray-500 font-medium">Install Velocity</p>
-              <p className="text-xs text-gray-400 mt-1">Weekly trends</p>
-            </div>
-
-            {/* Performance Score Card - Soon */}
-            <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 opacity-60 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-2">
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                <span className="text-2xl font-bold text-gray-400">Soon</span>
-              </div>
-              <p className="text-sm text-gray-500 font-medium">Performance Score</p>
-              <p className="text-xs text-gray-400 mt-1">Overall rating</p>
-            </div>
-
-            {/* Version Analytics Card - Soon */}
-            <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 opacity-60 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-2">
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                <span className="text-2xl font-bold text-gray-400">Soon</span>
-              </div>
-              <p className="text-sm text-gray-500 font-medium">Version Analytics</p>
-              <p className="text-xs text-gray-400 mt-1">Update patterns</p>
-            </div>
+            <EnhancedAnalyticsChart 
+              extensionId={extension.extension_id}
+              extensionCategory={extension.category}
+              days={timeframe}
+              height={300}
+            />
           </div>
 
           {/* DESCRIPTION & SCREENSHOTS - Combined Layout with equal heights */}
@@ -348,64 +309,6 @@ export default function ExtensionPageClient({ extension, relatedExtensions }: Ex
                 screenshots={extension.screenshots || []} 
                 extensionName={extension.name} 
               />
-            </div>
-          </div>
-
-          {/* GROWTH ANALYTICS & CHARTS - Coming Soon */}
-          <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
-            <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            Growth Analytics & Charts (Coming Soon)
-          </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Growth Charts Card - Soon */}
-            <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 opacity-60 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-2">
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
-                </svg>
-                <span className="text-2xl font-bold text-gray-400">Soon</span>
-              </div>
-              <p className="text-sm text-gray-500 font-medium">Growth Charts</p>
-              <p className="text-xs text-gray-400 mt-1">Historical trends</p>
-            </div>
-
-            {/* User Analytics Card - Soon */}
-            <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 opacity-60 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-2">
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                <span className="text-2xl font-bold text-gray-400">Soon</span>
-              </div>
-              <p className="text-sm text-gray-500 font-medium">User Analytics</p>
-              <p className="text-xs text-gray-400 mt-1">Acquisition data</p>
-            </div>
-
-            {/* Rating Trends Card - Soon */}
-            <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 opacity-60 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-2">
-                <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                </svg>
-                <span className="text-2xl font-bold text-gray-400">Soon</span>
-              </div>
-              <p className="text-sm text-gray-500 font-medium">Rating Trends</p>
-              <p className="text-xs text-gray-400 mt-1">Rating analysis</p>
-            </div>
-
-            {/* Version History Card - Soon */}
-            <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 opacity-60 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-2">
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span className="text-2xl font-bold text-gray-400">Soon</span>
-              </div>
-              <p className="text-sm text-gray-500 font-medium">Version History</p>
-              <p className="text-xs text-gray-400 mt-1">Update patterns</p>
             </div>
           </div>
 

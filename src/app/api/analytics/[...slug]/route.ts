@@ -4,12 +4,18 @@ const API_BASE_URL = process.env.API_URL || 'https://chrome-extension-api.namedr
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ slug: string[] }> }
 ) {
   try {
-    const { id } = await params;
+    const { slug } = await params;
+    const { searchParams } = new URL(request.url);
     
-    const response = await fetch(`${API_BASE_URL}/extension/${id}`, {
+    // Construct the analytics endpoint path
+    const analyticsPath = slug.join('/');
+    const queryString = searchParams.toString();
+    const apiUrl = `${API_BASE_URL}/analytics/${analyticsPath}${queryString ? `?${queryString}` : ''}`;
+    
+    const response = await fetch(apiUrl, {
       headers: {
         'Content-Type': 'application/json',
       },
@@ -18,7 +24,7 @@ export async function GET(
 
     if (!response.ok) {
       return NextResponse.json(
-        { error: 'Failed to fetch extension' },
+        { error: `Failed to fetch analytics data from ${analyticsPath}` },
         { status: response.status }
       );
     }
@@ -26,7 +32,7 @@ export async function GET(
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error('API proxy error:', error);
+    console.error('Analytics API proxy error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
