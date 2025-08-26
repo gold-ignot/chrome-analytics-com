@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import SEOOptimizedHeader from "@/components/SEOOptimizedHeader";
 import FooterWrapper from "@/components/FooterWrapper";
+import LoadingBar from "@/components/LoadingBar";
 import { GCScript } from 'next-goatcounter';
 
 const inter = Inter({
@@ -64,6 +65,7 @@ export default function RootLayout({
     <html lang="en" className="h-full">
       <body className={`${inter.variable} font-sans antialiased bg-slate-50`}>
         <GCScript siteUrl="https://chromeanalytics.goatcounter.com/count" />
+        <LoadingBar />
         <div className="min-h-screen flex flex-col">
           <SEOOptimizedHeader />
           <main className="flex-1">
