@@ -1,7 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 const slugify = require('slugify');
-const ora = require('ora');
 const cliProgress = require('cli-progress');
 
 // Configuration
@@ -67,7 +66,7 @@ async function fetchWithTimeout(url, timeout = 10000) {
   }
 }
 
-async function getCategories() {
+async function getCategories(ora) {
   const spinner = ora('Fetching categories from API...').start();
   try {
     const response = await fetchWithTimeout(`${API_BASE_URL}/categories`);
@@ -79,7 +78,7 @@ async function getCategories() {
   }
 }
 
-async function getExtensionCount() {
+async function getExtensionCount(ora) {
   const spinner = ora('Fetching extension count from API...').start();
   try {
     const response = await fetchWithTimeout(`${API_BASE_URL}/search?page=1&limit=1`);
@@ -108,9 +107,9 @@ ${content}
   }
 }
 
-async function generateCategoriesSitemap() {
+async function generateCategoriesSitemap(ora) {
   const spinner = ora('Generating categories sitemap...').start();
-  const categories = await getCategories();
+  const categories = await getCategories(ora);
   const lastmod = new Date().toISOString();
   
   const urls = categories.map(category => 
@@ -140,7 +139,7 @@ async function getExtensionSitemapList() {
   return sitemapList;
 }
 
-async function generateMainSitemap() {
+async function generateMainSitemap(ora) {
   const spinner = ora('Generating main sitemap index...').start();
   
   // Check which extension sitemaps were actually generated
@@ -183,8 +182,8 @@ async function fetchExtensionsPage(page, limit) {
   }
 }
 
-async function generateExtensionSitemaps() {
-  const totalExtensions = await getExtensionCount();
+async function generateExtensionSitemaps(ora) {
+  const totalExtensions = await getExtensionCount(ora);
   const totalSitemaps = Math.ceil(totalExtensions / EXTENSIONS_PER_SITEMAP);
   const totalPages = Math.ceil(totalExtensions / 100); // 100 extensions per page
   
@@ -291,6 +290,9 @@ async function main() {
   const startTime = Date.now();
   
   try {
+    // Dynamic import of ora (ES module)
+    const { default: ora } = await import('ora');
+    
     console.log('\n🚀 Starting sitemap generation...\n');
     
     // Ensure public directory exists
@@ -299,9 +301,9 @@ async function main() {
     }
     
     // Generate all sitemaps
-    await generateCategoriesSitemap();
-    await generateExtensionSitemaps();
-    await generateMainSitemap();
+    await generateCategoriesSitemap(ora);
+    await generateExtensionSitemaps(ora);
+    await generateMainSitemap(ora);
     
     const endTime = Date.now();
     const duration = ((endTime - startTime) / 1000).toFixed(1);
@@ -310,8 +312,13 @@ async function main() {
     finalSpinner.succeed(`\n✅ Sitemap generation completed successfully in ${duration}s!\n`);
     
   } catch (error) {
-    const errorSpinner = ora().start();
-    errorSpinner.fail(`❌ Error generating sitemaps: ${error.message}`);
+    try {
+      const { default: ora } = await import('ora');
+      const errorSpinner = ora().start();
+      errorSpinner.fail(`❌ Error generating sitemaps: ${error.message}`);
+    } catch {
+      console.error(`❌ Error generating sitemaps: ${error.message}`);
+    }
     console.error(error);
     process.exit(1);
   }
