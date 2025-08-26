@@ -26,7 +26,12 @@ export function createSlug(text: string): string {
  * Generate slug from extension name
  */
 export function createExtensionSlug(extension: Extension): string {
-  // Use extension name for the slug
+  // Use extension's slug if available, otherwise create from extension name
+  if (extension.slug && extension.slug.trim()) {
+    return extension.slug.trim();
+  }
+  
+  // Create slug from extension name
   const slug = createSlug(extension.name);
   
   // Fallback to a generic slug if name produces empty slug

@@ -26,6 +26,7 @@ export interface Extension {
   screenshots?: string[];
   logo_url?: string;
   status?: string;
+  slug?: string;
   // Pre-computed ranking fields (lower number = higher rank)
   popularity_rank?: number;
   trending_rank?: number;

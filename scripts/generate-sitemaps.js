@@ -205,8 +205,8 @@ async function generateExtensionSitemaps() {
     
     for (const extension of extensions) {
       const lastmod = new Date().toISOString();
-      // Create SEO-friendly slug from extension name
-      const slug = createSlug(extension.name || 'chrome-extension');
+      // Use extension's slug if available, otherwise create SEO-friendly slug from extension name
+      const slug = (extension.slug && extension.slug.trim()) || createSlug(extension.name || 'chrome-extension');
       currentSitemapUrls.push(`<url><loc>${SITE_URL}/extension/${slug}/${extension.extension_id}</loc><lastmod>${lastmod}</lastmod><changefreq>daily</changefreq><priority>0.6</priority></url>`);
       currentExtensionCount++;
       
