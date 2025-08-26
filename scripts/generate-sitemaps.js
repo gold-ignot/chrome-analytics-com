@@ -19,24 +19,18 @@ function createSlug(text) {
   }).substring(0, 60).replace(/-+$/, '') || 'chrome-extension';
 }
 
-// Fallback categories (in case API is unavailable)
+// Fallback categories (must match CATEGORIES in seoHelpers.ts)
 const FALLBACK_CATEGORIES = [
-  'extension',
-  'tools',
-  'workflow-planning',
-  'developer-tools',
-  'just-for-fun',
-  'games',
-  'social-networking',
-  'education',
+  'productivity',
   'shopping',
-  'entertainment',
+  'developer-tools',
   'communication',
-  'art-design',
-  'well-being',
+  'entertainment',
   'news-weather',
-  'travel',
-  'household'
+  'social-communication',
+  'accessibility',
+  'photos',
+  'search-tools'
 ];
 
 // API client setup

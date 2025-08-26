@@ -1,12 +1,8 @@
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { Suspense } from 'react';
-import { 
-  metadataGenerators, 
-  CATEGORIES, 
-  CATEGORY_DESCRIPTIONS,
-  CategoryKey 
-} from '@/lib/seoHelpers';
+import { metadataGenerators } from '@/lib/seoHelpers';
+import { apiClient } from '@/lib/api';
 import CategoryPageClient from './CategoryPageClient';
 
 interface CategoryPageProps {
@@ -18,35 +14,58 @@ interface CategoryPageProps {
 // Generate static metadata
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
   const { category } = await params;
-  const categoryName = CATEGORIES[category as CategoryKey];
   
-  if (!categoryName) {
+  try {
+    const categoriesResponse = await apiClient.getCategories();
+    const categoryData = categoriesResponse.categories.find(cat => cat.slug === category);
+    
+    if (!categoryData) {
+      return {
+        title: 'Category Not Found',
+        description: 'The requested category does not exist.',
+      };
+    }
+    
+    return metadataGenerators.category(category, categoryData.name);
+  } catch (error) {
+    console.error('Failed to fetch categories for metadata:', error);
     return {
       title: 'Category Not Found',
       description: 'The requested category does not exist.',
     };
   }
-  
-  return metadataGenerators.category(category, categoryName);
 }
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { category } = await params;
-  const categoryName = CATEGORIES[category as CategoryKey];
   
-  if (!categoryName) {
+  try {
+    const categoriesResponse = await apiClient.getCategories();
+    const categoryData = categoriesResponse.categories.find(cat => cat.slug === category);
+    
+    if (!categoryData) {
+      notFound();
+    }
+
+    return (
+      <Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading...</div>}>
+        <CategoryPageClient category={category} categoryName={categoryData.name} />
+      </Suspense>
+    );
+  } catch (error) {
+    console.error('Failed to fetch categories:', error);
     notFound();
   }
-
-  return (
-    <Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading...</div>}>
-      <CategoryPageClient category={category} categoryName={categoryName} />
-    </Suspense>
-  );
 }
 
 export async function generateStaticParams() {
-  return Object.keys(CATEGORIES).map((category) => ({
-    category,
-  }));
+  try {
+    const categoriesResponse = await apiClient.getCategories();
+    return categoriesResponse.categories.map((category) => ({
+      category: category.slug,
+    }));
+  } catch (error) {
+    console.error('Failed to fetch categories for static params:', error);
+    return [];
+  }
 }
