@@ -1,6 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 const slugify = require('slugify');
+const ora = require('ora');
+const cliProgress = require('cli-progress');
 
 // Configuration
 const SITE_URL = 'https://chrome-analytics.com';
@@ -66,23 +68,26 @@ async function fetchWithTimeout(url, timeout = 10000) {
 }
 
 async function getCategories() {
+  const spinner = ora('Fetching categories from API...').start();
   try {
-    console.log('Fetching categories from API...');
     const response = await fetchWithTimeout(`${API_BASE_URL}/categories`);
+    spinner.succeed(`Fetched ${response.categories?.length || 0} categories from API`);
     return response.categories || [];
   } catch (error) {
-    console.log('API failed, using fallback categories:', error.message);
+    spinner.warn(`API failed, using ${FALLBACK_CATEGORIES.length} fallback categories`);
     return FALLBACK_CATEGORIES.map(slug => ({ slug, name: slug }));
   }
 }
 
 async function getExtensionCount() {
+  const spinner = ora('Fetching extension count from API...').start();
   try {
-    console.log('Fetching extension count from API...');
     const response = await fetchWithTimeout(`${API_BASE_URL}/search?page=1&limit=1`);
-    return response.pagination?.total || 165234; // fallback estimate
+    const count = response.pagination?.total || 165234;
+    spinner.succeed(`Found ${count.toLocaleString()} total extensions`);
+    return count;
   } catch (error) {
-    console.log('API failed, using fallback extension count:', error.message);
+    spinner.warn('API failed, using fallback extension count: 165,234');
     return 165234; // fallback estimate
   }
 }
@@ -104,7 +109,7 @@ ${content}
 }
 
 async function generateCategoriesSitemap() {
-  console.log('Generating categories sitemap...');
+  const spinner = ora('Generating categories sitemap...').start();
   const categories = await getCategories();
   const lastmod = new Date().toISOString();
   
@@ -115,7 +120,7 @@ async function generateCategoriesSitemap() {
   const xml = generateXML('urlset', urls);
   const filePath = path.join(PUBLIC_DIR, 'sitemap-categories.xml');
   fs.writeFileSync(filePath, xml);
-  console.log(`Generated ${filePath} with ${categories.length} categories`);
+  spinner.succeed(`Generated categories sitemap with ${categories.length} categories`);
   
   return 'sitemap-categories.xml';
 }
@@ -136,7 +141,7 @@ async function getExtensionSitemapList() {
 }
 
 async function generateMainSitemap() {
-  console.log('Generating main sitemap...');
+  const spinner = ora('Generating main sitemap index...').start();
   
   // Check which extension sitemaps were actually generated
   const generatedSitemaps = [];
@@ -165,89 +170,128 @@ async function generateMainSitemap() {
   const xml = generateXML('sitemapindex', sitemaps.join('\n'));
   const filePath = path.join(PUBLIC_DIR, 'sitemap.xml');
   fs.writeFileSync(filePath, xml);
-  console.log(`Generated ${filePath} with ${sitemaps.length} sitemaps (${generatedSitemaps.length} extension sitemaps)`);
+  spinner.succeed(`Generated main sitemap index with ${sitemaps.length} sitemaps (${generatedSitemaps.length} extension sitemaps)`);
 }
 
 async function fetchExtensionsPage(page, limit) {
   try {
-    console.log(`Fetching extensions page ${page}...`);
     const response = await fetchWithTimeout(`${API_BASE_URL}/search?page=${page}&limit=${limit}&sort_by=users&order=desc`);
     return response.results || [];
   } catch (error) {
-    console.log(`Failed to fetch extensions page ${page}:`, error.message);
+    // Errors are handled by the progress bar in the calling function
     return [];
   }
 }
 
 async function generateExtensionSitemaps() {
-  console.log('Generating extension sitemaps with ALL extension data...');
   const totalExtensions = await getExtensionCount();
   const totalSitemaps = Math.ceil(totalExtensions / EXTENSIONS_PER_SITEMAP);
+  const totalPages = Math.ceil(totalExtensions / 100); // 100 extensions per page
   
-  console.log(`Total extensions: ${totalExtensions}, generating ${totalSitemaps} sitemaps`);
+  // Create progress bar
+  const progressBar = new cliProgress.SingleBar({
+    format: 'Fetching Extensions |{bar}| {percentage}% | {value}/{total} pages | {extensions} extensions | ETA: {eta}s',
+    barCompleteChar: '\u2588',
+    barIncompleteChar: '\u2591',
+    hideCursor: true
+  });
+  
+  progressBar.start(totalPages, 0, { extensions: 0 });
   
   let currentExtensionCount = 0;
   let currentSitemapIndex = 0;
   let currentSitemapUrls = [];
   
-  // Fetch ALL extensions, paginated
+  // Fetch ALL extensions with concurrency control
   let page = 1;
   let hasMorePages = true;
+  const concurrency = 2;
+  let processedPages = 0;
   
-  while (hasMorePages && currentSitemapIndex < totalSitemaps) {
-    console.log(`Fetching extensions page ${page}...`);
-    const extensions = await fetchExtensionsPage(page, 100);
-    
-    if (extensions.length === 0) {
-      hasMorePages = false;
-      break;
-    }
-    
-    for (const extension of extensions) {
-      const lastmod = new Date().toISOString();
-      // Use extension's slug if available, otherwise create SEO-friendly slug from extension name
-      const slug = (extension.slug && extension.slug.trim()) || createSlug(extension.name || 'chrome-extension');
-      currentSitemapUrls.push(`<url><loc>${SITE_URL}/extension/${slug}/${extension.extension_id}</loc><lastmod>${lastmod}</lastmod><changefreq>daily</changefreq><priority>0.6</priority></url>`);
-      currentExtensionCount++;
+  try {
+    while (hasMorePages && currentSitemapIndex < totalSitemaps) {
+      // Fetch multiple pages concurrently
+      const pagePromises = [];
+      const startPage = page;
       
-      // Check if we've reached the limit for current sitemap
-      if (currentSitemapUrls.length >= EXTENSIONS_PER_SITEMAP) {
-        // Write current sitemap
-        const xml = generateXML('urlset', currentSitemapUrls.join('\n'));
-        const filePath = path.join(PUBLIC_DIR, `sitemap-extensions-${currentSitemapIndex}.xml`);
-        fs.writeFileSync(filePath, xml);
-        console.log(`Generated ${filePath} with ${currentSitemapUrls.length} extensions`);
+      for (let i = 0; i < concurrency && hasMorePages; i++) {
+        pagePromises.push(fetchExtensionsPage(page + i, 100));
+      }
+      
+      const results = await Promise.all(pagePromises);
+      
+      // Process all fetched pages
+      let allPagesEmpty = true;
+      for (let i = 0; i < results.length; i++) {
+        const extensions = results[i];
+        processedPages++;
         
-        // Reset for next sitemap
-        currentSitemapIndex++;
-        currentSitemapUrls = [];
+        if (extensions.length > 0) {
+          allPagesEmpty = false;
+          
+          for (const extension of extensions) {
+            const lastmod = new Date().toISOString();
+            // Use extension's slug if available, otherwise create SEO-friendly slug from extension name
+            const slug = (extension.slug && extension.slug.trim()) || createSlug(extension.name || 'chrome-extension');
+            currentSitemapUrls.push(`<url><loc>${SITE_URL}/extension/${slug}/${extension.extension_id}</loc><lastmod>${lastmod}</lastmod><changefreq>daily</changefreq><priority>0.6</priority></url>`);
+            currentExtensionCount++;
+            
+            // Check if we've reached the limit for current sitemap
+            if (currentSitemapUrls.length >= EXTENSIONS_PER_SITEMAP) {
+              // Write current sitemap
+              const xml = generateXML('urlset', currentSitemapUrls.join('\n'));
+              const filePath = path.join(PUBLIC_DIR, `sitemap-extensions-${currentSitemapIndex}.xml`);
+              fs.writeFileSync(filePath, xml);
+              
+              // Reset for next sitemap
+              currentSitemapIndex++;
+              currentSitemapUrls = [];
+            }
+          }
+        }
+        
+        // Update progress bar
+        progressBar.update(processedPages, { extensions: currentExtensionCount });
+      }
+      
+      // Check if all pages were empty
+      if (allPagesEmpty) {
+        hasMorePages = false;
+        break;
+      }
+      
+      page += concurrency;
+      
+      // Add a small delay to be respectful to the API
+      if (page % (10 * concurrency) === 1) {
+        await new Promise(resolve => setTimeout(resolve, 100)); // 100ms delay every 10 batches
       }
     }
     
-    page++;
-    
-    // Add a small delay to be respectful to the API
-    if (page % 10 === 0) {
-      console.log(`Processed ${currentExtensionCount} extensions so far...`);
-      await new Promise(resolve => setTimeout(resolve, 100)); // 100ms delay every 10 pages
+    // Write any remaining extensions in the last sitemap
+    if (currentSitemapUrls.length > 0) {
+      const xml = generateXML('urlset', currentSitemapUrls.join('\n'));
+      const filePath = path.join(PUBLIC_DIR, `sitemap-extensions-${currentSitemapIndex}.xml`);
+      fs.writeFileSync(filePath, xml);
+      currentSitemapIndex++;
     }
+    
+    progressBar.stop();
+    
+    const spinner = ora().start();
+    spinner.succeed(`Generated ${currentSitemapIndex} extension sitemaps with ${currentExtensionCount.toLocaleString()} total extensions`);
+    
+  } catch (error) {
+    progressBar.stop();
+    throw error;
   }
-  
-  // Write any remaining extensions in the last sitemap
-  if (currentSitemapUrls.length > 0) {
-    const xml = generateXML('urlset', currentSitemapUrls.join('\n'));
-    const filePath = path.join(PUBLIC_DIR, `sitemap-extensions-${currentSitemapIndex}.xml`);
-    fs.writeFileSync(filePath, xml);
-    console.log(`Generated final ${filePath} with ${currentSitemapUrls.length} extensions`);
-    currentSitemapIndex++;
-  }
-  
-  console.log(`Generated ${currentSitemapIndex} extension sitemaps with ${currentExtensionCount} total extensions`);
 }
 
 async function main() {
+  const startTime = Date.now();
+  
   try {
-    console.log('Starting sitemap generation...');
+    console.log('\n🚀 Starting sitemap generation...\n');
     
     // Ensure public directory exists
     if (!fs.existsSync(PUBLIC_DIR)) {
@@ -259,9 +303,16 @@ async function main() {
     await generateExtensionSitemaps();
     await generateMainSitemap();
     
-    console.log('Sitemap generation completed successfully!');
+    const endTime = Date.now();
+    const duration = ((endTime - startTime) / 1000).toFixed(1);
+    
+    const finalSpinner = ora().start();
+    finalSpinner.succeed(`\n✅ Sitemap generation completed successfully in ${duration}s!\n`);
+    
   } catch (error) {
-    console.error('Error generating sitemaps:', error);
+    const errorSpinner = ora().start();
+    errorSpinner.fail(`❌ Error generating sitemaps: ${error.message}`);
+    console.error(error);
     process.exit(1);
   }
 }
