@@ -133,48 +133,6 @@ export default function FooterClient({ categories }: FooterClientProps) {
 
         </div>
 
-        {/* Extended Category Links for SEO - Using top categories dynamically */}
-        <div className="mt-12 pt-8 border-t border-slate-200">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {categories.slice(0, 8).map((category) => (
-              <div key={category.slug}>
-                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
-                  {category.name}
-                </h4>
-                <ul className="space-y-2">
-                  <li>
-                    <Link href={`/category/${category.slug}`} className="text-xs text-slate-500 hover:text-slate-700 transition-colors">
-                      Browse {category.count} Extensions
-                    </Link>
-                  </li>
-                  {/* Add related "best" link if it exists */}
-                  {category.slug === 'developer-tools' && (
-                    <li>
-                      <Link href="/best/developer-extensions" className="text-xs text-slate-500 hover:text-slate-700 transition-colors">
-                        Best Developer Extensions
-                      </Link>
-                    </li>
-                  )}
-                  {category.slug === 'shopping' && (
-                    <li>
-                      <Link href="/best/shopping-extensions" className="text-xs text-slate-500 hover:text-slate-700 transition-colors">
-                        Best Shopping Extensions
-                      </Link>
-                    </li>
-                  )}
-                  {category.slug === 'productivity' && (
-                    <li>
-                      <Link href="/best/productivity-extensions" className="text-xs text-slate-500 hover:text-slate-700 transition-colors">
-                        Best Productivity Extensions
-                      </Link>
-                    </li>
-                  )}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* Legal and Copyright */}
         <div className="border-t border-slate-200 mt-12 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">

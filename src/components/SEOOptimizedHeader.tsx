@@ -1,14 +1,29 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { CATEGORIES, BEST_TYPES } from '@/lib/seoHelpers';
+import { BEST_TYPES } from '@/lib/seoHelpers';
+import { Category } from '@/lib/api';
+import { getTopCategories } from '@/lib/categories';
 
 export default function SEOOptimizedHeader() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
   const pathname = usePathname();
+
+  useEffect(() => {
+    async function loadCategories() {
+      try {
+        const topCategories = await getTopCategories(6);
+        setCategories(topCategories);
+      } catch (error) {
+        console.error('Failed to load categories:', error);
+      }
+    }
+    loadCategories();
+  }, []);
 
   const isActivePath = (path: string) => {
     return pathname === path || pathname.startsWith(path);
@@ -110,14 +125,14 @@ export default function SEOOptimizedHeader() {
                       {/* Categories */}
                       <div>
                         <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Categories</h3>
-                        {Object.entries(CATEGORIES).slice(0, 5).map(([slug, name]) => (
+                        {categories.slice(0, 5).map((category) => (
                           <Link
-                            key={slug}
-                            href={`/category/${slug}`}
+                            key={category.slug}
+                            href={`/category/${category.slug}`}
                             onClick={handleLinkClick}
                             className="block px-3 py-2 text-sm text-slate-700 hover:text-blue-600 hover:bg-slate-50 rounded-md transition-colors"
                           >
-                            {name}
+                            {category.name}
                           </Link>
                         ))}
                       </div>
@@ -264,14 +279,14 @@ export default function SEOOptimizedHeader() {
               {/* Mobile Categories */}
               <div className="pt-4 border-t border-slate-200">
                 <h3 className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Categories</h3>
-                {Object.entries(CATEGORIES).slice(0, 6).map(([slug, name]) => (
+                {categories.slice(0, 6).map((category) => (
                   <Link
-                    key={slug}
-                    href={`/category/${slug}`}
+                    key={category.slug}
+                    href={`/category/${category.slug}`}
                     onClick={handleLinkClick}
                     className="block px-3 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-md transition-colors"
                   >
-                    {name}
+                    {category.name}
                   </Link>
                 ))}
               </div>
