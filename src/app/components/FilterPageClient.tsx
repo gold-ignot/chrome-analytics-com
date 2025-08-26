@@ -83,7 +83,20 @@ export default function FilterPageClient({ initialData }: FilterPageClientProps)
         response = await apiClient.searchExtensions(search, page, limit);
       } else {
         setIsSearching(false);
-        response = await apiClient.getExtensions(page, limit, initialData.sortBy, initialData.sortOrder);
+        // Use specialized endpoints based on filter type
+        switch (initialData.filterType) {
+          case 'popular':
+            response = await apiClient.getPopularExtensions(page, limit);
+            break;
+          case 'trending':
+            response = await apiClient.getTrendingExtensions(page, limit);
+            break;
+          case 'top-rated':
+            response = await apiClient.getTopRatedExtensions(page, limit);
+            break;
+          default:
+            response = await apiClient.getExtensions(page, limit, initialData.sortBy, initialData.sortOrder);
+        }
       }
 
       setExtensions(response.extensions);

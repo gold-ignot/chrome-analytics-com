@@ -44,7 +44,7 @@ export default async function TrendingExtensionsPage({ searchParams }: TrendingP
     if (searchQuery.trim()) {
       response = await apiClient.searchExtensions(searchQuery, page, limit);
     } else {
-      response = await apiClient.getExtensions(page, limit, 'recent', 'desc');
+      response = await apiClient.getTrendingExtensions(page, limit);
     }
 
     initialData = {

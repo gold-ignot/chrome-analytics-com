@@ -44,7 +44,7 @@ export default async function TopRatedExtensionsPage({ searchParams }: TopRatedP
     if (searchQuery.trim()) {
       response = await apiClient.searchExtensions(searchQuery, page, limit);
     } else {
-      response = await apiClient.getExtensions(page, limit, 'rating', 'desc');
+      response = await apiClient.getTopRatedExtensions(page, limit);
     }
 
     initialData = {

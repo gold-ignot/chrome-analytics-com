@@ -44,7 +44,7 @@ export default async function PopularExtensionsPage({ searchParams }: PopularPag
     if (searchQuery.trim()) {
       response = await apiClient.searchExtensions(searchQuery, page, limit);
     } else {
-      response = await apiClient.getExtensions(page, limit, 'users', 'desc');
+      response = await apiClient.getPopularExtensions(page, limit);
     }
 
     initialData = {
