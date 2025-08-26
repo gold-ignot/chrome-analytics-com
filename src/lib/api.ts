@@ -1,11 +1,10 @@
 // Dynamic API URL selection
 const getApiBaseUrl = () => {
   if (typeof window === 'undefined') {
-    // Server-side: use Next.js API routes with full URL
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    return `${baseUrl}/api`;
+    // Server-side: use external API directly (skip Next.js proxy)
+    return process.env.API_URL || 'https://chrome-extension-api.namedry.com';
   }
-  // Client-side: use Next.js API routes
+  // Client-side: use Next.js API routes (proxy)
   return '/api';
 };
 
@@ -114,9 +113,6 @@ class ApiClient {
     return getApiBaseUrl();
   }
 
-  private isServerSide(): boolean {
-    return typeof window === 'undefined';
-  }
 
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
     const url = `${this.getBaseUrl()}${endpoint}`;
@@ -168,8 +164,8 @@ class ApiClient {
       params.append('exclude_ids', excludeIds.join(','));
     }
     
-    // Use appropriate endpoint based on environment
-    const endpoint = this.isServerSide() ? `/search?${params}` : `/extensions?${params}`;
+    // Always use extensions endpoint for general extension listing
+    const endpoint = `/extensions?${params}`;
     const response = await this.request<{results: Extension[], pagination: PaginationInfo}>(endpoint);
     
     // Transform API response to match our interface
@@ -192,7 +188,8 @@ class ApiClient {
       limit: limit.toString(),
     });
     
-    const endpoint = this.isServerSide() ? `/search?${params}` : `/extensions?${params}`;
+    // Always use search endpoint for search queries
+    const endpoint = `/search?${params}`;
     const response = await this.request<{results: Extension[], pagination: PaginationInfo}>(endpoint);
     
     // Transform API response to match our interface
