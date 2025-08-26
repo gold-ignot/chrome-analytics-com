@@ -1,4 +1,16 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://chrome-extension-api.namedry.com';
+// Check if we're on server-side or client-side
+const getApiBaseUrl = () => {
+  if (typeof window === 'undefined') {
+    // Server-side: use full URL
+    return process.env.NEXT_PUBLIC_BASE_URL 
+      ? `${process.env.NEXT_PUBLIC_BASE_URL}/api`
+      : 'http://localhost:3000/api';
+  }
+  // Client-side: use relative URL
+  return '/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 export interface Extension {
   extension_id: string;
@@ -108,14 +120,7 @@ class ApiClient {
 
 
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
-    // Only add timestamp for non-static endpoints to prevent dynamic server usage during SSG
-    const isStaticEndpoint = endpoint.includes('/categories') || endpoint.includes('/health');
-    
-    let url = `${this.baseUrl}${endpoint}`;
-    if (!isStaticEndpoint) {
-      const separator = endpoint.includes('?') ? '&' : '?';
-      url = `${url}${separator}_t=${Date.now()}`;
-    }
+    const url = `${this.baseUrl}${endpoint}`;
     
     try {
       const response = await fetch(url, {
@@ -123,7 +128,6 @@ class ApiClient {
           'Content-Type': 'application/json',
           ...options?.headers,
         },
-        cache: isStaticEndpoint ? 'force-cache' : 'no-store',
         ...options,
       });
 
@@ -165,8 +169,8 @@ class ApiClient {
       params.append('exclude_ids', excludeIds.join(','));
     }
     
-    // Use /search endpoint for browsing all extensions
-    const response = await this.request<{results: Extension[], pagination: PaginationInfo}>(`/search?${params}`);
+    // Use /extensions endpoint for browsing all extensions
+    const response = await this.request<{results: Extension[], pagination: PaginationInfo}>(`/extensions?${params}`);
     
     // Transform API response to match our interface
     return {
@@ -188,7 +192,7 @@ class ApiClient {
       limit: limit.toString(),
     });
     
-    const response = await this.request<{results: Extension[], pagination: PaginationInfo}>(`/search?${params}`);
+    const response = await this.request<{results: Extension[], pagination: PaginationInfo}>(`/extensions?${params}`);
     
     // Transform API response to match our interface
     return {
