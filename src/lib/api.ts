@@ -1,12 +1,10 @@
 // Check if we're on server-side or client-side
 const getApiBaseUrl = () => {
   if (typeof window === 'undefined') {
-    // Server-side: use full URL
-    return process.env.NEXT_PUBLIC_BASE_URL 
-      ? `${process.env.NEXT_PUBLIC_BASE_URL}/api`
-      : 'http://localhost:3000/api';
+    // Server-side: use backend API directly
+    return process.env.API_URL || 'https://chrome-extension-api.namedry.com';
   }
-  // Client-side: use relative URL
+  // Client-side: use Next.js API routes
   return '/api';
 };
 
@@ -118,6 +116,9 @@ class ApiClient {
     this.baseUrl = baseUrl;
   }
 
+  private isServerSide(): boolean {
+    return typeof window === 'undefined';
+  }
 
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
@@ -169,8 +170,9 @@ class ApiClient {
       params.append('exclude_ids', excludeIds.join(','));
     }
     
-    // Use /extensions endpoint for browsing all extensions
-    const response = await this.request<{results: Extension[], pagination: PaginationInfo}>(`/extensions?${params}`);
+    // Use appropriate endpoint based on environment
+    const endpoint = this.isServerSide() ? `/search?${params}` : `/extensions?${params}`;
+    const response = await this.request<{results: Extension[], pagination: PaginationInfo}>(endpoint);
     
     // Transform API response to match our interface
     return {
@@ -192,7 +194,8 @@ class ApiClient {
       limit: limit.toString(),
     });
     
-    const response = await this.request<{results: Extension[], pagination: PaginationInfo}>(`/extensions?${params}`);
+    const endpoint = this.isServerSide() ? `/search?${params}` : `/extensions?${params}`;
+    const response = await this.request<{results: Extension[], pagination: PaginationInfo}>(endpoint);
     
     // Transform API response to match our interface
     return {
