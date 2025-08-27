@@ -137,9 +137,10 @@ class ApiClient {
     }
   }
 
-  // Extensions - Updated to match actual API
+  // Extensions - Uses search endpoint with empty query to get all extensions
   async getExtensions(page: number = 1, limit: number = 20, sort?: string, order?: string, category?: string, excludeIds?: string[]): Promise<ExtensionResponse> {
     const params = new URLSearchParams({
+      q: '', // Empty query to get all extensions
       page: page.toString(),
       limit: limit.toString(),
     });
@@ -164,8 +165,8 @@ class ApiClient {
       params.append('exclude_ids', excludeIds.join(','));
     }
     
-    // Always use extensions endpoint for general extension listing
-    const endpoint = `/extensions?${params}`;
+    // Use search endpoint with empty query to get all extensions
+    const endpoint = `/search?${params}`;
     const response = await this.request<{results: Extension[], pagination: PaginationInfo}>(endpoint);
     
     // Transform API response to match our interface

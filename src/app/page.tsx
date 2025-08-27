@@ -109,16 +109,17 @@ export default async function Home() {
   let totalExtensions = 0;
 
   try {
-    const [trendingResponse, topRatedResponse, popularResponse] = await Promise.all([
+    const [trendingResponse, topRatedResponse, popularResponse, totalCountResponse] = await Promise.all([
       apiClient.getTrendingExtensions(1, 6).catch(() => ({ extensions: [], total: 0 })),
       apiClient.getTopRatedExtensions(1, 6).catch(() => ({ extensions: [], total: 0 })),
-      apiClient.getPopularExtensions(1, 6).catch(() => ({ extensions: [], total: 0 }))
+      apiClient.getPopularExtensions(1, 6).catch(() => ({ extensions: [], total: 0 })),
+      apiClient.getExtensions(1, 1).catch(() => ({ extensions: [], total: 0 })) // Just to get the total count
     ]);
 
     trendingExtensions = trendingResponse.extensions || [];
     topRatedExtensions = topRatedResponse.extensions || [];
     popularExtensions = popularResponse.extensions || [];
-    totalExtensions = popularResponse.total || 0;
+    totalExtensions = totalCountResponse.total || 0;
   } catch (error) {
     console.error('Error fetching landing page data:', error);
   }
