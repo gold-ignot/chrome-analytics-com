@@ -76,13 +76,7 @@ export default async function ExtensionPage({ params }: ExtensionPageProps) {
       notFound();
     }
 
-    // Check if current slug matches the correct slug
-    const correctSlug = createExtensionSlug(extension);
-    if (parsedParams.slug !== correctSlug) {
-      // Redirect to the correct URL with proper slug
-      const correctUrl = createExtensionUrl(extension);
-      redirect(correctUrl);
-    }
+    // No slug redirect - just serve the extension data
     
     // Fetch related extensions server-side
     let relatedExtensions = [];
