@@ -146,7 +146,7 @@ export default function ExtensionPageClient({ extension, relatedExtensions }: Ex
               <h1 className={`text-2xl font-bold text-gray-900 ${
                 ((extension.popularity_rank > 0 && extension.popularity_rank <= 100) || 
                  (extension.top_rated_rank > 0 && extension.top_rated_rank <= 100) || 
-                 (extension.trending_rank > 0 && extension.trending_rank <= 100)) ? 'mb-2' : 'mb-4'
+                 (extension.trending_rank > 0 && extension.trending_rank <= 100)) ? 'mb-2' : ''
               }`}>{extension.name}</h1>
               
               {/* Ranking Mini Cards - Below title */}
