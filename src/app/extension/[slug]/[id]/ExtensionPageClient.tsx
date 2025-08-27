@@ -147,7 +147,7 @@ export default function ExtensionPageClient({ extension, relatedExtensions }: Ex
               
               {/* Ranking Mini Cards - Below title */}
               <div className="flex items-center gap-2 mb-3 flex-wrap relative">
-                {extension.popularity_rank && extension.popularity_rank <= 100 && (
+                {extension.popularity_rank && extension.popularity_rank > 0 && extension.popularity_rank <= 100 && (
                   <div className="bg-gradient-to-br from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 rounded-lg px-2 py-1 border border-purple-200 group relative cursor-help hover:shadow-md transition-all duration-200">
                     <div className="flex items-center gap-1">
                       <svg className="w-3 h-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -163,7 +163,7 @@ export default function ExtensionPageClient({ extension, relatedExtensions }: Ex
                   </div>
                 )}
 
-                {extension.top_rated_rank && extension.top_rated_rank <= 100 && (
+                {extension.top_rated_rank && extension.top_rated_rank > 0 && extension.top_rated_rank <= 100 && (
                   <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 hover:from-yellow-100 hover:to-yellow-200 rounded-lg px-2 py-1 border border-yellow-200 group relative cursor-help hover:shadow-md transition-all duration-200">
                     <div className="flex items-center gap-1">
                       <svg className="w-3 h-3 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
@@ -179,7 +179,7 @@ export default function ExtensionPageClient({ extension, relatedExtensions }: Ex
                   </div>
                 )}
 
-                {extension.trending_rank && extension.trending_rank <= 100 && (
+                {extension.trending_rank && extension.trending_rank > 0 && extension.trending_rank <= 100 && (
                   <div className="bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 rounded-lg px-2 py-1 border border-green-200 group relative cursor-help hover:shadow-md transition-all duration-200">
                     <div className="flex items-center gap-1">
                       <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

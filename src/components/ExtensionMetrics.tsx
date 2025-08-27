@@ -18,9 +18,9 @@ export default function ExtensionMetrics({ extension, showRankings = false }: Ex
     return users.toLocaleString();
   };
 
-  const hasRankings = (extension.popularity_rank && extension.popularity_rank <= 100) || 
-                     (extension.trending_rank && extension.trending_rank <= 100) || 
-                     (extension.top_rated_rank && extension.top_rated_rank <= 100);
+  const hasRankings = (extension.popularity_rank && extension.popularity_rank > 0 && extension.popularity_rank <= 100) || 
+                     (extension.trending_rank && extension.trending_rank > 0 && extension.trending_rank <= 100) || 
+                     (extension.top_rated_rank && extension.top_rated_rank > 0 && extension.top_rated_rank <= 100);
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -54,17 +54,17 @@ export default function ExtensionMetrics({ extension, showRankings = false }: Ex
       {showRankings && hasRankings && (
         <div className="mt-4 pt-4 border-t border-gray-200">
           <div className="flex flex-wrap gap-2">
-            {extension.popularity_rank && extension.popularity_rank <= 100 && (
+            {extension.popularity_rank && extension.popularity_rank > 0 && extension.popularity_rank <= 100 && (
               <span className="text-xs px-3 py-1.5 bg-purple-100 text-purple-700 rounded-full font-semibold">
                 #{extension.popularity_rank} Most Popular
               </span>
             )}
-            {extension.trending_rank && extension.trending_rank <= 100 && (
+            {extension.trending_rank && extension.trending_rank > 0 && extension.trending_rank <= 100 && (
               <span className="text-xs px-3 py-1.5 bg-orange-100 text-orange-700 rounded-full font-semibold">
                 #{extension.trending_rank} Trending
               </span>
             )}
-            {extension.top_rated_rank && extension.top_rated_rank <= 100 && (
+            {extension.top_rated_rank && extension.top_rated_rank > 0 && extension.top_rated_rank <= 100 && (
               <span className="text-xs px-3 py-1.5 bg-pink-100 text-pink-700 rounded-full font-semibold">
                 #{extension.top_rated_rank} Top Rated
               </span>
