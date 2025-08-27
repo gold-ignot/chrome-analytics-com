@@ -9,3 +9,33 @@
 
  ✓ Starting...
  ✓ Ready in 1281ms
+ ○ Compiling /extension/[slug]/[id] ...
+ ✓ Compiled /extension/[slug]/[id] in 3.5s
+ GET /extension/free-vpn-for-chrome-vpn-proxy-veepn/majdfhpaihoncoakbjgbdhglocklcgno 200 in 5942ms
+ ⚠ Cross origin request detected from 192.168.1.139 to /_next/* resource. In a future major version of Next.js, you will need to explicitly configure "allowedDevOrigins" in next.config to allow this.
+Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
+ ✓ Compiled /api/categories in 400ms
+ GET /api/categories 200 in 549ms
+ GET /api/analytics/install-velocity 200 in 1238ms
+ GET /api/analytics/multi-metric-trends?days=7 200 in 1280ms
+ GET /api/analytics/performance-score 200 in 806ms
+ GET /api/analytics/category-comparison?days=7&categories=Workflow+%26+Planning 200 in 1315ms
+ GET /api/analytics/growth?days=7&category=Workflow+%26+Planning 200 in 1336ms
+ GET /api/analytics/version-analytics 200 in 104ms
+ GET /api/analytics/user-analytics 200 in 217ms
+ GET /api/analytics/rating-trends 200 in 194ms
+ GET /api/analytics/growth?days=7&category=Workflow+%26+Planning 200 in 257ms
+ GET /api/analytics/multi-metric-trends?days=7 200 in 281ms
+ GET /api/analytics/growth?days=7&category=Workflow+%26+Planning 200 in 230ms
+ GET /api/analytics/market-overview?days=7 200 in 2929ms
+ GET /api/analytics/market-overview?days=7 200 in 1735ms
+ ✓ Compiled in 157ms
+ ✓ Compiled /extension/[slug]/[id] in 24ms
+ GET /extension/free-vpn-for-chrome-vpn-proxy-veepn/majdfhpaihoncoakbjgbdhglocklcgno 200 in 308ms
+ GET /api/analytics/install-velocity 200 in 211ms
+ GET /api/analytics/performance-score 200 in 214ms
+ GET /api/analytics/user-analytics 200 in 243ms
+ GET /api/analytics/category-comparison?days=7&categories=Workflow+%26+Planning 200 in 255ms
+ GET /api/analytics/version-analytics 200 in 254ms
+ GET /api/analytics/growth?days=7&category=Workflow+%26+Planning 200 in 273ms
+ GET /api/analytics/rating-trends 200 in 108ms
