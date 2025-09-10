@@ -44,3 +44,8 @@ next-env.d.ts
 
 .*-mcp/
 tsconfig.tsbuildinfo
+
+*.log
+
+# Sitemap generation progress
+scripts/.sitemap-progress.json
