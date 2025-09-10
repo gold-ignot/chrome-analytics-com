@@ -1,0 +1,91 @@
+name: Docker Swarm Stack Deployment
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verify docker-stack.yml exists
+        run: |
+          echo "Current working directory: $(pwd)"
+          echo "Listing contents of repository root:"
+          ls -la
+          echo "Checking for docker-stack.yml"
+          if [ -f "docker-stack.yml" ]; then
+            echo "docker-stack.yml FOUND in repository root."
+          else
+            echo "docker-stack.yml NOT FOUND in repository root!"
+            exit 1
+          fi
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        run: |
+          DOCKERFILE_CONTEXT_PATH="${{ secrets.DOCKERFILE_CONTEXT || '.' }}"
+          
+          if [[ "${{ secrets.DOCKER_IMAGE_NAME }}" == "${{ secrets.DOCKER_USERNAME }}"/* ]]; then
+            echo "Building and pushing custom image: ${{ secrets.DOCKER_IMAGE_NAME }}"
+            docker build -t ${{ secrets.DOCKER_IMAGE_NAME }} "$DOCKERFILE_CONTEXT_PATH"
+            docker push ${{ secrets.DOCKER_IMAGE_NAME }}
+          else
+            echo "Skipping image build/push for standard image: ${{ secrets.DOCKER_IMAGE_NAME }}"
+          fi
+
+      - name: Prepare deployment directory on remote host
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.SSH_HOST_SWARM }}
+          username: ${{ secrets.SSH_USER_SWARM }}
+          key: ${{ secrets.SSH_PRIVATE_KEY_DEPLOY }}
+          script: |
+            mkdir -p /opt/${{ github.event.repository.name }}
+            echo "Deployment directory created: /opt/${{ github.event.repository.name }}"
+
+      - name: Copy docker-stack.yml to Swarm Manager
+        uses: appleboy/scp-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST_SWARM }}
+          username: ${{ secrets.SSH_USER_SWARM }}
+          key: ${{ secrets.SSH_PRIVATE_KEY_DEPLOY }}
+          source: 'docker-stack.yml'
+          target: '/opt/${{ github.event.repository.name }}/'
+
+      - name: Deploy Docker Stack
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.SSH_HOST_SWARM }}
+          username: ${{ secrets.SSH_USER_SWARM }}
+          key: ${{ secrets.SSH_PRIVATE_KEY_DEPLOY }}
+          script: |
+            cd /opt/${{ github.event.repository.name }}
+            export DOCKER_IMAGE_NAME="${{ secrets.DOCKER_IMAGE_NAME }}"
+            docker stack deploy -c docker-stack.yml ${{ github.event.repository.name }} --with-registry-auth --prune
+            echo "Deployment initiated for stack: ${{ github.event.repository.name }}"
+
+      - name: Verify Deployment
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.SSH_HOST_SWARM }}
+          username: ${{ secrets.SSH_USER_SWARM }}
+          key: ${{ secrets.SSH_PRIVATE_KEY_DEPLOY }}
+          script: |
+            docker service ls -f "name=${{ github.event.repository.name }}"
+            docker stack ps ${{ github.event.repository.name }}
