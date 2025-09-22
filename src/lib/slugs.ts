@@ -40,7 +40,8 @@ export function createExtensionSlug(extension: Extension): string {
  * Generate the full URL path for an extension
  */
 export function createExtensionUrl(extension: Extension): string {
-  const slug = createExtensionSlug(extension);
+  // use backend-provided slug directly
+  const slug = extension.slug?.trim() || 'chrome-extension';
   return `/extension/${slug}/${extension.extension_id}`;
 }
 
