@@ -12,17 +12,12 @@ const EXTENSIONS_PER_SITEMAP = 10000;
 // API client setup
 const API_BASE_URL = 'https://chrome-extension-api.namedry.com';
 
-async function fetchWithRetry(url, maxRetries = 3, timeout = 30000) {
+async function fetchWithRetry(url, maxRetries = 3) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
-
     try {
       const response = await fetch(url, {
-        signal: controller.signal,
         headers: { 'Content-Type': 'application/json' }
       });
-      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -30,11 +25,8 @@ async function fetchWithRetry(url, maxRetries = 3, timeout = 30000) {
 
       return await response.json();
     } catch (error) {
-      clearTimeout(timeoutId);
-
       if (attempt === maxRetries) {
-        const errorType = error.name === 'AbortError' ? 'timeout' : 'request failed';
-        throw new Error(`${errorType} after ${maxRetries} attempts: ${error.message}`);
+        throw new Error(`Failed after ${maxRetries} attempts: ${error.message}`);
       }
 
       // exponential backoff
