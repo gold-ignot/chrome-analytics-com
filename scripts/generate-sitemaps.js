@@ -12,48 +12,33 @@ const EXTENSIONS_PER_SITEMAP = 10000;
 // API client setup
 const API_BASE_URL = 'https://chrome-extension-api.namedry.com';
 
-async function fetchWithTimeout(url, timeout = 30000) {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
-  
-  try {
-    const response = await fetch(url, { 
-      signal: controller.signal,
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
-    clearTimeout(timeoutId);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-    
-    return await response.json();
-  } catch (error) {
-    clearTimeout(timeoutId);
-    if (error.name === 'AbortError') {
-      throw new Error(`Request timeout after ${timeout}ms`);
-    }
-    throw error;
-  }
-}
-
-async function fetchWithRetry(url, maxRetries = 3, baseDelay = 1000) {
-  let lastError;
-  
+async function fetchWithRetry(url, maxRetries = 3, timeout = 30000) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+
     try {
-      return await fetchWithTimeout(url);
-    } catch (error) {
-      lastError = error;
-      
-      if (attempt === maxRetries) {
-        throw new Error(`Failed after ${maxRetries} attempts: ${error.message}`);
+      const response = await fetch(url, {
+        signal: controller.signal,
+        headers: { 'Content-Type': 'application/json' }
+      });
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
-      
-      // Exponential backoff with jitter
-      const delay = baseDelay * Math.pow(2, attempt - 1) + Math.random() * 1000;
+
+      return await response.json();
+    } catch (error) {
+      clearTimeout(timeoutId);
+
+      if (attempt === maxRetries) {
+        const errorType = error.name === 'AbortError' ? 'timeout' : 'request failed';
+        throw new Error(`${errorType} after ${maxRetries} attempts: ${error.message}`);
+      }
+
+      // exponential backoff
+      const delay = 1000 * Math.pow(2, attempt - 1);
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
