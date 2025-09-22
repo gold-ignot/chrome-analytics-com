@@ -7,21 +7,7 @@ const SITE_URL = 'https://chrome-analytics.com';
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 const EXTENSIONS_PER_SITEMAP = 10000;
 
-// Note: We should rely on backend slugs, not generate them here
-
-// Fallback categories (must match CATEGORIES in seoHelpers.ts)
-const FALLBACK_CATEGORIES = [
-  'productivity',
-  'shopping',
-  'developer-tools',
-  'communication',
-  'entertainment',
-  'news-weather',
-  'social-communication',
-  'accessibility',
-  'photos',
-  'search-tools'
-];
+// relies entirely on backend data
 
 // API client setup
 const API_BASE_URL = 'https://chrome-extension-api.namedry.com';
@@ -80,8 +66,8 @@ async function getCategories(ora) {
     spinner.succeed(`Fetched ${response.categories?.length || 0} categories from API`);
     return response.categories || [];
   } catch (error) {
-    spinner.warn(`API failed, using ${FALLBACK_CATEGORIES.length} fallback categories: ${error.message}`);
-    return FALLBACK_CATEGORIES.map(slug => ({ slug, name: slug }));
+    spinner.fail(`Failed to fetch categories: ${error.message}`);
+    throw error;
   }
 }
 
