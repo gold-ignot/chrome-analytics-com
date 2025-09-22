@@ -26,20 +26,14 @@ export function createSlug(text: string): string {
  * Generate slug from extension name
  */
 export function createExtensionSlug(extension: Extension): string {
-  // Always use extension's slug from backend if available
+  // Always use extension's slug from backend - no fallback generation
   if (extension.slug && extension.slug.trim()) {
     return extension.slug.trim();
   }
 
-  // Fallback only if backend doesn't provide a slug
-  const slug = createSlug(extension.name);
-
-  // Final fallback to a generic slug if name produces empty slug
-  if (!slug) {
-    return 'chrome-extension';
-  }
-
-  return slug;
+  // If backend doesn't provide a slug, there's a data issue
+  console.warn(`Extension ${extension.extension_id} missing slug from backend`);
+  return 'chrome-extension';
 }
 
 /**

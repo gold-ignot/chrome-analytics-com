@@ -14,7 +14,9 @@ export interface Extension {
   description: string;
   full_description?: string;
   category: string;
+  category_slug?: string;
   subcategory?: string;
+  subcategory_slug?: string;
   developer: string;
   developer_url?: string;
   website?: string;

@@ -1,6 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const slugify = require('slugify');
 const cliProgress = require('cli-progress');
 
 // Configuration
@@ -8,16 +7,7 @@ const SITE_URL = 'https://chrome-analytics.com';
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 const EXTENSIONS_PER_SITEMAP = 10000;
 
-// Create SEO-friendly slug using slugify package
-function createSlug(text) {
-  if (!text) return 'chrome-extension';
-  
-  return slugify(text, {
-    lower: true,
-    strict: true,
-    remove: /[*+~.()'"!:@]/g
-  }).substring(0, 60).replace(/-+$/, '') || 'chrome-extension';
-}
+// Note: We should rely on backend slugs, not generate them here
 
 // Fallback categories (must match CATEGORIES in seoHelpers.ts)
 const FALLBACK_CATEGORIES = [
@@ -211,18 +201,18 @@ async function generateExtensionSitemaps(ora) {
       barIncompleteChar: '\u2591',
       hideCursor: true
     });
-    
+
     progressBar.start(allUrls.length, 0);
-    
+
     let currentSitemapIndex = 0;
     let currentSitemapUrls = [];
     let processedCount = 0;
-    
+
     for (const urlObj of allUrls) {
       const sitemapUrl = `<url><loc>${SITE_URL}${urlObj.url}</loc><lastmod>${lastmod}</lastmod><changefreq>daily</changefreq><priority>0.6</priority></url>`;
       currentSitemapUrls.push(sitemapUrl);
       processedCount++;
-      
+
       // Check if we've reached the limit for current sitemap
       if (currentSitemapUrls.length >= EXTENSIONS_PER_SITEMAP) {
         const xml = generateXML('urlset', currentSitemapUrls.join('\n'));
@@ -231,11 +221,11 @@ async function generateExtensionSitemaps(ora) {
         currentSitemapIndex++;
         currentSitemapUrls = [];
       }
-      
+
       // Update progress
       progressBar.update(processedCount);
     }
-    
+
     // Write any remaining extensions in the last sitemap
     if (currentSitemapUrls.length > 0) {
       const xml = generateXML('urlset', currentSitemapUrls.join('\n'));
@@ -243,7 +233,7 @@ async function generateExtensionSitemaps(ora) {
       fs.writeFileSync(filePath, xml);
       currentSitemapIndex++;
     }
-    
+
     progressBar.stop();
     
     const finalSpinner = ora().start();

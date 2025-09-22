@@ -237,7 +237,7 @@ export default function ExtensionPageClient({ extension, relatedExtensions }: Ex
                 <span>•</span>
                 {extension.category && (
                   <a 
-                    href={`/category/${createSlug(extension.category)}`}
+                    href={`/category/${extension.category_slug || extension.category?.toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-')}`}
                     className="text-blue-600 hover:text-blue-800 text-sm"
                   >
                     {extension.category}
