@@ -26,19 +26,19 @@ export function createSlug(text: string): string {
  * Generate slug from extension name
  */
 export function createExtensionSlug(extension: Extension): string {
-  // Use extension's slug if available, otherwise create from extension name
+  // Always use extension's slug from backend if available
   if (extension.slug && extension.slug.trim()) {
     return extension.slug.trim();
   }
-  
-  // Create slug from extension name
+
+  // Fallback only if backend doesn't provide a slug
   const slug = createSlug(extension.name);
-  
-  // Fallback to a generic slug if name produces empty slug
+
+  // Final fallback to a generic slug if name produces empty slug
   if (!slug) {
     return 'chrome-extension';
   }
-  
+
   return slug;
 }
 
@@ -86,8 +86,8 @@ export const extensionUrls = {
  * Validate extension slug format
  */
 export function isValidExtensionSlug(slug: string): boolean {
-  // Check if slug matches expected format
-  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) && slug.length > 0 && slug.length <= 60;
+  // Check if slug matches expected format - allow regular hyphens and em dashes
+  return /^[a-z0-9]+(?:[-—][a-z0-9]+)*$/.test(slug) && slug.length > 0 && slug.length <= 60;
 }
 
 /**
