@@ -9,7 +9,10 @@ export async function middleware(request: NextRequest) {
     // track server-side to goatcounter
     const url = request.nextUrl.pathname + request.nextUrl.search;
     const userAgent = request.headers.get('user-agent') || '';
-    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || request.ip || '';
+    // cloudflare provides real ip in cf-connecting-ip header
+    const ip = request.headers.get('cf-connecting-ip') ||
+               request.headers.get('x-forwarded-for') ||
+               request.headers.get('x-real-ip') || '';
     const referer = request.headers.get('referer') || '';
     const language = request.headers.get('accept-language') || '';
 
