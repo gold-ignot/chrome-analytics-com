@@ -15,7 +15,6 @@
     "critters": "^0.0.25",
     "lucide-react": "^0.539.0",
     "next": "15.4.6",
-    "next-goatcounter": "^1.0.6",
     "ora": "^8.2.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
