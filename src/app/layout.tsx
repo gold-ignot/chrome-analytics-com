@@ -4,7 +4,6 @@ import "./globals.css";
 import SEOOptimizedHeader from "@/components/SEOOptimizedHeader";
 import FooterWrapper from "@/components/FooterWrapper";
 import LoadingBar from "@/components/LoadingBar";
-import { TrackingPixel } from '@/components/TrackingPixel';
 
 const inter = Inter({
   subsets: ["latin"],
@@ -64,7 +63,6 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className={`${inter.variable} font-sans antialiased bg-slate-50`}>
-        <TrackingPixel />
         <LoadingBar />
         <div className="min-h-screen flex flex-col">
           <SEOOptimizedHeader />
